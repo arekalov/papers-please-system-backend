@@ -24,6 +24,8 @@ servers:
 tags:
   - name: users
     description: User endpoints
+  - name: upks
+    description: UPK (checkpoint) endpoints
 
 
 
@@ -171,6 +173,163 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+  
+  /upks:
+    get:
+      tags:
+        - upks
+      summary: Get all UPKs
+      description: Returns a list of all checkpoints
+      parameters:
+        - $ref: '#/components/parameters/OffsetParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: region
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/Region'
+          description: Filter by region
+        - name: boss_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Filter by boss ID
+      responses:
+        '200':
+          description: A list of UPKs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpksListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags:
+        - upks
+      summary: Create new UPK
+      description: Create new checkpoint and return it
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpkRequest'
+      responses:
+        '201':
+          description: Created UPK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpkResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  
+  /upks/{id}:
+    get:
+      tags:
+        - upks
+      summary: Get UPK by ID
+      description: Returns a checkpoint by ID
+      parameters:
+        - $ref: '#/components/parameters/UpkId'
+      responses:
+        '200':
+          description: A UPK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpkResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+        - upks
+      summary: Update UPK
+      description: Full update of checkpoint
+      parameters:
+        - $ref: '#/components/parameters/UpkId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpkRequest'
+      responses:
+        '200':
+          description: Updated UPK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpkResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+        - upks
+      summary: Partially update UPK
+      description: Partial update of checkpoint fields
+      parameters:
+        - $ref: '#/components/parameters/UpkId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpkRequestPartial'
+      responses:
+        '200':
+          description: Updated UPK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpkResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - upks
+      summary: Delete UPK
+      description: Delete checkpoint by ID
+      parameters:
+        - $ref: '#/components/parameters/UpkId'
+      responses:
+        '204':
+          description: UPK deleted successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
 components:
   responses:
@@ -236,6 +395,14 @@ components:
       schema:
         type: string
         example: '520e073f-a2c3-40d4-a6ce-5ef72ba90b90'
+    UpkId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 'f47ac10b-58cc-4372-a567-0e02b2c3d479'
     OffsetParam:
       name: offset
       in: query
@@ -352,6 +519,85 @@ components:
         - boss
         - security
         - god
+    Region:
+      type: string
+      enum:
+        - Orvech_Vonor
+        - East_Grestin
+        - Paradizna
+    UpkResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 'f47ac10b-58cc-4372-a567-0e02b2c3d479'
+        name:
+          type: string
+          example: 'East Grestin Checkpoint'
+        bossId:
+          type: string
+          format: uuid
+          example: '520e073f-a2c3-40d4-a6ce-5ef72ba90b90'
+        region:
+          $ref: '#/components/schemas/Region'
+      required:
+        - id
+        - name
+        - bossId
+        - region
+    UpkRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: 'East Grestin Checkpoint'
+        bossId:
+          type: string
+          format: uuid
+          example: '520e073f-a2c3-40d4-a6ce-5ef72ba90b90'
+        region:
+          $ref: '#/components/schemas/Region'
+      required:
+        - name
+        - bossId
+        - region
+    UpkRequestPartial:
+      type: object
+      properties:
+        name:
+          type: string
+          example: 'East Grestin Checkpoint'
+        bossId:
+          type: string
+          format: uuid
+          example: '520e073f-a2c3-40d4-a6ce-5ef72ba90b90'
+        region:
+          $ref: '#/components/schemas/Region'
+    UpksListResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 10
+        limit:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 20
+        offset:
+          type: integer
+          minimum: 0
+          example: 0
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/UpkResponse'
+      required:
+        - total
+        - limit
+        - offset
+        - items
   securitySchemes:
     bearerAuth:
       type: http
