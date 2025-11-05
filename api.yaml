@@ -1,0 +1,359 @@
+openapi: '3.0.4'
+
+info:
+  title: Papers Please API
+  description: |
+    API for the Papers Please system.
+  contact:
+    name: arekalov
+    email: artyom.rekalov@gmail.com
+    url: https://github.com/arekalov
+  license:
+    name: MIT License
+    url: https://opensource.org/licenses/MIT
+  version: '1.0'
+externalDocs:
+  description: "Wiki of Papers Please System"
+  url: https://wiki.yandex.ru/homepage/papers-please-system/
+
+servers:
+  - url: https://localhost:8080/api/v1
+    description: Local development server
+
+
+tags:
+  - name: users
+    description: User endpoints
+
+
+
+paths:
+  /users:
+    get:
+      tags:
+        - users
+      summary: Get all users
+      description: Returns a list of all users
+      parameters:
+        - $ref: '#/components/parameters/OffsetParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: A list of users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsersListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags:
+        - users
+      summary: Add new user
+      description: Create new user and return it
+      parameters: 
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+      responses:
+        '200':
+          description: New user object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /users/{id}:
+    get:
+      tags:
+        - users    
+      summary: Get user by ID
+      description: Returns a user by ID
+      parameters: 
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: A user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+        - users
+      summary: Update some fields of user
+      parameters: 
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRequestPartial'
+      responses:
+        '200':
+          description: A user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRequest'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+        - users
+      summary: Update all userData
+      parameters: 
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRequest'
+      responses:
+        '200':
+          description: New user object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - users
+      summary: Path any field in user object
+      parameters: 
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: A user
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  responses:
+    BadRequest:
+      description: Bad Request - Invalid input data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 'INVALID_INPUT'
+            message: 'Invalid input data provided'
+    Unauthorized:
+      description: Unauthorized - Missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 'UNAUTHORIZED'
+            message: 'Authentication token is missing or invalid'
+    Forbidden:
+      description: Forbidden - Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 'FORBIDDEN'
+            message: 'You do not have permission to access this resource'
+    NotFound:
+      description: Not Found - Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 'NOT_FOUND'
+            message: 'The requested resource was not found'
+    Conflict:
+      description: Conflict - Resource already exists
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 'CONFLICT'
+            message: 'Resource with this identifier already exists'
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 'INTERNAL_ERROR'
+            message: 'An unexpected error occurred. Please try again later.'
+  parameters:
+    UserId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        example: '520e073f-a2c3-40d4-a6ce-5ef72ba90b90'
+    OffsetParam:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+        example: 0
+    LimitParam:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+        example: 20
+  schemas:
+    ErrorResponse:
+        type: object
+        properties:
+          code:
+            type: string
+            description: Machine-readable error code
+            example: 'USER_NOT_FOUND'
+          message:
+            type: string
+            description: Human-readable error message
+            example: 'User with id 520e073f-a2c3-40d4-a6ce-5ef72ba90b90 not found'
+        required:
+          - code
+          - message
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          example: '520e073f-a2c3-40d4-a6ce-5ef72ba90b90'
+        name:
+          type: string
+          example: 'Ivan Ivanov'
+        email:
+          type: string
+          example: 'ivanov@ya.ru'
+        role:
+          $ref: '#/components/schemas/Role'
+          example: migrant
+        upkId:
+          type: string
+          example: 'b50cbfb0-bcf9-4808-bcb1-f2024af7f2e1'
+      required:
+        - id
+        - name
+        - email
+        - role
+    UsersListResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 100
+        limit:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 20
+        offset:
+          type: integer
+          minimum: 0
+        items:
+          type: array
+          $ref: '#/components/schemas/UserResponse'
+    UserRequest: 
+      type: object
+      properties:
+        name:
+          type: string
+          example: 'Ivan Ivanov'
+        email:
+          type: string
+          example: 'ivanov@ya.ru'
+        role:
+          $ref: '#/components/schemas/Role'
+          example: migrant
+        upkId:
+          type: string
+          example: 'b50cbfb0-bcf9-4808-bcb1-f2024af7f2e1'
+      required:
+        - name
+        - email
+        - role
+    UserRequestPartial:
+      type: object
+      properties:
+        name:
+          type: string
+          example: 'Ivan Ivanov'
+        email:
+          type: string
+          example: 'ivanov@ya.ru'
+        role:
+          $ref: '#/components/schemas/Role'
+          example: migrant
+        upkId:
+          type: string
+          example: 'b50cbfb0-bcf9-4808-bcb1-f2024af7f2e1'
+    Role:
+      type: string
+      enum:
+        - migrant
+        - inspector 
+        - boss
+        - security
+        - god
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
