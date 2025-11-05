@@ -1,4 +1,4 @@
-openapi: '3.0.4'
+openapi: 3.0.3
 
 info:
   title: Papers Please API
@@ -357,5 +357,3 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
-      
