@@ -7,8 +7,11 @@ on:
       - main
     paths:
       - 'api.yaml'
-      - '.github/workflows/deploy-swagger-simple.yml'
+      - '.github/workflows/deploy-swagger.yml'
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   deploy:
