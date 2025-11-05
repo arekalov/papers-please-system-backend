@@ -28,6 +28,12 @@ tags:
     description: UPK (checkpoint) endpoints
   - name: shifts
     description: Shift management endpoints
+  - name: participations
+    description: Shift participation endpoints
+  - name: events
+    description: Shift agenda events endpoints
+  - name: tickets
+    description: Ticket/application endpoints
 
 
 
@@ -41,6 +47,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/OffsetParam'
         - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/RoleIdQueryParam'
+        - $ref: '#/components/parameters/UpkIdQueryParam'
       responses:
         '200':
           description: A list of users
@@ -471,6 +479,473 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+  
+  /participations:
+    get:
+      tags:
+        - participations
+      summary: Get all participations
+      description: Returns a list of all shift participations
+      parameters:
+        - $ref: '#/components/parameters/OffsetParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/UserIdQueryParam'
+        - $ref: '#/components/parameters/ShiftIdQueryParam'
+        - name: specialization
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/Specialization'
+          description: Filter by specialization
+      responses:
+        '200':
+          description: A list of participations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipationsListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags:
+        - participations
+      summary: Create new participation
+      description: Add user to shift
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ParticipationRequest'
+      responses:
+        '201':
+          description: Created participation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  
+  /participations/{id}:
+    get:
+      tags:
+        - participations
+      summary: Get participation by ID
+      description: Returns a participation by ID
+      parameters:
+        - $ref: '#/components/parameters/ParticipationId'
+      responses:
+        '200':
+          description: A participation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+        - participations
+      summary: Update participation
+      description: Full update of participation
+      parameters:
+        - $ref: '#/components/parameters/ParticipationId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ParticipationRequest'
+      responses:
+        '200':
+          description: Updated participation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+        - participations
+      summary: Partially update participation
+      description: Partial update of participation fields (bonuses/penalties)
+      parameters:
+        - $ref: '#/components/parameters/ParticipationId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ParticipationRequestPartial'
+      responses:
+        '200':
+          description: Updated participation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - participations
+      summary: Delete participation
+      description: Remove user from shift
+      parameters:
+        - $ref: '#/components/parameters/ParticipationId'
+      responses:
+        '204':
+          description: Participation deleted successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  
+  /events:
+    get:
+      tags:
+        - events
+      summary: Get all events
+      description: Returns a list of all shift agenda events
+      parameters:
+        - $ref: '#/components/parameters/OffsetParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/ShiftIdQueryParam'
+        - $ref: '#/components/parameters/UserIdQueryParam'
+        - name: priority
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/Priority'
+          description: Filter by priority
+      responses:
+        '200':
+          description: A list of events
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventsListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags:
+        - events
+      summary: Create new event
+      description: Create new agenda event for shift
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventRequest'
+      responses:
+        '201':
+          description: Created event
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  
+  /events/{id}:
+    get:
+      tags:
+        - events
+      summary: Get event by ID
+      description: Returns an event by ID
+      parameters:
+        - $ref: '#/components/parameters/EventId'
+      responses:
+        '200':
+          description: An event
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+        - events
+      summary: Update event
+      description: Full update of event
+      parameters:
+        - $ref: '#/components/parameters/EventId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventRequest'
+      responses:
+        '200':
+          description: Updated event
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+        - events
+      summary: Partially update event
+      description: Partial update of event fields
+      parameters:
+        - $ref: '#/components/parameters/EventId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventRequestPartial'
+      responses:
+        '200':
+          description: Updated event
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - events
+      summary: Delete event
+      description: Delete event by ID
+      parameters:
+        - $ref: '#/components/parameters/EventId'
+      responses:
+        '204':
+          description: Event deleted successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /tickets:
+    get:
+      tags:
+        - tickets
+      summary: Get all tickets
+      description: Returns a list of all tickets with optional filters
+      parameters:
+        - $ref: '#/components/parameters/TicketTypeParam'
+        - $ref: '#/components/parameters/StatusParam'
+        - $ref: '#/components/parameters/PriorityParam'
+        - $ref: '#/components/parameters/UserIdQueryParam'
+        - name: author_id
+          in: query
+          description: Filter by author ID
+          schema:
+            type: string
+            format: uuid
+        - name: executor_id
+          in: query
+          description: Filter by executor ID
+          schema:
+            type: string
+            format: uuid
+        - name: parent_ticket_id
+          in: query
+          description: Filter by parent ticket ID
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/OffsetParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: A list of tickets
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketsListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags:
+        - tickets
+      summary: Create a new ticket
+      description: Creates a new ticket
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketRequest'
+      responses:
+        '201':
+          description: Ticket created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  
+  /tickets/{id}:
+    get:
+      tags:
+        - tickets
+      summary: Get ticket by ID
+      description: Returns a ticket by ID
+      parameters:
+        - $ref: '#/components/parameters/TicketId'
+      responses:
+        '200':
+          description: A ticket
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+        - tickets
+      summary: Update ticket (full)
+      description: Update all fields of a ticket
+      parameters:
+        - $ref: '#/components/parameters/TicketId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketRequest'
+      responses:
+        '200':
+          description: Ticket updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+        - tickets
+      summary: Update ticket (partial)
+      description: Update some fields of a ticket
+      parameters:
+        - $ref: '#/components/parameters/TicketId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketRequestPartial'
+      responses:
+        '200':
+          description: Ticket updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - tickets
+      summary: Delete ticket
+      description: Delete ticket by ID
+      parameters:
+        - $ref: '#/components/parameters/TicketId'
+      responses:
+        '204':
+          description: Ticket deleted successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
 components:
   responses:
@@ -552,6 +1027,22 @@ components:
         type: string
         format: uuid
         example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
+    ParticipationId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 'd4e5f6a7-b8c9-0123-4567-890abcdef012'
+    EventId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 'e6f7a8b9-c0d1-2345-6789-0abcdef12345'
     UpkIdQueryParam:
       name: upk_id
       in: query
@@ -591,6 +1082,22 @@ components:
         type: string
         format: uuid
       description: Filter by boss ID
+    UserIdQueryParam:
+      name: user_id
+      in: query
+      required: false
+      schema:
+        type: string
+        format: uuid
+      description: Filter by user ID
+    ShiftIdQueryParam:
+      name: shift_id
+      in: query
+      required: false
+      schema:
+        type: string
+        format: uuid
+      description: Filter by shift ID
     OffsetParam:
       name: offset
       in: query
@@ -610,6 +1117,35 @@ components:
         maximum: 100
         default: 20
         example: 20
+    TicketId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 'b1c2d3e4-f5a6-7890-bcde-f12345678901'
+    TicketTypeParam:
+      name: ticket_type
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/TicketType'
+      description: Filter by ticket type
+    StatusParam:
+      name: status
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/Status'
+      description: Filter by status
+    PriorityParam:
+      name: priority
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/Priority'
+      description: Filter by priority
   schemas:
     ErrorResponse:
         type: object
@@ -642,6 +1178,7 @@ components:
           example: migrant
         upkId:
           type: string
+          format: uuid
           example: 'b50cbfb0-bcf9-4808-bcb1-f2024af7f2e1'
       required:
         - id
@@ -679,6 +1216,7 @@ components:
           example: migrant
         upkId:
           type: string
+          format: uuid
           example: 'b50cbfb0-bcf9-4808-bcb1-f2024af7f2e1'
       required:
         - name
@@ -698,6 +1236,7 @@ components:
           example: migrant
         upkId:
           type: string
+          format: uuid
           example: 'b50cbfb0-bcf9-4808-bcb1-f2024af7f2e1'
     Role:
       type: string
@@ -713,6 +1252,21 @@ components:
         - Orvech_Vonor
         - East_Grestin
         - Paradizna
+    Specialization:
+      type: string
+      enum:
+        - passport
+        - locals
+        - work
+        - transit
+        - special
+    Priority:
+      type: string
+      enum:
+        - low
+        - normal
+        - high
+        - critical
     UpkResponse:
       type: object
       properties:
@@ -855,6 +1409,329 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ShiftResponse'
+      required:
+        - total
+        - limit
+        - offset
+        - items
+    ParticipationResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 'd4e5f6a7-b8c9-0123-4567-890abcdef012'
+        userId:
+          type: string
+          format: uuid
+          example: '520e073f-a2c3-40d4-a6ce-5ef72ba90b90'
+        shiftId:
+          type: string
+          format: uuid
+          example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
+        coeffBonus:
+          type: number
+          format: float
+          minimum: 0
+          default: 1.0
+          example: 1.2
+        coeffPenalty:
+          type: number
+          format: float
+          minimum: 0
+          default: 0.0
+          example: 0.0
+        specialization:
+          $ref: '#/components/schemas/Specialization'
+      required:
+        - id
+        - userId
+        - shiftId
+        - coeffBonus
+        - coeffPenalty
+        - specialization
+    ParticipationRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+          example: '520e073f-a2c3-40d4-a6ce-5ef72ba90b90'
+        shiftId:
+          type: string
+          format: uuid
+          example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
+        coeffBonus:
+          type: number
+          format: float
+          minimum: 0
+          default: 1.0
+          example: 1.0
+        coeffPenalty:
+          type: number
+          format: float
+          minimum: 0
+          default: 0.0
+          example: 0.0
+        specialization:
+          $ref: '#/components/schemas/Specialization'
+      required:
+        - userId
+        - shiftId
+        - specialization
+    ParticipationRequestPartial:
+      type: object
+      properties:
+        coeffBonus:
+          type: number
+          format: float
+          minimum: 0
+          example: 1.5
+        coeffPenalty:
+          type: number
+          format: float
+          minimum: 0
+          example: 0.2
+        specialization:
+          $ref: '#/components/schemas/Specialization'
+    ParticipationsListResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 100
+        limit:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 20
+        offset:
+          type: integer
+          minimum: 0
+          example: 0
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParticipationResponse'
+      required:
+        - total
+        - limit
+        - offset
+        - items
+    EventResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 'e6f7a8b9-c0d1-2345-6789-0abcdef12345'
+        shiftId:
+          type: string
+          format: uuid
+          example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
+        description:
+          type: string
+          example: 'Повышенное внимание к рабочим визам'
+        priority:
+          $ref: '#/components/schemas/Priority'
+      required:
+        - id
+        - shiftId
+        - description
+        - priority
+    EventRequest:
+      type: object
+      properties:
+        shiftId:
+          type: string
+          format: uuid
+          example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
+        description:
+          type: string
+          example: 'Повышенное внимание к рабочим визам'
+        priority:
+          $ref: '#/components/schemas/Priority'
+          default: normal
+      required:
+        - shiftId
+        - description
+    EventRequestPartial:
+      type: object
+      properties:
+        description:
+          type: string
+          example: 'Усиленная проверка документов'
+        priority:
+          $ref: '#/components/schemas/Priority'
+    EventsListResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 25
+        limit:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 20
+        offset:
+          type: integer
+          minimum: 0
+          example: 0
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventResponse'
+      required:
+        - total
+        - limit
+        - offset
+        - items
+    TicketType:
+      type: string
+      enum:
+        - external
+        - internal
+        - arrest
+        - crosscheck
+        - appeal
+        - other
+      example: 'external'
+    Status:
+      type: string
+      enum:
+        - open
+        - in_progress
+        - need_info
+        - closed
+        - rejected
+        - timeout
+      example: 'open'
+    TicketResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 'b1c2d3e4-f5a6-7890-bcde-f12345678901'
+        ticketType:
+          $ref: '#/components/schemas/TicketType'
+        status:
+          $ref: '#/components/schemas/Status'
+        priority:
+          $ref: '#/components/schemas/Priority'
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-06-01T10:30:00Z'
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2024-06-01T14:20:00Z'
+        deadlineAt:
+          type: string
+          format: date
+          example: '2024-06-05'
+        resolvedAt:
+          type: string
+          format: date
+          nullable: true
+          example: '2024-06-03'
+        authorId:
+          type: string
+          format: uuid
+          example: '520e073f-a2c3-40d4-a6ce-5ef72ba90b90'
+        executorId:
+          type: string
+          format: uuid
+          nullable: true
+          example: '620e073f-a2c3-40d4-a6ce-5ef72ba90b91'
+        parentTicketId:
+          type: string
+          format: uuid
+          nullable: true
+          example: 'c2d3e4f5-a6b7-8901-cdef-012345678902'
+      required:
+        - id
+        - ticketType
+        - status
+        - priority
+        - createdAt
+        - updatedAt
+        - authorId
+    TicketRequest:
+      type: object
+      properties:
+        ticketType:
+          $ref: '#/components/schemas/TicketType'
+        status:
+          $ref: '#/components/schemas/Status'
+        priority:
+          $ref: '#/components/schemas/Priority'
+        deadlineAt:
+          type: string
+          format: date
+          example: '2024-06-05'
+        authorId:
+          type: string
+          format: uuid
+          example: '520e073f-a2c3-40d4-a6ce-5ef72ba90b90'
+        executorId:
+          type: string
+          format: uuid
+          nullable: true
+          example: '620e073f-a2c3-40d4-a6ce-5ef72ba90b91'
+        parentTicketId:
+          type: string
+          format: uuid
+          nullable: true
+          example: 'c2d3e4f5-a6b7-8901-cdef-012345678902'
+      required:
+        - ticketType
+        - status
+        - authorId
+    TicketRequestPartial:
+      type: object
+      properties:
+        ticketType:
+          $ref: '#/components/schemas/TicketType'
+        status:
+          $ref: '#/components/schemas/Status'
+        priority:
+          $ref: '#/components/schemas/Priority'
+        deadlineAt:
+          type: string
+          format: date
+          example: '2024-06-05'
+        executorId:
+          type: string
+          format: uuid
+          nullable: true
+          example: '620e073f-a2c3-40d4-a6ce-5ef72ba90b91'
+        resolvedAt:
+          type: string
+          format: date
+          nullable: true
+          example: '2024-06-03'
+    TicketsListResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 150
+        limit:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 20
+        offset:
+          type: integer
+          minimum: 0
+          example: 0
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TicketResponse'
       required:
         - total
         - limit
