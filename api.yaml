@@ -26,6 +26,8 @@ tags:
     description: User endpoints
   - name: upks
     description: UPK (checkpoint) endpoints
+  - name: shifts
+    description: Shift management endpoints
 
 
 
@@ -189,13 +191,7 @@ paths:
           schema:
             $ref: '#/components/schemas/Region'
           description: Filter by region
-        - name: boss_id
-          in: query
-          required: false
-          schema:
-            type: string
-            format: uuid
-          description: Filter by boss ID
+        - $ref: '#/components/parameters/BossIdQueryParam'
       responses:
         '200':
           description: A list of UPKs
@@ -330,6 +326,151 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+  
+  /shifts:
+    get:
+      tags:
+        - shifts
+      summary: Get all shifts
+      description: Returns a list of all shifts
+      parameters:
+        - $ref: '#/components/parameters/OffsetParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/UpkIdQueryParam'
+        - $ref: '#/components/parameters/ShiftDateParam'
+        - $ref: '#/components/parameters/CreatedByParam'
+      responses:
+        '200':
+          description: A list of shifts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftsListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags:
+        - shifts
+      summary: Create new shift
+      description: Create new shift and return it
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShiftRequest'
+      responses:
+        '201':
+          description: Created shift
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  
+  /shifts/{id}:
+    get:
+      tags:
+        - shifts
+      summary: Get shift by ID
+      description: Returns a shift by ID
+      parameters:
+        - $ref: '#/components/parameters/ShiftId'
+      responses:
+        '200':
+          description: A shift
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+        - shifts
+      summary: Update shift
+      description: Full update of shift
+      parameters:
+        - $ref: '#/components/parameters/ShiftId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShiftRequest'
+      responses:
+        '200':
+          description: Updated shift
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+        - shifts
+      summary: Partially update shift
+      description: Partial update of shift fields
+      parameters:
+        - $ref: '#/components/parameters/ShiftId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShiftRequestPartial'
+      responses:
+        '200':
+          description: Updated shift
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - shifts
+      summary: Delete shift
+      description: Delete shift by ID
+      parameters:
+        - $ref: '#/components/parameters/ShiftId'
+      responses:
+        '204':
+          description: Shift deleted successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
 components:
   responses:
@@ -403,6 +544,53 @@ components:
         type: string
         format: uuid
         example: 'f47ac10b-58cc-4372-a567-0e02b2c3d479'
+    ShiftId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
+    UpkIdQueryParam:
+      name: upk_id
+      in: query
+      required: false
+      schema:
+        type: string
+        format: uuid
+      description: Filter by UPK ID
+    ShiftDateParam:
+      name: shift_date
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date-time
+      description: Filter by shift date
+    CreatedByParam:
+      name: created_by
+      in: query
+      required: false
+      schema:
+        type: string
+        format: uuid
+      description: Filter by creator ID
+    RoleIdQueryParam:
+      name: role_id
+      in: query
+      required: false
+      schema:
+        type: integer
+      description: Filter by role ID
+    BossIdQueryParam:
+      name: boss_id
+      in: query
+      required: false
+      schema:
+        type: string
+        format: uuid
+      description: Filter by boss ID
     OffsetParam:
       name: offset
       in: query
@@ -593,6 +781,80 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/UpkResponse'
+      required:
+        - total
+        - limit
+        - offset
+        - items
+    ShiftResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
+        shiftDate:
+          type: string
+          format: date-time
+          example: '2024-06-01T08:00:00Z'
+        createdBy:
+          type: string
+          format: uuid
+          example: '520e073f-a2c3-40d4-a6ce-5ef72ba90b90'
+        upkId:
+          type: string
+          format: uuid
+          example: 'f47ac10b-58cc-4372-a567-0e02b2c3d479'
+      required:
+        - id
+        - shiftDate
+        - createdBy
+        - upkId
+    ShiftRequest:
+      type: object
+      properties:
+        shiftDate:
+          type: string
+          format: date-time
+          example: '2024-06-01T08:00:00Z'
+        createdBy:
+          type: string
+          format: uuid
+          example: '520e073f-a2c3-40d4-a6ce-5ef72ba90b90'
+        upkId:
+          type: string
+          format: uuid
+          example: 'f47ac10b-58cc-4372-a567-0e02b2c3d479'
+      required:
+        - shiftDate
+        - createdBy
+        - upkId
+    ShiftRequestPartial:
+      type: object
+      properties:
+        shiftDate:
+          type: string
+          format: date-time
+          example: '2024-06-01T08:00:00Z'
+    ShiftsListResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 50
+        limit:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 20
+        offset:
+          type: integer
+          minimum: 0
+          example: 0
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShiftResponse'
       required:
         - total
         - limit
