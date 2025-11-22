@@ -1,0 +1,8 @@
+# Database Configuration
+db.username=s335116
+db.password=your_password_here
+
+# JWT Configuration
+jwt.secret=your-jwt-secret-key-min-256-bits-for-hs256-algorithm
+jwt.expiration=86400000
+
