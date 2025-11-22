@@ -4,6 +4,8 @@ import com.arekalov.papersplease.model.enums.Priority
 import jakarta.validation.constraints.Size
 
 data class EventRequestPartial(
+    val shiftId: String? = null,
+
     @field:Size(min = 5, max = 500, message = "Description must be between 5 and 500 characters")
     val description: String? = null,
 

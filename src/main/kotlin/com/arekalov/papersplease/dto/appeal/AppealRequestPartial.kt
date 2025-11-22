@@ -5,6 +5,8 @@ import com.arekalov.papersplease.model.enums.TicketStatus
 import java.time.Instant
 
 data class AppealRequestPartial(
+    val ticketId: String? = null,
+    val createdBy: String? = null,
     val status: TicketStatus? = null,
     val verdict: AppealDecision? = null,
     val comment: String? = null,
