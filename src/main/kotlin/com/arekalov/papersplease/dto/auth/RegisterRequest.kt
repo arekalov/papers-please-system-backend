@@ -1,7 +1,9 @@
 package com.arekalov.papersplease.dto.auth
 
+import com.arekalov.papersplease.model.enums.Role
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 
 data class RegisterRequest(
@@ -17,8 +19,8 @@ data class RegisterRequest(
     @field:Size(min = 8, max = 100, message = "Password must be between 8 and 100 characters")
     val password: String,
 
-    @field:NotBlank(message = "Role is required")
-    val role: String,
+    @field:NotNull(message = "Role is required")
+    val role: Role,
 
     val upkId: String? = null,
 )
