@@ -44,3 +44,15 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+  writer-with-default-pretty-printer: true
+  paths-to-match: /api/v1/**
+  default-produces-media-type: application/json
+  default-consumes-media-type: application/json
+  api-docs.groups.enabled: true
+

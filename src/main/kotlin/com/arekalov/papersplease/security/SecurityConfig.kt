@@ -35,6 +35,7 @@ class SecurityConfig(
                 auth
                     .requestMatchers("/api/v1/auth/**").permitAll()
                     .requestMatchers("/api/v1/health").permitAll()
+                    .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/upks/**").hasAnyRole(INSPECTOR, BOSS, SECURITY, GOD)
                     .requestMatchers(HttpMethod.POST, "/api/v1/upks/**").hasAnyRole(BOSS, GOD)
                     .requestMatchers(HttpMethod.PUT, "/api/v1/upks/**").hasAnyRole(BOSS, GOD)
