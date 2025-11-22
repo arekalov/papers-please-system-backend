@@ -47,6 +47,8 @@ complexity:
     active: true
     functionThreshold: 6
     constructorThreshold: 7
+    ignoreAnnotated:
+      - 'Entity'
   MethodOverloading:
     active: false
     threshold: 6
@@ -197,8 +199,6 @@ potential-bugs:
     active: false
   Deprecation:
     active: false
-  DuplicateCaseInWhenExpression:
-    active: false
   EqualsAlwaysReturnsTrueOrFalse:
     active: false
   EqualsWithHashCodeExist:
@@ -225,11 +225,7 @@ potential-bugs:
     active: false
   MapGetWithNotNullAssertionOperator:
     active: false
-  MissingWhenCase:
-    active: false
   NullableToStringCall:
-    active: false
-  RedundantElseInWhen:
     active: false
   UnconditionalJumpStatementInLoop:
     active: false
