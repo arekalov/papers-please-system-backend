@@ -21,7 +21,7 @@ interface NotificationRepository : JpaRepository<Notification, UUID> {
         pageable: Pageable,
     ): Page<Notification>
 
-    fun findByType(type: NotificationType, pageable: Pageable): Page<Notification>
+    fun findByNotificationType(type: NotificationType, pageable: Pageable): Page<Notification>
 
     @Modifying
     @Query("UPDATE Notification n SET n.isRead = true WHERE n.user.id = :userId")

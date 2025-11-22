@@ -61,7 +61,7 @@ class NotificationService(
     suspend fun getByType(type: NotificationType, limit: Int, offset: Int): PagedResponse<NotificationResponse> =
         withContext(Dispatchers.IO) {
             val pageable = PageRequest.of(offset / limit, limit)
-            val page = notificationRepository.findByType(type, pageable)
+            val page = notificationRepository.findByNotificationType(type, pageable)
 
             PagedResponse(
                 items = page.content.map { it.toResponse() },

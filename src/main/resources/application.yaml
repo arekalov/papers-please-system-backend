@@ -3,15 +3,15 @@ spring:
     name: papersplease
   
   datasource:
-    url: jdbc:postgresql://se.ifmo.ru:5432/studs
-    username: ${DB_USERNAME:s335116}
-    password: ${DB_PASSWORD}
+    url: ${DB_URL:jdbc:postgresql://ep-fancy-mud-a4icq7ux-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require}
+    username: ${DB_USERNAME:neondb_owner}
+    password: ${DB_PASSWORD:npg_AQuTw7XShcL6}
     driver-class-name: org.postgresql.Driver
   
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     properties:
       hibernate:
         format_sql: true
@@ -48,11 +48,7 @@ springdoc:
   api-docs:
     path: /v3/api-docs
   swagger-ui:
-    path: /swagger-ui.html
-    enabled: true
+    enabled: false
   writer-with-default-pretty-printer: true
   paths-to-match: /api/v1/**
-  default-produces-media-type: application/json
-  default-consumes-media-type: application/json
-  api-docs.groups.enabled: true
 

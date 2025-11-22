@@ -12,7 +12,7 @@ import java.util.UUID
 interface AppealRepository : JpaRepository<Appeal, UUID> {
     fun findByTicket_Id(ticketId: UUID): Appeal?
 
-    fun findByFiledBy_Id(filedById: UUID, pageable: Pageable): Page<Appeal>
+    fun findByCreatedBy_Id(createdById: UUID, pageable: Pageable): Page<Appeal>
 
     fun findByDecidedBy_Id(decidedById: UUID, pageable: Pageable): Page<Appeal>
 

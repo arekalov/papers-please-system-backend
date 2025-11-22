@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/api/v1/participations")
+@RequestMapping("/api/v1/participationsKate")
 @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'GOD')")
 class ParticipationController(
     private val participationService: ParticipationService,

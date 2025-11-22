@@ -56,7 +56,7 @@ class AppealService(
     suspend fun getByFiledBy(userId: String, limit: Int, offset: Int): PagedResponse<AppealResponse> =
         withContext(Dispatchers.IO) {
             val pageable = PageRequest.of(offset / limit, limit)
-            val page = appealRepository.findByFiledBy_Id(UUID.fromString(userId), pageable)
+            val page = appealRepository.findByCreatedBy_Id(UUID.fromString(userId), pageable)
 
             PagedResponse(
                 items = page.content.map { it.toResponse() },

@@ -7,7 +7,6 @@ import com.arekalov.papersplease.dto.event.EventResponse
 import com.arekalov.papersplease.exception.ResourceNotFoundException
 import com.arekalov.papersplease.mapper.toEntity
 import com.arekalov.papersplease.mapper.toResponse
-import com.arekalov.papersplease.model.enums.Priority
 import com.arekalov.papersplease.repository.EventRepository
 import com.arekalov.papersplease.repository.ShiftRepository
 import kotlinx.coroutines.Dispatchers
@@ -47,24 +46,6 @@ class EventService(
     suspend fun getByShift(shiftId: String, limit: Int, offset: Int): PagedResponse<EventResponse> =
         withContext(Dispatchers.IO) {
             val events = eventRepository.findByShift_Id(UUID.fromString(shiftId))
-            val totalCount = events.size.toLong()
-
-            val paginatedEvents = events
-                .drop(offset)
-                .take(limit)
-
-            PagedResponse(
-                items = paginatedEvents.map { it.toResponse() },
-                total = totalCount,
-                limit = limit,
-                offset = offset,
-            )
-        }
-
-    @Transactional(readOnly = true)
-    suspend fun getByPriority(priority: Priority, limit: Int, offset: Int): PagedResponse<EventResponse> =
-        withContext(Dispatchers.IO) {
-            val events = eventRepository.findByPriority(priority)
             val totalCount = events.size.toLong()
 
             val paginatedEvents = events

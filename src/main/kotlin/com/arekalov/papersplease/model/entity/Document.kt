@@ -17,7 +17,7 @@ class Document(
     @Column(name = "document_type", nullable = false)
     var documentType: DocumentType,
 
-    @Column(name = "body", columnDefinition = "jsonb", nullable = false)
+    @Column(name = "body", columnDefinition = "TEXT", nullable = false)
     var body: String,
 
     @Column(name = "issued_at", nullable = false)

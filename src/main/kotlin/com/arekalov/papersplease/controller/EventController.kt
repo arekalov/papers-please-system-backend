@@ -4,7 +4,6 @@ import com.arekalov.papersplease.dto.PagedResponse
 import com.arekalov.papersplease.dto.event.EventRequest
 import com.arekalov.papersplease.dto.event.EventRequestPartial
 import com.arekalov.papersplease.dto.event.EventResponse
-import com.arekalov.papersplease.model.enums.Priority
 import com.arekalov.papersplease.service.EventService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
@@ -52,16 +51,6 @@ class EventController(
         @RequestParam(defaultValue = "0") offset: Int,
     ): ResponseEntity<PagedResponse<EventResponse>> {
         val response = eventService.getByShift(shiftId, limit, offset)
-        return ResponseEntity.ok(response)
-    }
-
-    @GetMapping("/by-priority/{priority}")
-    suspend fun getEventsByPriority(
-        @PathVariable priority: Priority,
-        @RequestParam(defaultValue = "10") limit: Int,
-        @RequestParam(defaultValue = "0") offset: Int,
-    ): ResponseEntity<PagedResponse<EventResponse>> {
-        val response = eventService.getByPriority(priority, limit, offset)
         return ResponseEntity.ok(response)
     }
 

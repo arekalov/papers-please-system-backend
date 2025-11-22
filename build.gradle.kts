@@ -86,3 +86,10 @@ tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
 tasks.named("check") {
 	setDependsOn(dependsOn.filterNot { it.toString().contains("detekt") })
 }
+
+tasks.register<Exec>("generateOpenApi") {
+	group = "documentation"
+	description = "Generate OpenAPI specification from running application to docs/openapi.yaml"
+	
+	commandLine("bash", "$projectDir/scripts/generate-openapi.sh")
+}

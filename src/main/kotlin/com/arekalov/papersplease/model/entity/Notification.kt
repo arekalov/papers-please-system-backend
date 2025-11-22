@@ -25,6 +25,9 @@ class Notification(
     @Column(name = "message", nullable = false, columnDefinition = "TEXT")
     var message: String,
 
+    @Column(name = "is_read", nullable = false)
+    var isRead: Boolean = false,
+
     @Column(name = "created_at", nullable = false)
     var createdAt: Instant = Instant.now(),
 ) : BaseEntity()

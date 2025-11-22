@@ -5,8 +5,7 @@ on:
     branches:
       - master
     paths:
-      - 'src/**'
-      - 'build.gradle.kts'
+      - 'docs/openapi.yaml'
       - '.github/workflows/swagger-deploy.yml'
   workflow_dispatch:
 
@@ -22,40 +21,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-
-      - name: Build project
-        run: ./gradlew build -x test --no-daemon
-
-      - name: Start application
+      - name: Verify OpenAPI file exists
         run: |
-          java -jar build/libs/*.jar &
-          echo $! > app.pid
-          echo "Waiting for application to start..."
-          timeout 60 bash -c 'until curl -f http://localhost:8080/v3/api-docs.yaml > /dev/null 2>&1; do sleep 2; done' || exit 1
-
-      - name: Generate OpenAPI YAML
-        run: |
-          curl http://localhost:8080/v3/api-docs.yaml -o openapi.yaml
-          echo "Generated OpenAPI spec:"
-          head -n 20 openapi.yaml
-
-      - name: Stop application
-        run: |
-          kill $(cat app.pid) || true
+          if [ ! -f docs/openapi.yaml ]; then
+            echo "Error: docs/openapi.yaml not found!"
+            exit 1
+          fi
+          echo "OpenAPI spec found (first 30 lines):"
+          head -n 30 docs/openapi.yaml
 
       - name: Generate Swagger UI
         uses: Legion2/swagger-ui-action@v1
         with:
           output: swagger-ui
-          spec-file: openapi.yaml
+          spec-file: docs/openapi.yaml
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
