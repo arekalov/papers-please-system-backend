@@ -29,7 +29,7 @@ class NotificationController(
 ) {
 
     @GetMapping
-    suspend fun getAllNotifications(
+    fun getAllNotifications(
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
     ): ResponseEntity<PagedResponse<NotificationResponse>> {
@@ -38,7 +38,7 @@ class NotificationController(
     }
 
     @GetMapping("/{id}")
-    suspend fun getNotificationById(
+    fun getNotificationById(
         @PathVariable id: String,
     ): ResponseEntity<NotificationResponse> {
         val response = notificationService.getById(id)
@@ -46,7 +46,7 @@ class NotificationController(
     }
 
     @GetMapping("/by-user/{userId}")
-    suspend fun getNotificationsByUser(
+    fun getNotificationsByUser(
         @PathVariable userId: String,
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
@@ -56,7 +56,7 @@ class NotificationController(
     }
 
     @GetMapping("/by-type/{type}")
-    suspend fun getNotificationsByType(
+    fun getNotificationsByType(
         @PathVariable type: NotificationType,
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
@@ -67,7 +67,7 @@ class NotificationController(
 
     @PostMapping
     @PreAuthorize("hasAnyRole('BOSS', 'SECURITY', 'GOD')")
-    suspend fun createNotification(
+    fun createNotification(
         @Valid @RequestBody request: NotificationRequest,
     ): ResponseEntity<NotificationResponse> {
         val response = notificationService.create(request)
@@ -76,7 +76,7 @@ class NotificationController(
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('BOSS', 'SECURITY', 'GOD')")
-    suspend fun updateNotification(
+    fun updateNotification(
         @PathVariable id: String,
         @Valid @RequestBody request: NotificationRequest,
     ): ResponseEntity<NotificationResponse> {
@@ -85,7 +85,7 @@ class NotificationController(
     }
 
     @PatchMapping("/{id}")
-    suspend fun partialUpdateNotification(
+    fun partialUpdateNotification(
         @PathVariable id: String,
         @Valid @RequestBody request: NotificationRequestPartial,
     ): ResponseEntity<NotificationResponse> {
@@ -94,9 +94,9 @@ class NotificationController(
     }
 
     @DeleteMapping("/{id}")
-    suspend fun deleteNotification(
+    fun deleteNotification(
         @PathVariable id: String,
-    ): ResponseEntity<Void> {
+    ): ResponseEntity<Unit> {
         notificationService.delete(id)
         return ResponseEntity.noContent().build()
     }

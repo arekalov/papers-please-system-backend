@@ -30,5 +30,5 @@ class Document(
     var uploadedAt: Instant = Instant.now(),
 ) : BaseEntity() {
     @ManyToMany(mappedBy = "documents", fetch = FetchType.LAZY)
-    var tickets: MutableSet<Ticket> = mutableSetOf()
+    val tickets: MutableSet<Ticket> = mutableSetOf()
 }

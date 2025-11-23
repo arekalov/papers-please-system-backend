@@ -63,7 +63,7 @@ class Ticket(
         joinColumns = [JoinColumn(name = "ticket_id")],
         inverseJoinColumns = [JoinColumn(name = "related_ticket_id")],
     )
-    var relatedTickets: MutableSet<Ticket> = mutableSetOf()
+    val relatedTickets: MutableSet<Ticket> = mutableSetOf()
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
@@ -71,5 +71,5 @@ class Ticket(
         joinColumns = [JoinColumn(name = "ticket_id")],
         inverseJoinColumns = [JoinColumn(name = "document_id")],
     )
-    var documents: MutableSet<Document> = mutableSetOf()
+    val documents: MutableSet<Document> = mutableSetOf()
 }

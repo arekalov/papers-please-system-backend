@@ -29,7 +29,7 @@ class AppealController(
 ) {
 
     @GetMapping
-    suspend fun getAllAppeals(
+    fun getAllAppeals(
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
     ): ResponseEntity<PagedResponse<AppealResponse>> {
@@ -38,7 +38,7 @@ class AppealController(
     }
 
     @GetMapping("/{id}")
-    suspend fun getAppealById(
+    fun getAppealById(
         @PathVariable id: String,
     ): ResponseEntity<AppealResponse> {
         val response = appealService.getById(id)
@@ -46,7 +46,7 @@ class AppealController(
     }
 
     @GetMapping("/by-ticket/{ticketId}")
-    suspend fun getAppealByTicket(
+    fun getAppealByTicket(
         @PathVariable ticketId: String,
     ): ResponseEntity<AppealResponse?> {
         val response = appealService.getByTicket(ticketId)
@@ -58,7 +58,7 @@ class AppealController(
     }
 
     @GetMapping("/by-filed-by/{userId}")
-    suspend fun getAppealsByFiledBy(
+    fun getAppealsByFiledBy(
         @PathVariable userId: String,
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
@@ -68,7 +68,7 @@ class AppealController(
     }
 
     @GetMapping("/by-decision/{decision}")
-    suspend fun getAppealsByDecision(
+    fun getAppealsByDecision(
         @PathVariable decision: AppealDecision,
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
@@ -78,7 +78,7 @@ class AppealController(
     }
 
     @PostMapping
-    suspend fun createAppeal(
+    fun createAppeal(
         @Valid @RequestBody request: AppealRequest,
     ): ResponseEntity<AppealResponse> {
         val response = appealService.create(request)
@@ -86,7 +86,7 @@ class AppealController(
     }
 
     @PutMapping("/{id}")
-    suspend fun updateAppeal(
+    fun updateAppeal(
         @PathVariable id: String,
         @Valid @RequestBody request: AppealRequest,
     ): ResponseEntity<AppealResponse> {
@@ -95,7 +95,7 @@ class AppealController(
     }
 
     @PatchMapping("/{id}")
-    suspend fun partialUpdateAppeal(
+    fun partialUpdateAppeal(
         @PathVariable id: String,
         @Valid @RequestBody request: AppealRequestPartial,
     ): ResponseEntity<AppealResponse> {
@@ -104,7 +104,7 @@ class AppealController(
     }
 
     @PostMapping("/{id}/process")
-    suspend fun processAppeal(
+    fun processAppeal(
         @PathVariable id: String,
         @RequestParam decision: AppealDecision,
         @RequestParam decidedById: String,
@@ -116,9 +116,9 @@ class AppealController(
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('GOD')")
-    suspend fun deleteAppeal(
+    fun deleteAppeal(
         @PathVariable id: String,
-    ): ResponseEntity<Void> {
+    ): ResponseEntity<Unit> {
         appealService.delete(id)
         return ResponseEntity.noContent().build()
     }

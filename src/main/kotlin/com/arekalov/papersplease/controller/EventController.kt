@@ -28,7 +28,7 @@ class EventController(
 ) {
 
     @GetMapping
-    suspend fun getAllEvents(
+    fun getAllEvents(
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
     ): ResponseEntity<PagedResponse<EventResponse>> {
@@ -37,7 +37,7 @@ class EventController(
     }
 
     @GetMapping("/{id}")
-    suspend fun getEventById(
+    fun getEventById(
         @PathVariable id: String,
     ): ResponseEntity<EventResponse> {
         val response = eventService.getById(id)
@@ -45,7 +45,7 @@ class EventController(
     }
 
     @GetMapping("/by-shift/{shiftId}")
-    suspend fun getEventsByShift(
+    fun getEventsByShift(
         @PathVariable shiftId: String,
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
@@ -55,7 +55,7 @@ class EventController(
     }
 
     @PostMapping
-    suspend fun createEvent(
+    fun createEvent(
         @Valid @RequestBody request: EventRequest,
     ): ResponseEntity<EventResponse> {
         val response = eventService.create(request)
@@ -64,7 +64,7 @@ class EventController(
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('BOSS', 'SECURITY', 'GOD')")
-    suspend fun updateEvent(
+    fun updateEvent(
         @PathVariable id: String,
         @Valid @RequestBody request: EventRequest,
     ): ResponseEntity<EventResponse> {
@@ -74,7 +74,7 @@ class EventController(
 
     @PatchMapping("/{id}")
     @PreAuthorize("hasAnyRole('BOSS', 'SECURITY', 'GOD')")
-    suspend fun partialUpdateEvent(
+    fun partialUpdateEvent(
         @PathVariable id: String,
         @Valid @RequestBody request: EventRequestPartial,
     ): ResponseEntity<EventResponse> {
@@ -84,9 +84,9 @@ class EventController(
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('BOSS', 'GOD')")
-    suspend fun deleteEvent(
+    fun deleteEvent(
         @PathVariable id: String,
-    ): ResponseEntity<Void> {
+    ): ResponseEntity<Unit> {
         eventService.delete(id)
         return ResponseEntity.noContent().build()
     }

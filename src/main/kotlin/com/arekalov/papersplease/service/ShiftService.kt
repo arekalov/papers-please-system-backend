@@ -10,8 +10,6 @@ import com.arekalov.papersplease.mapper.toResponse
 import com.arekalov.papersplease.repository.ShiftRepository
 import com.arekalov.papersplease.repository.UpkRepository
 import com.arekalov.papersplease.repository.UserRepository
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -26,11 +24,11 @@ class ShiftService(
 ) {
 
     @Transactional(readOnly = true)
-    suspend fun getAll(limit: Int, offset: Int): PagedResponse<ShiftResponse> = withContext(Dispatchers.IO) {
+    fun getAll(limit: Int, offset: Int): PagedResponse<ShiftResponse> {
         val pageable = PageRequest.of(offset / limit, limit)
         val page = shiftRepository.findAll(pageable)
 
-        PagedResponse(
+        return PagedResponse(
             items = page.content.map { it.toResponse() },
             total = page.totalElements,
             limit = limit,
@@ -39,41 +37,40 @@ class ShiftService(
     }
 
     @Transactional(readOnly = true)
-    suspend fun getById(id: String): ShiftResponse = withContext(Dispatchers.IO) {
+    fun getById(id: String): ShiftResponse {
         val shift = shiftRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("Shift with id $id not found") }
-        shift.toResponse()
+        return shift.toResponse()
     }
 
     @Transactional(readOnly = true)
-    suspend fun getByUpk(upkId: String, limit: Int, offset: Int): PagedResponse<ShiftResponse> =
-        withContext(Dispatchers.IO) {
-            val shifts = shiftRepository.findByUpk_Id(UUID.fromString(upkId))
-            val totalCount = shifts.size.toLong()
+    fun getByUpk(upkId: String, limit: Int, offset: Int): PagedResponse<ShiftResponse> {
+        val shifts = shiftRepository.findByUpk_Id(UUID.fromString(upkId))
+        val totalCount = shifts.size.toLong()
 
-            val paginatedShifts = shifts
-                .drop(offset)
-                .take(limit)
+        val paginatedShifts = shifts
+            .drop(offset)
+            .take(limit)
 
-            PagedResponse(
-                items = paginatedShifts.map { it.toResponse() },
-                total = totalCount,
-                limit = limit,
-                offset = offset,
-            )
-        }
+        return PagedResponse(
+            items = paginatedShifts.map { it.toResponse() },
+            total = totalCount,
+            limit = limit,
+            offset = offset,
+        )
+    }
 
     @Transactional(readOnly = true)
-    suspend fun getByDate(
+    fun getByDate(
         upkId: String,
         date: Instant,
-    ): ShiftResponse? = withContext(Dispatchers.IO) {
+    ): ShiftResponse? {
         val shift = shiftRepository.findByShiftDateAndUpk_Id(date, UUID.fromString(upkId))
-        shift?.toResponse()
+        return shift?.toResponse()
     }
 
     @Transactional
-    suspend fun create(request: ShiftRequest): ShiftResponse = withContext(Dispatchers.IO) {
+    fun create(request: ShiftRequest): ShiftResponse {
         val upk = upkRepository.findById(UUID.fromString(request.upkId))
             .orElseThrow { ResourceNotFoundException("UPK with id ${request.upkId} not found") }
 
@@ -82,11 +79,11 @@ class ShiftService(
 
         val shift = request.toEntity(upk, createdBy)
 
-        shiftRepository.save(shift).toResponse()
+        return shiftRepository.save(shift).toResponse()
     }
 
     @Transactional
-    suspend fun update(id: String, request: ShiftRequest): ShiftResponse = withContext(Dispatchers.IO) {
+    fun update(id: String, request: ShiftRequest): ShiftResponse {
         val shift = shiftRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("Shift with id $id not found") }
 
@@ -102,11 +99,11 @@ class ShiftService(
             this.createdBy = createdBy
         }
 
-        shiftRepository.save(shift).toResponse()
+        return shiftRepository.save(shift).toResponse()
     }
 
     @Transactional
-    suspend fun partialUpdate(id: String, request: ShiftRequestPartial): ShiftResponse = withContext(Dispatchers.IO) {
+    fun partialUpdate(id: String, request: ShiftRequestPartial): ShiftResponse {
         val shift = shiftRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("Shift with id $id not found") }
 
@@ -120,11 +117,11 @@ class ShiftService(
                 .orElseThrow { ResourceNotFoundException("User with id $createdById not found") }
         }
 
-        shiftRepository.save(shift).toResponse()
+        return shiftRepository.save(shift).toResponse()
     }
 
     @Transactional
-    suspend fun delete(id: String) = withContext(Dispatchers.IO) {
+    fun delete(id: String) {
         val shift = shiftRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("Shift with id $id not found") }
         shiftRepository.delete(shift)

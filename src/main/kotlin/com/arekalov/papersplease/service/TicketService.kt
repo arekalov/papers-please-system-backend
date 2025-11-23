@@ -13,8 +13,6 @@ import com.arekalov.papersplease.model.enums.TicketType
 import com.arekalov.papersplease.repository.ShiftRepository
 import com.arekalov.papersplease.repository.TicketRepository
 import com.arekalov.papersplease.repository.UserRepository
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -30,11 +28,11 @@ class TicketService(
 ) {
 
     @Transactional(readOnly = true)
-    suspend fun getAll(limit: Int, offset: Int): PagedResponse<TicketResponse> = withContext(Dispatchers.IO) {
+    fun getAll(limit: Int, offset: Int): PagedResponse<TicketResponse> {
         val pageable = PageRequest.of(offset / limit, limit)
         val page = ticketRepository.findAll(pageable)
 
-        PagedResponse(
+        return PagedResponse(
             items = page.content.map { it.toResponse() },
             total = page.totalElements,
             limit = limit,
@@ -43,98 +41,92 @@ class TicketService(
     }
 
     @Transactional(readOnly = true)
-    suspend fun getById(id: String): TicketResponse = withContext(Dispatchers.IO) {
+    fun getById(id: String): TicketResponse {
         val ticket = ticketRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("Ticket with id $id not found") }
-        ticket.toResponse()
+        return ticket.toResponse()
     }
 
     @Transactional(readOnly = true)
-    suspend fun getByAuthor(authorId: String, limit: Int, offset: Int): PagedResponse<TicketResponse> =
-        withContext(Dispatchers.IO) {
-            val pageable = PageRequest.of(offset / limit, limit)
-            val page = ticketRepository.findByAuthor_Id(UUID.fromString(authorId), pageable)
+    fun getByAuthor(authorId: String, limit: Int, offset: Int): PagedResponse<TicketResponse> {
+        val pageable = PageRequest.of(offset / limit, limit)
+        val page = ticketRepository.findByAuthor_Id(UUID.fromString(authorId), pageable)
 
-            PagedResponse(
-                items = page.content.map { it.toResponse() },
-                total = page.totalElements,
-                limit = limit,
-                offset = offset,
-            )
-        }
-
-    @Transactional(readOnly = true)
-    suspend fun getByExecutor(executorId: String, limit: Int, offset: Int): PagedResponse<TicketResponse> =
-        withContext(Dispatchers.IO) {
-            val pageable = PageRequest.of(offset / limit, limit)
-            val page = ticketRepository.findByExecutor_Id(UUID.fromString(executorId), pageable)
-
-            PagedResponse(
-                items = page.content.map { it.toResponse() },
-                total = page.totalElements,
-                limit = limit,
-                offset = offset,
-            )
-        }
+        return PagedResponse(
+            items = page.content.map { it.toResponse() },
+            total = page.totalElements,
+            limit = limit,
+            offset = offset,
+        )
+    }
 
     @Transactional(readOnly = true)
-    suspend fun getByStatus(status: TicketStatus, limit: Int, offset: Int): PagedResponse<TicketResponse> =
-        withContext(Dispatchers.IO) {
-            val pageable = PageRequest.of(offset / limit, limit)
-            val page = ticketRepository.findByStatus(status, pageable)
+    fun getByExecutor(executorId: String, limit: Int, offset: Int): PagedResponse<TicketResponse> {
+        val pageable = PageRequest.of(offset / limit, limit)
+        val page = ticketRepository.findByExecutor_Id(UUID.fromString(executorId), pageable)
 
-            PagedResponse(
-                items = page.content.map { it.toResponse() },
-                total = page.totalElements,
-                limit = limit,
-                offset = offset,
-            )
-        }
-
-    @Transactional(readOnly = true)
-    suspend fun getByType(type: TicketType, limit: Int, offset: Int): PagedResponse<TicketResponse> =
-        withContext(Dispatchers.IO) {
-            val pageable = PageRequest.of(offset / limit, limit)
-            val page = ticketRepository.findByTicketType(type, pageable)
-
-            PagedResponse(
-                items = page.content.map { it.toResponse() },
-                total = page.totalElements,
-                limit = limit,
-                offset = offset,
-            )
-        }
+        return PagedResponse(
+            items = page.content.map { it.toResponse() },
+            total = page.totalElements,
+            limit = limit,
+            offset = offset,
+        )
+    }
 
     @Transactional(readOnly = true)
-    suspend fun getByPriority(priority: Priority, limit: Int, offset: Int): PagedResponse<TicketResponse> =
-        withContext(Dispatchers.IO) {
-            val pageable = PageRequest.of(offset / limit, limit)
-            val page = ticketRepository.findByPriority(priority, pageable)
+    fun getByStatus(status: TicketStatus, limit: Int, offset: Int): PagedResponse<TicketResponse> {
+        val pageable = PageRequest.of(offset / limit, limit)
+        val page = ticketRepository.findByStatus(status, pageable)
 
-            PagedResponse(
-                items = page.content.map { it.toResponse() },
-                total = page.totalElements,
-                limit = limit,
-                offset = offset,
-            )
-        }
+        return PagedResponse(
+            items = page.content.map { it.toResponse() },
+            total = page.totalElements,
+            limit = limit,
+            offset = offset,
+        )
+    }
 
     @Transactional(readOnly = true)
-    suspend fun getByShift(shiftId: String, limit: Int, offset: Int): PagedResponse<TicketResponse> =
-        withContext(Dispatchers.IO) {
-            val pageable = PageRequest.of(offset / limit, limit)
-            val page = ticketRepository.findByShift_Id(UUID.fromString(shiftId), pageable)
+    fun getByType(type: TicketType, limit: Int, offset: Int): PagedResponse<TicketResponse> {
+        val pageable = PageRequest.of(offset / limit, limit)
+        val page = ticketRepository.findByTicketType(type, pageable)
 
-            PagedResponse(
-                items = page.content.map { it.toResponse() },
-                total = page.totalElements,
-                limit = limit,
-                offset = offset,
-            )
-        }
+        return PagedResponse(
+            items = page.content.map { it.toResponse() },
+            total = page.totalElements,
+            limit = limit,
+            offset = offset,
+        )
+    }
+
+    @Transactional(readOnly = true)
+    fun getByPriority(priority: Priority, limit: Int, offset: Int): PagedResponse<TicketResponse> {
+        val pageable = PageRequest.of(offset / limit, limit)
+        val page = ticketRepository.findByPriority(priority, pageable)
+
+        return PagedResponse(
+            items = page.content.map { it.toResponse() },
+            total = page.totalElements,
+            limit = limit,
+            offset = offset,
+        )
+    }
+
+    @Transactional(readOnly = true)
+    fun getByShift(shiftId: String, limit: Int, offset: Int): PagedResponse<TicketResponse> {
+        val pageable = PageRequest.of(offset / limit, limit)
+        val page = ticketRepository.findByShift_Id(UUID.fromString(shiftId), pageable)
+
+        return PagedResponse(
+            items = page.content.map { it.toResponse() },
+            total = page.totalElements,
+            limit = limit,
+            offset = offset,
+        )
+    }
 
     @Transactional
-    suspend fun create(request: TicketRequest): TicketResponse = withContext(Dispatchers.IO) {
+    fun create(request: TicketRequest): TicketResponse {
         val author = userRepository.findById(UUID.fromString(request.authorId))
             .orElseThrow { ResourceNotFoundException("User with id ${request.authorId} not found") }
 
@@ -150,11 +142,11 @@ class TicketService(
 
         val ticket = request.toEntity(author, executor, shift)
 
-        ticketRepository.save(ticket).toResponse()
+        return ticketRepository.save(ticket).toResponse()
     }
 
     @Transactional
-    suspend fun update(id: String, request: TicketRequest): TicketResponse = withContext(Dispatchers.IO) {
+    fun update(id: String, request: TicketRequest): TicketResponse {
         val ticket = ticketRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("Ticket with id $id not found") }
 
@@ -176,42 +168,41 @@ class TicketService(
             updatedAt = Instant.now()
         }
 
-        ticketRepository.save(ticket).toResponse()
+        return ticketRepository.save(ticket).toResponse()
     }
 
     @Transactional
-    suspend fun partialUpdate(id: String, request: TicketRequestPartial): TicketResponse =
-        withContext(Dispatchers.IO) {
-            val ticket = ticketRepository.findById(UUID.fromString(id))
-                .orElseThrow { ResourceNotFoundException("Ticket with id $id not found") }
+    fun partialUpdate(id: String, request: TicketRequestPartial): TicketResponse {
+        val ticket = ticketRepository.findById(UUID.fromString(id))
+            .orElseThrow { ResourceNotFoundException("Ticket with id $id not found") }
 
-            request.ticketType?.let { ticket.ticketType = it }
-            request.status?.let { ticket.status = it }
-            request.priority?.let { ticket.priority = it }
-            request.deadlineAt?.let { ticket.deadlineAt = it }
-            request.authorId?.let { authorId ->
-                ticket.author = userRepository.findById(UUID.fromString(authorId))
-                    .orElseThrow { ResourceNotFoundException("User with id $authorId not found") }
-            }
-            request.executorId?.let { executorId ->
-                ticket.executor = userRepository.findById(UUID.fromString(executorId))
-                    .orElseThrow { ResourceNotFoundException("User with id $executorId not found") }
-            }
-
-            ticket.updatedAt = Instant.now()
-
-            ticketRepository.save(ticket).toResponse()
+        request.ticketType?.let { ticket.ticketType = it }
+        request.status?.let { ticket.status = it }
+        request.priority?.let { ticket.priority = it }
+        request.deadlineAt?.let { ticket.deadlineAt = it }
+        request.authorId?.let { authorId ->
+            ticket.author = userRepository.findById(UUID.fromString(authorId))
+                .orElseThrow { ResourceNotFoundException("User with id $authorId not found") }
+        }
+        request.executorId?.let { executorId ->
+            ticket.executor = userRepository.findById(UUID.fromString(executorId))
+                .orElseThrow { ResourceNotFoundException("User with id $executorId not found") }
         }
 
+        ticket.updatedAt = Instant.now()
+
+        return ticketRepository.save(ticket).toResponse()
+    }
+
     @Transactional
-    suspend fun delete(id: String) = withContext(Dispatchers.IO) {
+    fun delete(id: String) {
         val ticket = ticketRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("Ticket with id $id not found") }
         ticketRepository.delete(ticket)
     }
 
     @Transactional
-    suspend fun assignExecutor(ticketId: String, executorId: String): TicketResponse = withContext(Dispatchers.IO) {
+    fun assignExecutor(ticketId: String, executorId: String): TicketResponse {
         val ticket = ticketRepository.findById(UUID.fromString(ticketId))
             .orElseThrow { ResourceNotFoundException("Ticket with id $ticketId not found") }
 
@@ -222,11 +213,11 @@ class TicketService(
         ticket.status = TicketStatus.IN_PROGRESS
         ticket.updatedAt = Instant.now()
 
-        ticketRepository.save(ticket).toResponse()
+        return ticketRepository.save(ticket).toResponse()
     }
 
     @Transactional
-    suspend fun closeTicket(ticketId: String, resolution: String): TicketResponse = withContext(Dispatchers.IO) {
+    fun closeTicket(ticketId: String, resolution: String): TicketResponse {
         val ticket = ticketRepository.findById(UUID.fromString(ticketId))
             .orElseThrow { ResourceNotFoundException("Ticket with id $ticketId not found") }
 
@@ -234,17 +225,17 @@ class TicketService(
         ticket.resolution = resolution
         ticket.updatedAt = Instant.now()
 
-        ticketRepository.save(ticket).toResponse()
+        return ticketRepository.save(ticket).toResponse()
     }
 
     @Transactional
-    suspend fun reopenTicket(ticketId: String): TicketResponse = withContext(Dispatchers.IO) {
+    fun reopenTicket(ticketId: String): TicketResponse {
         val ticket = ticketRepository.findById(UUID.fromString(ticketId))
             .orElseThrow { ResourceNotFoundException("Ticket with id $ticketId not found") }
 
         ticket.status = TicketStatus.OPEN
         ticket.updatedAt = Instant.now()
 
-        ticketRepository.save(ticket).toResponse()
+        return ticketRepository.save(ticket).toResponse()
     }
 }

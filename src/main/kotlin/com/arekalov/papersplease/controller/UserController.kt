@@ -10,6 +10,7 @@ import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
@@ -23,72 +24,91 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/v1/users")
-@PreAuthorize("hasAnyRole('BOSS', 'SECURITY', 'GOD')")
 class UserController(
     private val userService: UserService,
 ) {
 
     @GetMapping
-    suspend fun getAllUsers(
+    @PreAuthorize("hasAnyRole('BOSS', 'SECURITY', 'GOD')")
+    fun getAllUsers(
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
     ): ResponseEntity<PagedResponse<UserResponse>> {
-        val response = userService.getAll(limit, offset)
-        return ResponseEntity.ok(response)
+        return ResponseEntity.ok(userService.getAll(limit, offset))
+    }
+
+    @GetMapping("/me")
+    fun getCurrentUser(
+        authentication: Authentication,
+    ): ResponseEntity<UserResponse> {
+        return ResponseEntity.ok(userService.getById(authentication.name))
+    }
+
+    @PutMapping("/me")
+    fun updateCurrentUser(
+        authentication: Authentication,
+        @Valid @RequestBody request: UserRequest,
+    ): ResponseEntity<UserResponse> {
+        return ResponseEntity.ok(userService.update(authentication.name, request))
+    }
+
+    @PatchMapping("/me")
+    fun partialUpdateCurrentUser(
+        authentication: Authentication,
+        @Valid @RequestBody request: UserRequestPartial,
+    ): ResponseEntity<UserResponse> {
+        return ResponseEntity.ok(userService.partialUpdate(authentication.name, request))
     }
 
     @GetMapping("/{id}")
-    suspend fun getUserById(
+    @PreAuthorize("hasAnyRole('BOSS', 'SECURITY', 'GOD')")
+    fun getUserById(
         @PathVariable id: String,
     ): ResponseEntity<UserResponse> {
-        val response = userService.getById(id)
-        return ResponseEntity.ok(response)
+        return ResponseEntity.ok(userService.getById(id))
     }
 
     @GetMapping("/by-role/{role}")
-    suspend fun getUsersByRole(
+    @PreAuthorize("hasAnyRole('BOSS', 'SECURITY', 'GOD')")
+    fun getUsersByRole(
         @PathVariable role: Role,
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
     ): ResponseEntity<PagedResponse<UserResponse>> {
-        val response = userService.getByRole(role, limit, offset)
-        return ResponseEntity.ok(response)
+        return ResponseEntity.ok(userService.getByRole(role, limit, offset))
     }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('BOSS', 'GOD')")
-    suspend fun createUser(
+    fun createUser(
         @Valid @RequestBody request: UserRequest,
     ): ResponseEntity<UserResponse> {
-        val response = userService.create(request)
-        return ResponseEntity.status(HttpStatus.CREATED).body(response)
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.create(request))
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('BOSS', 'GOD')")
-    suspend fun updateUser(
+    fun updateUser(
         @PathVariable id: String,
         @Valid @RequestBody request: UserRequest,
     ): ResponseEntity<UserResponse> {
-        val response = userService.update(id, request)
-        return ResponseEntity.ok(response)
+        return ResponseEntity.ok(userService.update(id, request))
     }
 
     @PatchMapping("/{id}")
     @PreAuthorize("hasAnyRole('BOSS', 'GOD')")
-    suspend fun partialUpdateUser(
+    fun partialUpdateUser(
         @PathVariable id: String,
         @Valid @RequestBody request: UserRequestPartial,
     ): ResponseEntity<UserResponse> {
-        val response = userService.partialUpdate(id, request)
-        return ResponseEntity.ok(response)
+        return ResponseEntity.ok(userService.partialUpdate(id, request))
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('GOD')")
-    suspend fun deleteUser(
+    fun deleteUser(
         @PathVariable id: String,
-    ): ResponseEntity<Void> {
+    ): ResponseEntity<Unit> {
         userService.delete(id)
         return ResponseEntity.noContent().build()
     }

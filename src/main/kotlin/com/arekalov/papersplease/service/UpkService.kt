@@ -10,8 +10,6 @@ import com.arekalov.papersplease.model.entity.Upk
 import com.arekalov.papersplease.model.enums.Region
 import com.arekalov.papersplease.repository.UpkRepository
 import com.arekalov.papersplease.repository.UserRepository
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -24,11 +22,11 @@ class UpkService(
 ) {
 
     @Transactional(readOnly = true)
-    suspend fun getAll(limit: Int, offset: Int): PagedResponse<UpkResponse> = withContext(Dispatchers.IO) {
+    fun getAll(limit: Int, offset: Int): PagedResponse<UpkResponse> {
         val pageable = PageRequest.of(offset / limit, limit)
         val page = upkRepository.findAll(pageable)
 
-        PagedResponse(
+        return PagedResponse(
             items = page.content.map { it.toResponse() },
             total = page.totalElements,
             limit = limit,
@@ -37,32 +35,31 @@ class UpkService(
     }
 
     @Transactional(readOnly = true)
-    suspend fun getById(id: String): UpkResponse = withContext(Dispatchers.IO) {
+    fun getById(id: String): UpkResponse {
         val upk = upkRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("UPK with id $id not found") }
-        upk.toResponse()
+        return upk.toResponse()
     }
 
     @Transactional(readOnly = true)
-    suspend fun getByRegion(region: Region, limit: Int, offset: Int): PagedResponse<UpkResponse> =
-        withContext(Dispatchers.IO) {
-            val upks = upkRepository.findByRegion(region)
-            val totalCount = upks.size.toLong()
+    fun getByRegion(region: Region, limit: Int, offset: Int): PagedResponse<UpkResponse> {
+        val upks = upkRepository.findByRegion(region)
+        val totalCount = upks.size.toLong()
 
-            val paginatedUpks = upks
-                .drop(offset)
-                .take(limit)
+        val paginatedUpks = upks
+            .drop(offset)
+            .take(limit)
 
-            PagedResponse(
-                items = paginatedUpks.map { it.toResponse() },
-                total = totalCount,
-                limit = limit,
-                offset = offset,
-            )
-        }
+        return PagedResponse(
+            items = paginatedUpks.map { it.toResponse() },
+            total = totalCount,
+            limit = limit,
+            offset = offset,
+        )
+    }
 
     @Transactional
-    suspend fun create(request: UpkRequest): UpkResponse = withContext(Dispatchers.IO) {
+    fun create(request: UpkRequest): UpkResponse {
         val boss = request.bossId?.let {
             userRepository.findById(UUID.fromString(it))
                 .orElseThrow { ResourceNotFoundException("User with id $it not found") }
@@ -74,11 +71,11 @@ class UpkService(
             boss = boss,
         )
 
-        upkRepository.save(upk).toResponse()
+        return upkRepository.save(upk).toResponse()
     }
 
     @Transactional
-    suspend fun update(id: String, request: UpkRequest): UpkResponse = withContext(Dispatchers.IO) {
+    fun update(id: String, request: UpkRequest): UpkResponse {
         val upk = upkRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("UPK with id $id not found") }
 
@@ -93,11 +90,11 @@ class UpkService(
             this.boss = boss
         }
 
-        upkRepository.save(upk).toResponse()
+        return upkRepository.save(upk).toResponse()
     }
 
     @Transactional
-    suspend fun partialUpdate(id: String, request: UpkRequestPartial): UpkResponse = withContext(Dispatchers.IO) {
+    fun partialUpdate(id: String, request: UpkRequestPartial): UpkResponse {
         val upk = upkRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("UPK with id $id not found") }
 
@@ -108,11 +105,11 @@ class UpkService(
                 .orElseThrow { ResourceNotFoundException("User with id $bossId not found") }
         }
 
-        upkRepository.save(upk).toResponse()
+        return upkRepository.save(upk).toResponse()
     }
 
     @Transactional
-    suspend fun delete(id: String) = withContext(Dispatchers.IO) {
+    fun delete(id: String) {
         val upk = upkRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("UPK with id $id not found") }
         upkRepository.delete(upk)

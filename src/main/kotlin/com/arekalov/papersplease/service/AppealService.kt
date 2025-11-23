@@ -11,8 +11,6 @@ import com.arekalov.papersplease.model.enums.AppealDecision
 import com.arekalov.papersplease.repository.AppealRepository
 import com.arekalov.papersplease.repository.TicketRepository
 import com.arekalov.papersplease.repository.UserRepository
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -27,11 +25,11 @@ class AppealService(
 ) {
 
     @Transactional(readOnly = true)
-    suspend fun getAll(limit: Int, offset: Int): PagedResponse<AppealResponse> = withContext(Dispatchers.IO) {
+    fun getAll(limit: Int, offset: Int): PagedResponse<AppealResponse> {
         val pageable = PageRequest.of(offset / limit, limit)
         val page = appealRepository.findAll(pageable)
 
-        PagedResponse(
+        return PagedResponse(
             items = page.content.map { it.toResponse() },
             total = page.totalElements,
             limit = limit,
@@ -40,48 +38,46 @@ class AppealService(
     }
 
     @Transactional(readOnly = true)
-    suspend fun getById(id: String): AppealResponse = withContext(Dispatchers.IO) {
+    fun getById(id: String): AppealResponse {
         val appeal = appealRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("Appeal with id $id not found") }
-        appeal.toResponse()
+        return appeal.toResponse()
     }
 
     @Transactional(readOnly = true)
-    suspend fun getByTicket(ticketId: String): AppealResponse? = withContext(Dispatchers.IO) {
+    fun getByTicket(ticketId: String): AppealResponse? {
         val appeal = appealRepository.findByTicket_Id(UUID.fromString(ticketId))
-        appeal?.toResponse()
+        return appeal?.toResponse()
     }
 
     @Transactional(readOnly = true)
-    suspend fun getByFiledBy(userId: String, limit: Int, offset: Int): PagedResponse<AppealResponse> =
-        withContext(Dispatchers.IO) {
-            val pageable = PageRequest.of(offset / limit, limit)
-            val page = appealRepository.findByCreatedBy_Id(UUID.fromString(userId), pageable)
+    fun getByFiledBy(userId: String, limit: Int, offset: Int): PagedResponse<AppealResponse> {
+        val pageable = PageRequest.of(offset / limit, limit)
+        val page = appealRepository.findByCreatedBy_Id(UUID.fromString(userId), pageable)
 
-            PagedResponse(
-                items = page.content.map { it.toResponse() },
-                total = page.totalElements,
-                limit = limit,
-                offset = offset,
-            )
-        }
+        return PagedResponse(
+            items = page.content.map { it.toResponse() },
+            total = page.totalElements,
+            limit = limit,
+            offset = offset,
+        )
+    }
 
     @Transactional(readOnly = true)
-    suspend fun getByDecision(decision: AppealDecision, limit: Int, offset: Int): PagedResponse<AppealResponse> =
-        withContext(Dispatchers.IO) {
-            val pageable = PageRequest.of(offset / limit, limit)
-            val page = appealRepository.findByDecision(decision, pageable)
+    fun getByDecision(decision: AppealDecision, limit: Int, offset: Int): PagedResponse<AppealResponse> {
+        val pageable = PageRequest.of(offset / limit, limit)
+        val page = appealRepository.findByDecision(decision, pageable)
 
-            PagedResponse(
-                items = page.content.map { it.toResponse() },
-                total = page.totalElements,
-                limit = limit,
-                offset = offset,
-            )
-        }
+        return PagedResponse(
+            items = page.content.map { it.toResponse() },
+            total = page.totalElements,
+            limit = limit,
+            offset = offset,
+        )
+    }
 
     @Transactional
-    suspend fun create(request: AppealRequest): AppealResponse = withContext(Dispatchers.IO) {
+    fun create(request: AppealRequest): AppealResponse {
         val ticket = ticketRepository.findById(UUID.fromString(request.ticketId))
             .orElseThrow { ResourceNotFoundException("Ticket with id ${request.ticketId} not found") }
 
@@ -90,11 +86,11 @@ class AppealService(
 
         val appeal = request.toEntity(ticket, createdBy)
 
-        appealRepository.save(appeal).toResponse()
+        return appealRepository.save(appeal).toResponse()
     }
 
     @Transactional
-    suspend fun update(id: String, request: AppealRequest): AppealResponse = withContext(Dispatchers.IO) {
+    fun update(id: String, request: AppealRequest): AppealResponse {
         val appeal = appealRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("Appeal with id $id not found") }
 
@@ -107,45 +103,44 @@ class AppealService(
         appeal.apply {
             this.ticket = ticket
             this.createdBy = createdBy
-            reason = request.comment ?: ""
+            reason = request.comment.orEmpty()
         }
 
-        appealRepository.save(appeal).toResponse()
+        return appealRepository.save(appeal).toResponse()
     }
 
     @Transactional
-    suspend fun partialUpdate(id: String, request: AppealRequestPartial): AppealResponse =
-        withContext(Dispatchers.IO) {
-            val appeal = appealRepository.findById(UUID.fromString(id))
-                .orElseThrow { ResourceNotFoundException("Appeal with id $id not found") }
+    fun partialUpdate(id: String, request: AppealRequestPartial): AppealResponse {
+        val appeal = appealRepository.findById(UUID.fromString(id))
+            .orElseThrow { ResourceNotFoundException("Appeal with id $id not found") }
 
-            request.ticketId?.let { ticketId ->
-                appeal.ticket = ticketRepository.findById(UUID.fromString(ticketId))
-                    .orElseThrow { ResourceNotFoundException("Ticket with id $ticketId not found") }
-            }
-            request.createdBy?.let { createdById ->
-                appeal.createdBy = userRepository.findById(UUID.fromString(createdById))
-                    .orElseThrow { ResourceNotFoundException("User with id $createdById not found") }
-            }
-            request.comment?.let { appeal.reason = it }
-
-            appealRepository.save(appeal).toResponse()
+        request.ticketId?.let { ticketId ->
+            appeal.ticket = ticketRepository.findById(UUID.fromString(ticketId))
+                .orElseThrow { ResourceNotFoundException("Ticket with id $ticketId not found") }
         }
+        request.createdBy?.let { createdById ->
+            appeal.createdBy = userRepository.findById(UUID.fromString(createdById))
+                .orElseThrow { ResourceNotFoundException("User with id $createdById not found") }
+        }
+        request.comment?.let { appeal.reason = it }
+
+        return appealRepository.save(appeal).toResponse()
+    }
 
     @Transactional
-    suspend fun delete(id: String) = withContext(Dispatchers.IO) {
+    fun delete(id: String) {
         val appeal = appealRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("Appeal with id $id not found") }
         appealRepository.delete(appeal)
     }
 
     @Transactional
-    suspend fun processAppeal(
+    fun processAppeal(
         appealId: String,
         decision: AppealDecision,
         decidedById: String,
         notes: String?,
-    ): AppealResponse = withContext(Dispatchers.IO) {
+    ): AppealResponse {
         val appeal = appealRepository.findById(UUID.fromString(appealId))
             .orElseThrow { ResourceNotFoundException("Appeal with id $appealId not found") }
 
@@ -159,6 +154,6 @@ class AppealService(
             decisionNotes = notes
         }
 
-        appealRepository.save(appeal).toResponse()
+        return appealRepository.save(appeal).toResponse()
     }
 }

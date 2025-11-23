@@ -1,8 +1,12 @@
 package com.arekalov.papersplease.exception
 
 import com.arekalov.papersplease.dto.ErrorResponse
+import com.fasterxml.jackson.databind.JsonMappingException
+import com.fasterxml.jackson.databind.exc.InvalidFormatException
+import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.validation.FieldError
@@ -87,6 +91,41 @@ class GlobalExceptionHandler {
         val error = ErrorResponse(
             message = "Validation failed: $errors",
             code = "VALIDATION_ERROR",
+        )
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error)
+    }
+
+    @ExceptionHandler(IllegalArgumentException::class)
+    fun handleIllegalArgument(ex: IllegalArgumentException): ResponseEntity<ErrorResponse> {
+        val error = ErrorResponse(
+            message = ex.message ?: "Invalid argument",
+            code = "BAD_REQUEST",
+        )
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error)
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException::class)
+    fun handleHttpMessageNotReadable(ex: HttpMessageNotReadableException): ResponseEntity<ErrorResponse> {
+        val message = when (val cause = ex.cause) {
+            is MismatchedInputException -> {
+                val fieldName = cause.path.joinToString(".") { it.fieldName ?: "unknown" }
+                "Missing or invalid field: $fieldName"
+            }
+            is InvalidFormatException -> {
+                val fieldName = cause.path.joinToString(".") { it.fieldName ?: "unknown" }
+                val value = cause.value
+                "Invalid value '$value' for field: $fieldName"
+            }
+            is JsonMappingException -> {
+                val fieldName = cause.path.joinToString(".") { it.fieldName ?: "unknown" }
+                "Invalid JSON format for field: $fieldName"
+            }
+            else -> "Invalid request body format"
+        }
+
+        val error = ErrorResponse(
+            message = message,
+            code = "BAD_REQUEST",
         )
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error)
     }

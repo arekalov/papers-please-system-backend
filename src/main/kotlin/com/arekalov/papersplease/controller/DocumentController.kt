@@ -29,7 +29,7 @@ class DocumentController(
 ) {
 
     @GetMapping
-    suspend fun getAllDocuments(
+    fun getAllDocuments(
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
     ): ResponseEntity<PagedResponse<DocumentResponse>> {
@@ -38,7 +38,7 @@ class DocumentController(
     }
 
     @GetMapping("/{id}")
-    suspend fun getDocumentById(
+    fun getDocumentById(
         @PathVariable id: String,
     ): ResponseEntity<DocumentResponse> {
         val response = documentService.getById(id)
@@ -46,7 +46,7 @@ class DocumentController(
     }
 
     @GetMapping("/by-type/{type}")
-    suspend fun getDocumentsByType(
+    fun getDocumentsByType(
         @PathVariable type: DocumentType,
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
@@ -56,7 +56,7 @@ class DocumentController(
     }
 
     @PostMapping
-    suspend fun createDocument(
+    fun createDocument(
         @Valid @RequestBody request: DocumentRequest,
     ): ResponseEntity<DocumentResponse> {
         val response = documentService.create(request)
@@ -65,7 +65,7 @@ class DocumentController(
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('BOSS', 'SECURITY', 'GOD')")
-    suspend fun updateDocument(
+    fun updateDocument(
         @PathVariable id: String,
         @Valid @RequestBody request: DocumentRequest,
     ): ResponseEntity<DocumentResponse> {
@@ -75,7 +75,7 @@ class DocumentController(
 
     @PatchMapping("/{id}")
     @PreAuthorize("hasAnyRole('BOSS', 'SECURITY', 'GOD')")
-    suspend fun partialUpdateDocument(
+    fun partialUpdateDocument(
         @PathVariable id: String,
         @Valid @RequestBody request: DocumentRequestPartial,
     ): ResponseEntity<DocumentResponse> {
@@ -85,9 +85,9 @@ class DocumentController(
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('BOSS', 'GOD')")
-    suspend fun deleteDocument(
+    fun deleteDocument(
         @PathVariable id: String,
-    ): ResponseEntity<Void> {
+    ): ResponseEntity<Unit> {
         documentService.delete(id)
         return ResponseEntity.noContent().build()
     }

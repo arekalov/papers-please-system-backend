@@ -29,7 +29,7 @@ class ParticipationController(
 ) {
 
     @GetMapping
-    suspend fun getAllParticipations(
+    fun getAllParticipations(
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
     ): ResponseEntity<PagedResponse<ParticipationResponse>> {
@@ -38,7 +38,7 @@ class ParticipationController(
     }
 
     @GetMapping("/{id}")
-    suspend fun getParticipationById(
+    fun getParticipationById(
         @PathVariable id: String,
     ): ResponseEntity<ParticipationResponse> {
         val response = participationService.getById(id)
@@ -46,7 +46,7 @@ class ParticipationController(
     }
 
     @GetMapping("/by-shift/{shiftId}")
-    suspend fun getParticipationsByShift(
+    fun getParticipationsByShift(
         @PathVariable shiftId: String,
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
@@ -56,7 +56,7 @@ class ParticipationController(
     }
 
     @GetMapping("/by-user/{userId}")
-    suspend fun getParticipationsByUser(
+    fun getParticipationsByUser(
         @PathVariable userId: String,
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
@@ -66,7 +66,7 @@ class ParticipationController(
     }
 
     @GetMapping("/by-specialization/{specialization}")
-    suspend fun getParticipationsBySpecialization(
+    fun getParticipationsBySpecialization(
         @PathVariable specialization: Specialization,
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
@@ -77,7 +77,7 @@ class ParticipationController(
 
     @PostMapping
     @PreAuthorize("hasAnyRole('BOSS', 'SECURITY', 'GOD')")
-    suspend fun createParticipation(
+    fun createParticipation(
         @Valid @RequestBody request: ParticipationRequest,
     ): ResponseEntity<ParticipationResponse> {
         val response = participationService.create(request)
@@ -86,7 +86,7 @@ class ParticipationController(
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('BOSS', 'SECURITY', 'GOD')")
-    suspend fun updateParticipation(
+    fun updateParticipation(
         @PathVariable id: String,
         @Valid @RequestBody request: ParticipationRequest,
     ): ResponseEntity<ParticipationResponse> {
@@ -96,7 +96,7 @@ class ParticipationController(
 
     @PatchMapping("/{id}")
     @PreAuthorize("hasAnyRole('BOSS', 'SECURITY', 'GOD')")
-    suspend fun partialUpdateParticipation(
+    fun partialUpdateParticipation(
         @PathVariable id: String,
         @Valid @RequestBody request: ParticipationRequestPartial,
     ): ResponseEntity<ParticipationResponse> {
@@ -106,9 +106,9 @@ class ParticipationController(
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('BOSS', 'GOD')")
-    suspend fun deleteParticipation(
+    fun deleteParticipation(
         @PathVariable id: String,
-    ): ResponseEntity<Void> {
+    ): ResponseEntity<Unit> {
         participationService.delete(id)
         return ResponseEntity.noContent().build()
     }

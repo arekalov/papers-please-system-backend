@@ -1,6 +1,7 @@
 package com.arekalov.papersplease.dto.auth
 
 import com.arekalov.papersplease.model.enums.Role
+import com.arekalov.papersplease.validation.ValidUUID
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
@@ -22,5 +23,6 @@ data class RegisterRequest(
     @field:NotNull(message = "Role is required")
     val role: Role,
 
+    @field:ValidUUID(message = "UPK ID must be a valid UUID")
     val upkId: String? = null,
 )

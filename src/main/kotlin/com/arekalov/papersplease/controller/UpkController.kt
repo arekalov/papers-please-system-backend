@@ -29,7 +29,7 @@ class UpkController(
 ) {
 
     @GetMapping
-    suspend fun getAllUpks(
+    fun getAllUpks(
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
     ): ResponseEntity<PagedResponse<UpkResponse>> {
@@ -38,7 +38,7 @@ class UpkController(
     }
 
     @GetMapping("/{id}")
-    suspend fun getUpkById(
+    fun getUpkById(
         @PathVariable id: String,
     ): ResponseEntity<UpkResponse> {
         val response = upkService.getById(id)
@@ -46,7 +46,7 @@ class UpkController(
     }
 
     @GetMapping("/by-region/{region}")
-    suspend fun getUpksByRegion(
+    fun getUpksByRegion(
         @PathVariable region: Region,
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
@@ -57,7 +57,7 @@ class UpkController(
 
     @PostMapping
     @PreAuthorize("hasAnyRole('BOSS', 'GOD')")
-    suspend fun createUpk(
+    fun createUpk(
         @Valid @RequestBody request: UpkRequest,
     ): ResponseEntity<UpkResponse> {
         val response = upkService.create(request)
@@ -66,7 +66,7 @@ class UpkController(
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('BOSS', 'GOD')")
-    suspend fun updateUpk(
+    fun updateUpk(
         @PathVariable id: String,
         @Valid @RequestBody request: UpkRequest,
     ): ResponseEntity<UpkResponse> {
@@ -76,7 +76,7 @@ class UpkController(
 
     @PatchMapping("/{id}")
     @PreAuthorize("hasAnyRole('BOSS', 'GOD')")
-    suspend fun partialUpdateUpk(
+    fun partialUpdateUpk(
         @PathVariable id: String,
         @Valid @RequestBody request: UpkRequestPartial,
     ): ResponseEntity<UpkResponse> {
@@ -86,9 +86,9 @@ class UpkController(
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('GOD')")
-    suspend fun deleteUpk(
+    fun deleteUpk(
         @PathVariable id: String,
-    ): ResponseEntity<Void> {
+    ): ResponseEntity<Unit> {
         upkService.delete(id)
         return ResponseEntity.noContent().build()
     }

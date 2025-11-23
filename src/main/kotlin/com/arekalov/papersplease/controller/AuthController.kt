@@ -21,7 +21,7 @@ class AuthController(
 ) {
 
     @PostMapping("/register")
-    suspend fun register(
+    fun register(
         @Valid @RequestBody request: RegisterRequest,
     ): ResponseEntity<AuthResponse> {
         val response = authService.register(request)
@@ -29,7 +29,7 @@ class AuthController(
     }
 
     @PostMapping("/login")
-    suspend fun login(
+    fun login(
         @Valid @RequestBody request: LoginRequest,
     ): ResponseEntity<AuthResponse> {
         val response = authService.login(request)
@@ -37,7 +37,7 @@ class AuthController(
     }
 
     @PostMapping("/refresh")
-    suspend fun refresh(
+    fun refresh(
         @Valid @RequestBody request: RefreshRequest,
     ): ResponseEntity<AuthResponse> {
         val response = authService.refresh(request)
@@ -45,7 +45,7 @@ class AuthController(
     }
 
     @PostMapping("/reset-password")
-    suspend fun resetPassword(
+    fun resetPassword(
         @Valid @RequestBody request: ResetPasswordRequest,
     ): ResponseEntity<Map<String, String>> {
         return ResponseEntity.ok(mapOf("message" to "Password reset link sent to ${request.email}"))

@@ -12,8 +12,6 @@ import com.arekalov.papersplease.model.entity.User
 import com.arekalov.papersplease.repository.UpkRepository
 import com.arekalov.papersplease.repository.UserRepository
 import com.arekalov.papersplease.security.JwtTokenProvider
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -28,7 +26,7 @@ class AuthService(
 ) {
 
     @Transactional
-    suspend fun register(request: RegisterRequest): AuthResponse = withContext(Dispatchers.IO) {
+    fun register(request: RegisterRequest): AuthResponse {
         if (userRepository.findByEmail(request.email) != null) {
             throw ConflictException("User with email ${request.email} already exists")
         }
@@ -51,7 +49,7 @@ class AuthService(
         val accessToken = jwtTokenProvider.generateAccessToken(savedUser.id.toString(), savedUser.role.name)
         val refreshToken = jwtTokenProvider.generateRefreshToken(savedUser.id.toString())
 
-        AuthResponse(
+        return AuthResponse(
             accessToken = accessToken,
             refreshToken = refreshToken,
             user = savedUser.toResponse(),
@@ -59,7 +57,7 @@ class AuthService(
     }
 
     @Transactional(readOnly = true)
-    suspend fun login(request: LoginRequest): AuthResponse = withContext(Dispatchers.IO) {
+    fun login(request: LoginRequest): AuthResponse {
         val user = userRepository.findByEmail(request.email)
             ?: throw UnauthorizedException("Invalid email or password")
 
@@ -70,7 +68,7 @@ class AuthService(
         val accessToken = jwtTokenProvider.generateAccessToken(user.id.toString(), user.role.name)
         val refreshToken = jwtTokenProvider.generateRefreshToken(user.id.toString())
 
-        AuthResponse(
+        return AuthResponse(
             accessToken = accessToken,
             refreshToken = refreshToken,
             user = user.toResponse(),
@@ -78,7 +76,7 @@ class AuthService(
     }
 
     @Transactional(readOnly = true)
-    suspend fun refresh(request: RefreshRequest): AuthResponse = withContext(Dispatchers.IO) {
+    fun refresh(request: RefreshRequest): AuthResponse {
         if (!jwtTokenProvider.validateToken(request.refreshToken)) {
             throw UnauthorizedException("Invalid refresh token")
         }
@@ -90,7 +88,7 @@ class AuthService(
         val accessToken = jwtTokenProvider.generateAccessToken(user.id.toString(), user.role.name)
         val newRefreshToken = jwtTokenProvider.generateRefreshToken(user.id.toString())
 
-        AuthResponse(
+        return AuthResponse(
             accessToken = accessToken,
             refreshToken = newRefreshToken,
             user = user.toResponse(),

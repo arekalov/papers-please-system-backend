@@ -11,8 +11,6 @@ import com.arekalov.papersplease.model.entity.User
 import com.arekalov.papersplease.model.enums.Role
 import com.arekalov.papersplease.repository.UpkRepository
 import com.arekalov.papersplease.repository.UserRepository
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.springframework.data.domain.PageRequest
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
@@ -27,11 +25,11 @@ class UserService(
 ) {
 
     @Transactional(readOnly = true)
-    suspend fun getAll(limit: Int, offset: Int): PagedResponse<UserResponse> = withContext(Dispatchers.IO) {
+    fun getAll(limit: Int, offset: Int): PagedResponse<UserResponse> {
         val pageable = PageRequest.of(offset / limit, limit)
         val page = userRepository.findAll(pageable)
 
-        PagedResponse(
+        return PagedResponse(
             items = page.content.map { it.toResponse() },
             total = page.totalElements,
             limit = limit,
@@ -40,32 +38,31 @@ class UserService(
     }
 
     @Transactional(readOnly = true)
-    suspend fun getById(id: String): UserResponse = withContext(Dispatchers.IO) {
+    fun getById(id: String): UserResponse {
         val user = userRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("User with id $id not found") }
-        user.toResponse()
+        return user.toResponse()
     }
 
     @Transactional(readOnly = true)
-    suspend fun getByRole(role: Role, limit: Int, offset: Int): PagedResponse<UserResponse> =
-        withContext(Dispatchers.IO) {
-            val users = userRepository.findByRole(role)
-            val totalCount = users.size.toLong()
+    fun getByRole(role: Role, limit: Int, offset: Int): PagedResponse<UserResponse> {
+        val users = userRepository.findByRole(role)
+        val totalCount = users.size.toLong()
 
-            val paginatedUsers = users
-                .drop(offset)
-                .take(limit)
+        val paginatedUsers = users
+            .drop(offset)
+            .take(limit)
 
-            PagedResponse(
-                items = paginatedUsers.map { it.toResponse() },
-                total = totalCount,
-                limit = limit,
-                offset = offset,
-            )
-        }
+        return PagedResponse(
+            items = paginatedUsers.map { it.toResponse() },
+            total = totalCount,
+            limit = limit,
+            offset = offset,
+        )
+    }
 
     @Transactional
-    suspend fun create(request: UserRequest): UserResponse = withContext(Dispatchers.IO) {
+    fun create(request: UserRequest): UserResponse {
         if (userRepository.findByEmail(request.email) != null) {
             throw ConflictException("User with email ${request.email} already exists")
         }
@@ -83,11 +80,11 @@ class UserService(
             upk = upk,
         )
 
-        userRepository.save(user).toResponse()
+        return userRepository.save(user).toResponse()
     }
 
     @Transactional
-    suspend fun update(id: String, request: UserRequest): UserResponse = withContext(Dispatchers.IO) {
+    fun update(id: String, request: UserRequest): UserResponse {
         val user = userRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("User with id $id not found") }
 
@@ -107,11 +104,11 @@ class UserService(
             this.upk = upk
         }
 
-        userRepository.save(user).toResponse()
+        return userRepository.save(user).toResponse()
     }
 
     @Transactional
-    suspend fun partialUpdate(id: String, request: UserRequestPartial): UserResponse = withContext(Dispatchers.IO) {
+    fun partialUpdate(id: String, request: UserRequestPartial): UserResponse {
         val user = userRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("User with id $id not found") }
 
@@ -129,11 +126,11 @@ class UserService(
                 .orElseThrow { ResourceNotFoundException("UPK with id $upkId not found") }
         }
 
-        userRepository.save(user).toResponse()
+        return userRepository.save(user).toResponse()
     }
 
     @Transactional
-    suspend fun delete(id: String) = withContext(Dispatchers.IO) {
+    fun delete(id: String) {
         val user = userRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("User with id $id not found") }
         userRepository.delete(user)

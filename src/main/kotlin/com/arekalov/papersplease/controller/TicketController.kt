@@ -32,7 +32,7 @@ class TicketController(
 ) {
 
     @GetMapping
-    suspend fun getAllTickets(
+    fun getAllTickets(
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
     ): ResponseEntity<PagedResponse<TicketResponse>> {
@@ -41,7 +41,7 @@ class TicketController(
     }
 
     @GetMapping("/{id}")
-    suspend fun getTicketById(
+    fun getTicketById(
         @PathVariable id: String,
     ): ResponseEntity<TicketResponse> {
         val response = ticketService.getById(id)
@@ -49,7 +49,7 @@ class TicketController(
     }
 
     @GetMapping("/by-author/{authorId}")
-    suspend fun getTicketsByAuthor(
+    fun getTicketsByAuthor(
         @PathVariable authorId: String,
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
@@ -59,7 +59,7 @@ class TicketController(
     }
 
     @GetMapping("/by-executor/{executorId}")
-    suspend fun getTicketsByExecutor(
+    fun getTicketsByExecutor(
         @PathVariable executorId: String,
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
@@ -69,7 +69,7 @@ class TicketController(
     }
 
     @GetMapping("/by-status/{status}")
-    suspend fun getTicketsByStatus(
+    fun getTicketsByStatus(
         @PathVariable status: TicketStatus,
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
@@ -79,7 +79,7 @@ class TicketController(
     }
 
     @GetMapping("/by-type/{type}")
-    suspend fun getTicketsByType(
+    fun getTicketsByType(
         @PathVariable type: TicketType,
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
@@ -89,7 +89,7 @@ class TicketController(
     }
 
     @GetMapping("/by-priority/{priority}")
-    suspend fun getTicketsByPriority(
+    fun getTicketsByPriority(
         @PathVariable priority: Priority,
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
@@ -99,7 +99,7 @@ class TicketController(
     }
 
     @GetMapping("/by-shift/{shiftId}")
-    suspend fun getTicketsByShift(
+    fun getTicketsByShift(
         @PathVariable shiftId: String,
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
@@ -109,7 +109,7 @@ class TicketController(
     }
 
     @PostMapping
-    suspend fun createTicket(
+    fun createTicket(
         @Valid @RequestBody request: TicketRequest,
     ): ResponseEntity<TicketResponse> {
         val response = ticketService.create(request)
@@ -118,7 +118,7 @@ class TicketController(
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('BOSS', 'SECURITY', 'GOD')")
-    suspend fun updateTicket(
+    fun updateTicket(
         @PathVariable id: String,
         @Valid @RequestBody request: TicketRequest,
     ): ResponseEntity<TicketResponse> {
@@ -127,7 +127,7 @@ class TicketController(
     }
 
     @PatchMapping("/{id}")
-    suspend fun partialUpdateTicket(
+    fun partialUpdateTicket(
         @PathVariable id: String,
         @Valid @RequestBody request: TicketRequestPartial,
     ): ResponseEntity<TicketResponse> {
@@ -137,7 +137,7 @@ class TicketController(
 
     @PostMapping("/{id}/assign")
     @PreAuthorize("hasAnyRole('BOSS', 'SECURITY', 'GOD')")
-    suspend fun assignExecutor(
+    fun assignExecutor(
         @PathVariable id: String,
         @RequestParam executorId: String,
     ): ResponseEntity<TicketResponse> {
@@ -146,7 +146,7 @@ class TicketController(
     }
 
     @PostMapping("/{id}/close")
-    suspend fun closeTicket(
+    fun closeTicket(
         @PathVariable id: String,
         @RequestParam resolution: String,
     ): ResponseEntity<TicketResponse> {
@@ -156,7 +156,7 @@ class TicketController(
 
     @PostMapping("/{id}/reopen")
     @PreAuthorize("hasAnyRole('BOSS', 'SECURITY', 'GOD')")
-    suspend fun reopenTicket(
+    fun reopenTicket(
         @PathVariable id: String,
     ): ResponseEntity<TicketResponse> {
         val response = ticketService.reopenTicket(id)
@@ -165,9 +165,9 @@ class TicketController(
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('BOSS', 'GOD')")
-    suspend fun deleteTicket(
+    fun deleteTicket(
         @PathVariable id: String,
-    ): ResponseEntity<Void> {
+    ): ResponseEntity<Unit> {
         ticketService.delete(id)
         return ResponseEntity.noContent().build()
     }

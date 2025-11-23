@@ -29,7 +29,7 @@ class ShiftController(
 ) {
 
     @GetMapping
-    suspend fun getAllShifts(
+    fun getAllShifts(
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
     ): ResponseEntity<PagedResponse<ShiftResponse>> {
@@ -38,7 +38,7 @@ class ShiftController(
     }
 
     @GetMapping("/{id}")
-    suspend fun getShiftById(
+    fun getShiftById(
         @PathVariable id: String,
     ): ResponseEntity<ShiftResponse> {
         val response = shiftService.getById(id)
@@ -46,7 +46,7 @@ class ShiftController(
     }
 
     @GetMapping("/by-upk/{upkId}")
-    suspend fun getShiftsByUpk(
+    fun getShiftsByUpk(
         @PathVariable upkId: String,
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
@@ -56,7 +56,7 @@ class ShiftController(
     }
 
     @GetMapping("/by-date")
-    suspend fun getShiftByDate(
+    fun getShiftByDate(
         @RequestParam upkId: String,
         @RequestParam date: Instant,
     ): ResponseEntity<ShiftResponse?> {
@@ -70,7 +70,7 @@ class ShiftController(
 
     @PostMapping
     @PreAuthorize("hasAnyRole('BOSS', 'SECURITY', 'GOD')")
-    suspend fun createShift(
+    fun createShift(
         @Valid @RequestBody request: ShiftRequest,
     ): ResponseEntity<ShiftResponse> {
         val response = shiftService.create(request)
@@ -79,7 +79,7 @@ class ShiftController(
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('BOSS', 'SECURITY', 'GOD')")
-    suspend fun updateShift(
+    fun updateShift(
         @PathVariable id: String,
         @Valid @RequestBody request: ShiftRequest,
     ): ResponseEntity<ShiftResponse> {
@@ -89,7 +89,7 @@ class ShiftController(
 
     @PatchMapping("/{id}")
     @PreAuthorize("hasAnyRole('BOSS', 'SECURITY', 'GOD')")
-    suspend fun partialUpdateShift(
+    fun partialUpdateShift(
         @PathVariable id: String,
         @Valid @RequestBody request: ShiftRequestPartial,
     ): ResponseEntity<ShiftResponse> {
@@ -99,9 +99,9 @@ class ShiftController(
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('BOSS', 'GOD')")
-    suspend fun deleteShift(
+    fun deleteShift(
         @PathVariable id: String,
-    ): ResponseEntity<Void> {
+    ): ResponseEntity<Unit> {
         shiftService.delete(id)
         return ResponseEntity.noContent().build()
     }
