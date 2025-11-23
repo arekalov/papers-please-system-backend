@@ -9,6 +9,7 @@ import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
@@ -21,62 +22,71 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/v1/events")
-@PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'GOD')")
 class EventController(
     private val eventService: EventService,
 ) {
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'GOD')")
     fun getAllEvents(
+        authentication: Authentication,
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
     ): ResponseEntity<PagedResponse<EventResponse>> {
-        val response = eventService.getAll(limit, offset)
+        val response = eventService.getAll(authentication.name, limit, offset)
         return ResponseEntity.ok(response)
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'GOD')")
     fun getEventById(
+        authentication: Authentication,
         @PathVariable id: String,
     ): ResponseEntity<EventResponse> {
-        val response = eventService.getById(id)
+        val response = eventService.getById(authentication.name, id)
         return ResponseEntity.ok(response)
     }
 
     @GetMapping("/by-shift/{shiftId}")
+    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'GOD')")
     fun getEventsByShift(
+        authentication: Authentication,
         @PathVariable shiftId: String,
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
     ): ResponseEntity<PagedResponse<EventResponse>> {
-        val response = eventService.getByShift(shiftId, limit, offset)
+        val response = eventService.getByShift(authentication.name, shiftId, limit, offset)
         return ResponseEntity.ok(response)
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('GOD')")
     fun createEvent(
+        authentication: Authentication,
         @Valid @RequestBody request: EventRequest,
     ): ResponseEntity<EventResponse> {
-        val response = eventService.create(request)
+        val response = eventService.create(authentication.name, request)
         return ResponseEntity.status(HttpStatus.CREATED).body(response)
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("hasAnyRole('BOSS', 'SECURITY', 'GOD')")
+    @PreAuthorize("hasAnyRole('BOSS', 'GOD')")
     fun partialUpdateEvent(
+        authentication: Authentication,
         @PathVariable id: String,
         @Valid @RequestBody request: EventRequestPartial,
     ): ResponseEntity<EventResponse> {
-        val response = eventService.partialUpdate(id, request)
+        val response = eventService.partialUpdate(authentication.name, id, request)
         return ResponseEntity.ok(response)
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('BOSS', 'GOD')")
+    @PreAuthorize("hasRole('GOD')")
     fun deleteEvent(
+        authentication: Authentication,
         @PathVariable id: String,
     ): ResponseEntity<Unit> {
-        eventService.delete(id)
+        eventService.delete(authentication.name, id)
         return ResponseEntity.noContent().build()
     }
 }

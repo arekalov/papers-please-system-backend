@@ -25,7 +25,6 @@ import com.arekalov.papersplease.model.entity.Shift
 import com.arekalov.papersplease.model.entity.Ticket
 import com.arekalov.papersplease.model.entity.Upk
 import com.arekalov.papersplease.model.entity.User
-import com.arekalov.papersplease.model.enums.Priority
 import java.time.Instant
 
 fun User.toResponse() = UserResponse(
@@ -83,14 +82,16 @@ fun ParticipationRequest.toEntity(shift: Shift, user: User) = Participation(
 fun Event.toResponse() = EventResponse(
     id = id.toString(),
     shiftId = shift.id.toString(),
+    time = time,
     description = description,
-    priority = Priority.NORMAL,
+    specialization = specialization,
 )
 
 fun EventRequest.toEntity(shift: Shift) = Event(
     shift = shift,
-    time = Instant.now(),
+    time = time,
     description = description,
+    specialization = specialization,
 )
 
 fun Ticket.toResponse() = TicketResponse(

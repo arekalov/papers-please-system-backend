@@ -1,7 +1,10 @@
 package com.arekalov.papersplease.model.entity
 
+import com.arekalov.papersplease.model.enums.Specialization
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.FetchType
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
@@ -20,4 +23,8 @@ class Event(
 
     @Column(name = "description", columnDefinition = "TEXT")
     var description: String,
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "specialization")
+    var specialization: Specialization? = null,
 ) : BaseEntity()

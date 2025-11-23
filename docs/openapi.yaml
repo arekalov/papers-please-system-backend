@@ -1577,44 +1577,52 @@ components:
     EventRequest:
       required:
       - description
-      - priority
       - shiftId
+      - time
       type: object
       properties:
         shiftId:
           type: string
+        time:
+          type: string
+          format: date-time
         description:
           maxLength: 500
           minLength: 5
           type: string
-        priority:
+        specialization:
           type: string
           enum:
-          - LOW
-          - NORMAL
-          - HIGH
-          - CRITICAL
+          - PASSPORT
+          - LOCALS
+          - WORK
+          - TRANSIT
+          - SPECIAL
     EventResponse:
       required:
       - description
       - id
-      - priority
       - shiftId
+      - time
       type: object
       properties:
         id:
           type: string
         shiftId:
           type: string
+        time:
+          type: string
+          format: date-time
         description:
           type: string
-        priority:
+        specialization:
           type: string
           enum:
-          - LOW
-          - NORMAL
-          - HIGH
-          - CRITICAL
+          - PASSPORT
+          - LOCALS
+          - WORK
+          - TRANSIT
+          - SPECIAL
     DocumentRequest:
       required:
       - body
@@ -1877,17 +1885,21 @@ components:
       properties:
         shiftId:
           type: string
+        time:
+          type: string
+          format: date-time
         description:
           maxLength: 500
           minLength: 5
           type: string
-        priority:
+        specialization:
           type: string
           enum:
-          - LOW
-          - NORMAL
-          - HIGH
-          - CRITICAL
+          - PASSPORT
+          - LOCALS
+          - WORK
+          - TRANSIT
+          - SPECIAL
     DocumentRequestPartial:
       type: object
       properties:
