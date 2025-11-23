@@ -44,6 +44,10 @@ class Ticket(
     var author: User,
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subject_id", nullable = false)
+    var subject: User,
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "executor_id")
     var executor: User? = null,
 

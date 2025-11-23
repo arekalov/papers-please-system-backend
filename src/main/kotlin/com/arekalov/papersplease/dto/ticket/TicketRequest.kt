@@ -21,7 +21,15 @@ data class TicketRequest(
     @field:NotBlank(message = "Author ID is required")
     val authorId: String,
 
+    @field:NotBlank(message = "Subject ID is required")
+    val subjectId: String,
+
     val executorId: String? = null,
 
-    val parentTicketId: String? = null,
+    val shiftId: String? = null,
+
+    @field:NotBlank(message = "Description is required")
+    val description: String,
+
+    val resolution: String? = null,
 )

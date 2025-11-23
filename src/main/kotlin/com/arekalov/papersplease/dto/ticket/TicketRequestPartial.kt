@@ -10,7 +10,8 @@ data class TicketRequestPartial(
     val status: TicketStatus? = null,
     val priority: Priority? = null,
     val deadlineAt: Instant? = null,
-    val authorId: String? = null,
     val executorId: String? = null,
-    val resolvedAt: Instant? = null,
+    val shiftId: String? = null,
+    val description: String? = null,
+    val resolution: String? = null,
 )

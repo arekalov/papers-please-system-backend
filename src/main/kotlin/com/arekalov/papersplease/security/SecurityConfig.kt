@@ -56,7 +56,7 @@ class SecurityConfig(
                     // Event endpoints
                     .requestMatchers("/api/v1/events/**").hasAnyRole(INSPECTOR, BOSS, SECURITY, GOD)
                     // Ticket endpoints
-                    .requestMatchers("/api/v1/tickets/**").hasAnyRole(INSPECTOR, BOSS, SECURITY, GOD)
+                    .requestMatchers("/api/v1/tickets/**").hasAnyRole(INSPECTOR, BOSS, SECURITY, MIGRANT, GOD)
                     // Document endpoints
                     .requestMatchers("/api/v1/documents/**").hasAnyRole(INSPECTOR, BOSS, SECURITY, MIGRANT, GOD)
                     // Appeal endpoints

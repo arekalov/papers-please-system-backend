@@ -106,14 +106,19 @@ fun Ticket.toResponse() = TicketResponse(
     createdAt = createdAt,
     updatedAt = updatedAt,
     deadlineAt = deadlineAt,
-    resolvedAt = null,
     authorId = author.id.toString(),
+    subjectId = subject.id.toString(),
     executorId = executor?.id?.toString(),
-    parentTicketId = null,
+    shiftId = shift?.id?.toString(),
+    description = description,
+    resolution = resolution,
+    relatedTicketIds = relatedTickets.mapNotNull { it.id?.toString() },
+    documentIds = documents.mapNotNull { it.id?.toString() },
 )
 
 fun TicketRequest.toEntity(
     author: User,
+    subject: User,
     executor: User?,
     shift: Shift?,
 ) = Ticket(
@@ -122,10 +127,11 @@ fun TicketRequest.toEntity(
     priority = priority,
     deadlineAt = deadlineAt,
     author = author,
+    subject = subject,
     executor = executor,
     shift = shift,
-    description = "",
-    resolution = null,
+    description = description,
+    resolution = resolution,
 )
 
 fun Document.toResponse(): DocumentResponse {

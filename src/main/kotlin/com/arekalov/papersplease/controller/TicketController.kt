@@ -12,6 +12,7 @@ import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
@@ -24,140 +25,74 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/v1/tickets")
-@PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'GOD')")
-@Suppress("TooManyFunctions")
 class TicketController(
     private val ticketService: TicketService,
 ) {
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'MIGRANT', 'GOD')")
+    @Suppress("LongParameterList")
     fun getAllTickets(
+        authentication: Authentication,
+        @RequestParam(required = false) authorId: String?,
+        @RequestParam(required = false) executorId: String?,
+        @RequestParam(required = false) status: TicketStatus?,
+        @RequestParam(required = false) type: TicketType?,
+        @RequestParam(required = false) priority: Priority?,
+        @RequestParam(required = false) shiftId: String?,
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
     ): ResponseEntity<PagedResponse<TicketResponse>> {
-        val response = ticketService.getAll(limit, offset)
+        val response = when {
+            authorId != null -> ticketService.getByAuthor(authentication.name, authorId, limit, offset)
+            executorId != null -> ticketService.getByExecutor(authentication.name, executorId, limit, offset)
+            status != null -> ticketService.getByStatus(authentication.name, status, limit, offset)
+            type != null -> ticketService.getByType(authentication.name, type, limit, offset)
+            priority != null -> ticketService.getByPriority(authentication.name, priority, limit, offset)
+            shiftId != null -> ticketService.getByShift(authentication.name, shiftId, limit, offset)
+            else -> ticketService.getAll(authentication.name, limit, offset)
+        }
         return ResponseEntity.ok(response)
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'MIGRANT', 'GOD')")
     fun getTicketById(
+        authentication: Authentication,
         @PathVariable id: String,
     ): ResponseEntity<TicketResponse> {
-        val response = ticketService.getById(id)
-        return ResponseEntity.ok(response)
-    }
-
-    @GetMapping("/by-author/{authorId}")
-    fun getTicketsByAuthor(
-        @PathVariable authorId: String,
-        @RequestParam(defaultValue = "10") limit: Int,
-        @RequestParam(defaultValue = "0") offset: Int,
-    ): ResponseEntity<PagedResponse<TicketResponse>> {
-        val response = ticketService.getByAuthor(authorId, limit, offset)
-        return ResponseEntity.ok(response)
-    }
-
-    @GetMapping("/by-executor/{executorId}")
-    fun getTicketsByExecutor(
-        @PathVariable executorId: String,
-        @RequestParam(defaultValue = "10") limit: Int,
-        @RequestParam(defaultValue = "0") offset: Int,
-    ): ResponseEntity<PagedResponse<TicketResponse>> {
-        val response = ticketService.getByExecutor(executorId, limit, offset)
-        return ResponseEntity.ok(response)
-    }
-
-    @GetMapping("/by-status/{status}")
-    fun getTicketsByStatus(
-        @PathVariable status: TicketStatus,
-        @RequestParam(defaultValue = "10") limit: Int,
-        @RequestParam(defaultValue = "0") offset: Int,
-    ): ResponseEntity<PagedResponse<TicketResponse>> {
-        val response = ticketService.getByStatus(status, limit, offset)
-        return ResponseEntity.ok(response)
-    }
-
-    @GetMapping("/by-type/{type}")
-    fun getTicketsByType(
-        @PathVariable type: TicketType,
-        @RequestParam(defaultValue = "10") limit: Int,
-        @RequestParam(defaultValue = "0") offset: Int,
-    ): ResponseEntity<PagedResponse<TicketResponse>> {
-        val response = ticketService.getByType(type, limit, offset)
-        return ResponseEntity.ok(response)
-    }
-
-    @GetMapping("/by-priority/{priority}")
-    fun getTicketsByPriority(
-        @PathVariable priority: Priority,
-        @RequestParam(defaultValue = "10") limit: Int,
-        @RequestParam(defaultValue = "0") offset: Int,
-    ): ResponseEntity<PagedResponse<TicketResponse>> {
-        val response = ticketService.getByPriority(priority, limit, offset)
-        return ResponseEntity.ok(response)
-    }
-
-    @GetMapping("/by-shift/{shiftId}")
-    fun getTicketsByShift(
-        @PathVariable shiftId: String,
-        @RequestParam(defaultValue = "10") limit: Int,
-        @RequestParam(defaultValue = "0") offset: Int,
-    ): ResponseEntity<PagedResponse<TicketResponse>> {
-        val response = ticketService.getByShift(shiftId, limit, offset)
+        val response = ticketService.getById(authentication.name, id)
         return ResponseEntity.ok(response)
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'MIGRANT', 'GOD')")
     fun createTicket(
+        authentication: Authentication,
         @Valid @RequestBody request: TicketRequest,
     ): ResponseEntity<TicketResponse> {
-        val response = ticketService.create(request)
+        val response = ticketService.create(authentication.name, request)
         return ResponseEntity.status(HttpStatus.CREATED).body(response)
     }
 
     @PatchMapping("/{id}")
+    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'GOD')")
     fun partialUpdateTicket(
+        authentication: Authentication,
         @PathVariable id: String,
         @Valid @RequestBody request: TicketRequestPartial,
     ): ResponseEntity<TicketResponse> {
-        val response = ticketService.partialUpdate(id, request)
-        return ResponseEntity.ok(response)
-    }
-
-    @PostMapping("/{id}/assign")
-    @PreAuthorize("hasAnyRole('BOSS', 'SECURITY', 'GOD')")
-    fun assignExecutor(
-        @PathVariable id: String,
-        @RequestParam executorId: String,
-    ): ResponseEntity<TicketResponse> {
-        val response = ticketService.assignExecutor(id, executorId)
-        return ResponseEntity.ok(response)
-    }
-
-    @PostMapping("/{id}/close")
-    fun closeTicket(
-        @PathVariable id: String,
-        @RequestParam resolution: String,
-    ): ResponseEntity<TicketResponse> {
-        val response = ticketService.closeTicket(id, resolution)
-        return ResponseEntity.ok(response)
-    }
-
-    @PostMapping("/{id}/reopen")
-    @PreAuthorize("hasAnyRole('BOSS', 'SECURITY', 'GOD')")
-    fun reopenTicket(
-        @PathVariable id: String,
-    ): ResponseEntity<TicketResponse> {
-        val response = ticketService.reopenTicket(id)
+        val response = ticketService.partialUpdate(authentication.name, id, request)
         return ResponseEntity.ok(response)
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('BOSS', 'GOD')")
+    @PreAuthorize("hasAnyRole('MIGRANT', 'BOSS', 'GOD')")
     fun deleteTicket(
+        authentication: Authentication,
         @PathVariable id: String,
     ): ResponseEntity<Unit> {
-        ticketService.delete(id)
+        ticketService.delete(authentication.name, id)
         return ResponseEntity.noContent().build()
     }
 }
