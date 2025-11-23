@@ -63,6 +63,10 @@ paths:
       responses:
         "200":
           description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Unit"
     patch:
       tags:
       - user-controller
@@ -73,6 +77,52 @@ paths:
         required: true
         schema:
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRequestPartial"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+  /api/v1/users/me:
+    get:
+      tags:
+      - user-controller
+      operationId: getCurrentUser
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+    put:
+      tags:
+      - user-controller
+      operationId: updateCurrentUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+    patch:
+      tags:
+      - user-controller
+      operationId: partialUpdateCurrentUser
       requestBody:
         content:
           application/json:
@@ -140,6 +190,10 @@ paths:
       responses:
         "200":
           description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Unit"
     patch:
       tags:
       - upk-controller
@@ -217,6 +271,10 @@ paths:
       responses:
         "200":
           description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Unit"
     patch:
       tags:
       - ticket-controller
@@ -294,6 +352,10 @@ paths:
       responses:
         "200":
           description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Unit"
     patch:
       tags:
       - shift-controller
@@ -371,6 +433,10 @@ paths:
       responses:
         "200":
           description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Unit"
     patch:
       tags:
       - participation-controller
@@ -448,6 +514,10 @@ paths:
       responses:
         "200":
           description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Unit"
     patch:
       tags:
       - notification-controller
@@ -525,6 +595,10 @@ paths:
       responses:
         "200":
           description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Unit"
     patch:
       tags:
       - event-controller
@@ -602,6 +676,10 @@ paths:
       responses:
         "200":
           description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Unit"
     patch:
       tags:
       - document-controller
@@ -679,6 +757,10 @@ paths:
       responses:
         "200":
           description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Unit"
     patch:
       tags:
       - appeal-controller
@@ -1275,80 +1357,6 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/AppealResponse"
-  /api/v1/users/by-role/{role}:
-    get:
-      tags:
-      - user-controller
-      operationId: getUsersByRole
-      parameters:
-      - name: role
-        in: path
-        required: true
-        schema:
-          type: string
-          enum:
-          - MIGRANT
-          - INSPECTOR
-          - BOSS
-          - SECURITY
-          - GOD
-      - name: limit
-        in: query
-        required: false
-        schema:
-          type: integer
-          format: int32
-          default: 10
-      - name: offset
-        in: query
-        required: false
-        schema:
-          type: integer
-          format: int32
-          default: 0
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/PagedResponseUserResponse"
-  /api/v1/upks/by-region/{region}:
-    get:
-      tags:
-      - upk-controller
-      operationId: getUpksByRegion
-      parameters:
-      - name: region
-        in: path
-        required: true
-        schema:
-          type: string
-          enum:
-          - ORVECH_VONOR
-          - EAST_GRESTIN
-          - PARADIZNA
-      - name: limit
-        in: query
-        required: false
-        schema:
-          type: integer
-          format: int32
-          default: 10
-      - name: offset
-        in: query
-        required: false
-        schema:
-          type: integer
-          format: int32
-          default: 0
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/PagedResponseUpkResponse"
   /api/v1/tickets/by-type/{type}:
     get:
       tags:
@@ -1558,62 +1566,6 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/PagedResponseTicketResponse"
-  /api/v1/shifts/by-upk/{upkId}:
-    get:
-      tags:
-      - shift-controller
-      operationId: getShiftsByUpk
-      parameters:
-      - name: upkId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: limit
-        in: query
-        required: false
-        schema:
-          type: integer
-          format: int32
-          default: 10
-      - name: offset
-        in: query
-        required: false
-        schema:
-          type: integer
-          format: int32
-          default: 0
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/PagedResponseShiftResponse"
-  /api/v1/shifts/by-date:
-    get:
-      tags:
-      - shift-controller
-      operationId: getShiftByDate
-      parameters:
-      - name: upkId
-        in: query
-        required: true
-        schema:
-          type: string
-      - name: date
-        in: query
-        required: true
-        schema:
-          type: string
-          format: date-time
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/ShiftResponse"
   /api/v1/participationsKate/by-user/{userId}:
     get:
       tags:
@@ -2866,6 +2818,8 @@ components:
         offset:
           type: integer
           format: int32
+    Unit:
+      type: object
   securitySchemes:
     bearerAuth:
       type: http
