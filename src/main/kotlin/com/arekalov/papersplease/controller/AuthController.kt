@@ -4,7 +4,6 @@ import com.arekalov.papersplease.dto.auth.AuthResponse
 import com.arekalov.papersplease.dto.auth.LoginRequest
 import com.arekalov.papersplease.dto.auth.RefreshRequest
 import com.arekalov.papersplease.dto.auth.RegisterRequest
-import com.arekalov.papersplease.dto.auth.ResetPasswordRequest
 import com.arekalov.papersplease.service.AuthService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
@@ -42,12 +41,5 @@ class AuthController(
     ): ResponseEntity<AuthResponse> {
         val response = authService.refresh(request)
         return ResponseEntity.ok(response)
-    }
-
-    @PostMapping("/reset-password")
-    fun resetPassword(
-        @Valid @RequestBody request: ResetPasswordRequest,
-    ): ResponseEntity<Map<String, String>> {
-        return ResponseEntity.ok(mapOf("message" to "Password reset link sent to ${request.email}"))
     }
 }
