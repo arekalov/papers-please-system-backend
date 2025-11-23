@@ -841,7 +841,7 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ShiftResponse"
-  /api/v1/participationsKate/{id}:
+  /api/v1/participations/{id}:
     get:
       tags:
       - participation-controller
@@ -1340,7 +1340,7 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/PagedResponseTicketResponse"
-  /api/v1/participationsKate/by-user/{userId}:
+  /api/v1/participations/by-user/{userId}:
     get:
       tags:
       - participation-controller
@@ -1372,7 +1372,7 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/PagedResponseParticipationResponse"
-  /api/v1/participationsKate/by-specialization/{specialization}:
+  /api/v1/participations/by-specialization/{specialization}:
     get:
       tags:
       - participation-controller
@@ -1410,7 +1410,7 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/PagedResponseParticipationResponse"
-  /api/v1/participationsKate/by-shift/{shiftId}:
+  /api/v1/participations/by-shift/{shiftId}:
     get:
       tags:
       - participation-controller
