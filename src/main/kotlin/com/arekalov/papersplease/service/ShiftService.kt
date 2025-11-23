@@ -8,6 +8,8 @@ import com.arekalov.papersplease.exception.ForbiddenException
 import com.arekalov.papersplease.exception.ResourceNotFoundException
 import com.arekalov.papersplease.mapper.toEntity
 import com.arekalov.papersplease.mapper.toResponse
+import com.arekalov.papersplease.model.entity.Upk
+import com.arekalov.papersplease.model.entity.User
 import com.arekalov.papersplease.model.enums.Role
 import com.arekalov.papersplease.repository.ShiftRepository
 import com.arekalov.papersplease.repository.UpkRepository
@@ -30,12 +32,13 @@ class ShiftService(
         val currentUser = userRepository.findById(UUID.fromString(currentUserId))
             .orElseThrow { ResourceNotFoundException("Current user not found") }
 
-        val userId = currentUser.id!!
-        val page = when (currentUser.role) {
-            Role.BOSS -> shiftRepository.findByCreatedBy_Id(userId, pageable)
-            Role.INSPECTOR, Role.MIGRANT -> shiftRepository.findByParticipations_User_Id(userId, pageable)
-            else -> shiftRepository.findAll(pageable)
-        }
+        val page = currentUser.id?.let { userId ->
+            when (currentUser.role) {
+                Role.BOSS -> shiftRepository.findByCreatedBy_Id(userId, pageable)
+                Role.INSPECTOR, Role.MIGRANT -> shiftRepository.findByParticipations_User_Id(userId, pageable)
+                else -> shiftRepository.findAll(pageable)
+            }
+        } ?: throw IllegalStateException("User ID cannot be null for persisted entity")
 
         return PagedResponse(
             items = page.content.map { it.toResponse() },
@@ -63,14 +66,7 @@ class ShiftService(
         val upk = upkRepository.findById(UUID.fromString(request.upkId))
             .orElseThrow { ResourceNotFoundException("UPK with id ${request.upkId} not found") }
 
-        if (currentUser.role == Role.BOSS) {
-            if (currentUser.upk == null) {
-                throw ForbiddenException("Boss must be assigned to UPK")
-            }
-            if (upk.id != currentUser.upk!!.id) {
-                throw ForbiddenException("Boss can only create shifts for their own UPK")
-            }
-        }
+        checkBossUpkAccess(currentUser, upk, "create shifts")
 
         val createdBy = userRepository.findById(UUID.fromString(request.createdBy))
             .orElseThrow { ResourceNotFoundException("User with id ${request.createdBy} not found") }
@@ -93,14 +89,7 @@ class ShiftService(
         val upk = upkRepository.findById(UUID.fromString(request.upkId))
             .orElseThrow { ResourceNotFoundException("UPK with id ${request.upkId} not found") }
 
-        if (currentUser.role == Role.BOSS) {
-            if (currentUser.upk == null) {
-                throw ForbiddenException("Boss must be assigned to UPK")
-            }
-            if (upk.id != currentUser.upk!!.id) {
-                throw ForbiddenException("Boss can only update shifts for their own UPK")
-            }
-        }
+        checkBossUpkAccess(currentUser, upk, "update shifts")
 
         val createdBy = userRepository.findById(UUID.fromString(request.createdBy))
             .orElseThrow { ResourceNotFoundException("User with id ${request.createdBy} not found") }
@@ -129,15 +118,7 @@ class ShiftService(
             val upk = upkRepository.findById(UUID.fromString(upkId))
                 .orElseThrow { ResourceNotFoundException("UPK with id $upkId not found") }
 
-            if (currentUser.role == Role.BOSS) {
-                if (currentUser.upk == null) {
-                    throw ForbiddenException("Boss must be assigned to UPK")
-                }
-                if (upk.id != currentUser.upk!!.id) {
-                    throw ForbiddenException("Boss can only update shifts for their own UPK")
-                }
-            }
-
+            checkBossUpkAccess(currentUser, upk, "update shifts")
             shift.upk = upk
         }
         request.createdBy?.let { createdById ->
@@ -164,17 +145,27 @@ class ShiftService(
 
         when (currentUser.role) {
             Role.BOSS -> {
-                if (currentUser.upk == null) {
-                    throw ForbiddenException("Boss must be assigned to UPK")
-                }
-                if (shift.upk.id != currentUser.upk!!.id) {
-                    throw ForbiddenException("Boss can only access shifts from their own UPK")
-                }
+                currentUser.upk?.id?.let { currentUserUpkId ->
+                    if (shift.upk.id != currentUserUpkId) {
+                        throw ForbiddenException("Boss can only access shifts from their own UPK")
+                    }
+                } ?: throw ForbiddenException("Boss must be assigned to UPK")
             }
             Role.INSPECTOR, Role.MIGRANT -> {
                 throw ForbiddenException("Employees can only view shifts through the list endpoint")
             }
             else -> {}
+        }
+    }
+
+    private fun checkBossUpkAccess(currentUser: User, upk: Upk, action: String) {
+        if (currentUser.role == Role.BOSS) {
+            val currentUserUpkId = currentUser.upk?.id
+                ?: throw ForbiddenException("Boss must be assigned to UPK")
+
+            if (upk.id != currentUserUpkId) {
+                throw ForbiddenException("Boss can only $action for their own UPK")
+            }
         }
     }
 }

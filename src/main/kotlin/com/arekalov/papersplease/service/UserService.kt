@@ -8,6 +8,7 @@ import com.arekalov.papersplease.exception.ConflictException
 import com.arekalov.papersplease.exception.ForbiddenException
 import com.arekalov.papersplease.exception.ResourceNotFoundException
 import com.arekalov.papersplease.mapper.toResponse
+import com.arekalov.papersplease.model.entity.Upk
 import com.arekalov.papersplease.model.entity.User
 import com.arekalov.papersplease.model.enums.Role
 import com.arekalov.papersplease.repository.UpkRepository
@@ -77,14 +78,7 @@ class UserService(
                 .orElseThrow { ResourceNotFoundException("UPK with id $it not found") }
         }
 
-        if (currentUser?.role == Role.BOSS) {
-            if (currentUser.upk == null) {
-                throw ForbiddenException("Boss must be assigned to UPK")
-            }
-            if (upk?.id != currentUser.upk!!.id) {
-                throw ForbiddenException("Boss can only create users in their own UPK")
-            }
-        }
+        currentUser?.let { checkBossUpkAccess(it, upk, "create users in") }
 
         val user = User(
             name = request.name,
@@ -117,14 +111,7 @@ class UserService(
                 .orElseThrow { ResourceNotFoundException("UPK with id $it not found") }
         }
 
-        if (currentUser?.role == Role.BOSS) {
-            if (currentUser.upk == null) {
-                throw ForbiddenException("Boss must be assigned to UPK")
-            }
-            if (upk?.id != currentUser.upk!!.id) {
-                throw ForbiddenException("Boss can only assign users to their own UPK")
-            }
-        }
+        currentUser?.let { checkBossUpkAccess(it, upk, "assign users") }
 
         user.apply {
             name = request.name
@@ -160,15 +147,7 @@ class UserService(
             val upk = upkRepository.findById(UUID.fromString(upkId))
                 .orElseThrow { ResourceNotFoundException("UPK with id $upkId not found") }
 
-            if (currentUser?.role == Role.BOSS) {
-                if (currentUser.upk == null) {
-                    throw ForbiddenException("Boss must be assigned to UPK")
-                }
-                if (upk.id != currentUser.upk!!.id) {
-                    throw ForbiddenException("Boss can only assign users to their own UPK")
-                }
-            }
-
+            currentUser?.let { checkBossUpkAccess(it, upk, "assign users") }
             user.upk = upk
         }
 
@@ -190,11 +169,21 @@ class UserService(
             .orElseThrow { ResourceNotFoundException("Current user not found") }
 
         if (currentUser.role == Role.BOSS) {
-            if (currentUser.upk == null) {
-                throw ForbiddenException("Boss must be assigned to UPK")
-            }
-            if (targetUser.upk?.id != currentUser.upk!!.id) {
-                throw ForbiddenException("Boss can only access users from their own UPK")
+            currentUser.upk?.id?.let { currentUserUpkId ->
+                if (targetUser.upk?.id != currentUserUpkId) {
+                    throw ForbiddenException("Boss can only access users from their own UPK")
+                }
+            } ?: throw ForbiddenException("Boss must be assigned to UPK")
+        }
+    }
+
+    private fun checkBossUpkAccess(currentUser: User, upk: Upk?, action: String) {
+        if (currentUser.role == Role.BOSS) {
+            val currentUserUpkId = currentUser.upk?.id
+                ?: throw ForbiddenException("Boss must be assigned to UPK")
+
+            if (upk?.id != currentUserUpkId) {
+                throw ForbiddenException("Boss can only $action to their own UPK")
             }
         }
     }
