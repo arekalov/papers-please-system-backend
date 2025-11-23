@@ -4,7 +4,6 @@ import com.arekalov.papersplease.dto.PagedResponse
 import com.arekalov.papersplease.dto.upk.UpkRequest
 import com.arekalov.papersplease.dto.upk.UpkRequestPartial
 import com.arekalov.papersplease.dto.upk.UpkResponse
-import com.arekalov.papersplease.exception.ConflictException
 import com.arekalov.papersplease.exception.ResourceNotFoundException
 import com.arekalov.papersplease.mapper.toResponse
 import com.arekalov.papersplease.model.entity.Upk
@@ -29,7 +28,7 @@ class UpkService(
         val page = upkRepository.findAll(pageable)
 
         return PagedResponse(
-            items = page.content.map { it.toResponse() },
+            items = page.content.map { it.toResponse(userRepository) },
             total = page.totalElements,
             limit = limit,
             offset = offset,
@@ -40,28 +39,17 @@ class UpkService(
     fun getById(id: String): UpkResponse {
         val upk = upkRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("UPK with id $id not found") }
-        return upk.toResponse()
+        return upk.toResponse(userRepository)
     }
 
     @Transactional
     fun create(request: UpkRequest): UpkResponse {
-        val boss = request.bossId?.let {
-            userRepository.findById(UUID.fromString(it))
-                .orElseThrow { ResourceNotFoundException("User with id $it not found") }
-        } ?: throw ResourceNotFoundException("Boss is required")
-
-        val existingUpk = upkRepository.findByBossId(boss.id!!)
-        if (existingUpk != null) {
-            throw ConflictException("Boss is already assigned to UPK '${existingUpk.name}'")
-        }
-
         val upk = Upk(
             name = request.name,
             region = request.region,
-            boss = boss,
         )
 
-        return upkRepository.save(upk).toResponse()
+        return upkRepository.save(upk).toResponse(userRepository)
     }
 
     @Transactional
@@ -71,19 +59,8 @@ class UpkService(
 
         request.name?.let { upk.name = it }
         request.region?.let { upk.region = it }
-        request.bossId?.let { bossId ->
-            val newBoss = userRepository.findById(UUID.fromString(bossId))
-                .orElseThrow { ResourceNotFoundException("User with id $bossId not found") }
 
-            val existingUpk = upkRepository.findByBossId(newBoss.id!!)
-            if (existingUpk != null && existingUpk.id != upk.id) {
-                throw ConflictException("Boss is already assigned to UPK '${existingUpk.name}'")
-            }
-
-            upk.boss = newBoss
-        }
-
-        return upkRepository.save(upk).toResponse()
+        return upkRepository.save(upk).toResponse(userRepository)
     }
 
     @Transactional

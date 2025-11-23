@@ -10,9 +10,6 @@ data class UpkRequest(
     @field:Size(min = 2, max = 100, message = "Name must be between 2 and 100 characters")
     val name: String,
 
-    @field:NotBlank(message = "Boss ID is required")
-    val bossId: String,
-
     @field:NotNull(message = "Region is required")
     val region: Region,
 )

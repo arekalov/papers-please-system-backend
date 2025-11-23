@@ -1726,7 +1726,6 @@ components:
           type: string
     UpkRequest:
       required:
-      - bossId
       - name
       - region
       type: object
@@ -1734,8 +1733,6 @@ components:
         name:
           maxLength: 100
           minLength: 2
-          type: string
-        bossId:
           type: string
         region:
           type: string
@@ -1745,7 +1742,6 @@ components:
           - PARADIZNA
     UpkResponse:
       required:
-      - bossId
       - id
       - name
       - region
@@ -2252,8 +2248,6 @@ components:
         name:
           maxLength: 100
           minLength: 2
-          type: string
-        bossId:
           type: string
         region:
           type: string

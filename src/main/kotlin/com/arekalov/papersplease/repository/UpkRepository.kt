@@ -9,6 +9,4 @@ import java.util.UUID
 @Repository
 interface UpkRepository : JpaRepository<Upk, UUID> {
     fun findByRegion(region: Region): List<Upk>
-
-    fun findByBossId(bossId: UUID): Upk?
 }
