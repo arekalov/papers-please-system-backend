@@ -1,0 +1,123 @@
+# Papers Please System - Backend
+
+## Описание проекта
+
+Это backend-система управления УПК (учебно-пограничными контрольными пунктами) в стиле игры "Papers, Please". 
+
+Система управляет:
+- **Пользователями** (мигранты, инспекторы, начальники, охрана, администраторы)
+- **УПК** (пограничные пункты) в разных регионах
+- **Сменами** и участием инспекторов в них
+- **Заявками** (тикеты) различных типов с приоритетами и статусами
+- **Документами** (паспорта, визы, разрешения, фото)
+- **Апелляциями** на решения инспекторов
+- **Событиями** и уведомлениями
+
+## Технологический стек
+
+- **Язык**: Kotlin 2.2.21
+- **Framework**: Spring Boot 4.0.0
+- **БД**: PostgreSQL (JPA/Hibernate)
+- **Безопасность**: Spring Security + JWT
+- **Асинхронность**: Kotlin Coroutines
+- **Валидация**: Spring Validation
+- **Линтер**: Detekt
+- **API**: REST + OpenAPI/Swagger
+
+## Правила работы с Cursor
+
+### Git и коммиты
+
+**ВАЖНО**: Никогда не выполняй git commit самостоятельно. Я делаю это сам, явно, когда готов зафиксировать изменения.
+
+Ты можешь:
+- Показывать статус репозитория (`git status`)
+- Просматривать изменения (`git diff`)
+- Предлагать текст коммита
+
+Ты НЕ можешь:
+- Делать `git commit`
+- Делать `git push`
+- Делать `git add` (stage изменения)
+- Изменять git конфигурацию
+
+### Стиль кода Kotlin
+
+Строго следуй идиоматичному Kotlin code style:
+
+#### Общие правила
+- Используй `val` вместо `var` везде, где возможно (immutability first)
+- Предпочитай expression-style вместо statement-style:
+  ```kotlin
+  // Хорошо
+  val result = if (condition) value1 else value2
+  
+  // Плохо
+  val result: String
+  if (condition) {
+      result = value1
+  } else {
+      result = value2
+  }
+  ```
+- Используй `when` вместо множественных `if-else`
+- Применяй trailing commas в многострочных объявлениях
+- Используй named arguments для улучшения читаемости, особенно при вызовах с несколькими параметрами
+
+#### Null-safety
+- Используй safe calls (`?.`) и elvis operator (`?:`)
+- Избегай `!!` (force unwrap) - используй только когда абсолютно уверен
+- Предпочитай `let`, `also`, `apply`, `run` для работы с nullable типами
+
+#### Data classes и collections
+- Используй data classes для DTO и простых моделей данных
+- Предпочитай immutable коллекции (`List`, `Set`, `Map`) вместо mutable (`MutableList`, etc.)
+- Используй collection functions (`map`, `filter`, `flatMap`, `groupBy`, etc.) вместо циклов
+
+#### Extension functions
+- Создавай extension functions для конвертации между типами (Entity ↔ DTO)
+- Группируй связанные extensions в одном файле
+
+#### Spring Boot специфика
+- Используй constructor injection вместо field injection
+- Применяй `@Service`, `@Repository`, `@Controller` аннотации правильно
+- Используй `ResponseEntity` для HTTP ответов с явными статусами
+- Применяй validation annotations на DTO (`@Valid`, `@NotNull`, etc.)
+
+#### Coroutines
+- Используй `suspend` функции для асинхронных операций
+- Применяй structured concurrency (coroutine scopes)
+- Не блокируй основной поток - используй `withContext(Dispatchers.IO)` для I/O операций
+
+#### Naming conventions
+- Classes/Interfaces: `PascalCase`
+- Functions/Variables: `camelCase`
+- Constants: `UPPER_SNAKE_CASE`
+- Packages: `lowercase` без underscores
+
+#### Форматирование
+- Отступы: 4 пробела (не табы)
+- Максимальная длина строки: 120 символов
+- Используй пустые строки для логического разделения блоков кода
+- Импорты: сортируй алфавитно, удаляй неиспользуемые
+
+### Best practices
+
+1. **DRY (Don't Repeat Yourself)**: избегай дублирования кода
+2. **SOLID принципы**: особенно Single Responsibility
+3. **Defensive programming**: валидируй входные данные
+4. **Meaningful names**: имена должны быть самодокументирующими
+5. **Error handling**: используй кастомные исключения и глобальный обработчик
+6. **Logging**: логируй важные события и ошибки
+7. **Testing mindset**: пиши код, который легко тестировать
+
+### Документация
+
+- API документируется через OpenAPI аннотации
+- Сложная логика комментируется KDoc
+- README и документация в папке `docs/`
+
+---
+
+Помни: качество кода важнее скорости. Следуй принципам Clean Code.
+

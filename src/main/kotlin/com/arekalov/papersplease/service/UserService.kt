@@ -92,38 +92,6 @@ class UserService(
     }
 
     @Transactional
-    fun update(currentUserId: String?, id: String, request: UserRequest): UserResponse {
-        val user = userRepository.findById(UUID.fromString(id))
-            .orElseThrow { ResourceNotFoundException("User with id $id not found") }
-
-        currentUserId?.let { checkAccessToUser(it, user) }
-
-        if (request.email != user.email && userRepository.findByEmail(request.email) != null) {
-            throw ConflictException("User with email ${request.email} already exists")
-        }
-
-        val currentUser = currentUserId?.let {
-            userRepository.findById(UUID.fromString(it)).orElse(null)
-        }
-
-        val upk = request.upkId?.let {
-            upkRepository.findById(UUID.fromString(it))
-                .orElseThrow { ResourceNotFoundException("UPK with id $it not found") }
-        }
-
-        currentUser?.let { checkBossUpkAccess(it, upk, "assign users") }
-
-        user.apply {
-            name = request.name
-            email = request.email
-            role = request.role
-            this.upk = upk
-        }
-
-        return userRepository.save(user).toResponse()
-    }
-
-    @Transactional
     fun partialUpdate(currentUserId: String?, id: String, request: UserRequestPartial): UserResponse {
         val user = userRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("User with id $id not found") }

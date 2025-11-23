@@ -90,26 +90,6 @@ class AppealService(
     }
 
     @Transactional
-    fun update(id: String, request: AppealRequest): AppealResponse {
-        val appeal = appealRepository.findById(UUID.fromString(id))
-            .orElseThrow { ResourceNotFoundException("Appeal with id $id not found") }
-
-        val ticket = ticketRepository.findById(UUID.fromString(request.ticketId))
-            .orElseThrow { ResourceNotFoundException("Ticket with id ${request.ticketId} not found") }
-
-        val createdBy = userRepository.findById(UUID.fromString(request.createdBy))
-            .orElseThrow { ResourceNotFoundException("User with id ${request.createdBy} not found") }
-
-        appeal.apply {
-            this.ticket = ticket
-            this.createdBy = createdBy
-            reason = request.comment.orEmpty()
-        }
-
-        return appealRepository.save(appeal).toResponse()
-    }
-
-    @Transactional
     fun partialUpdate(id: String, request: AppealRequestPartial): AppealResponse {
         val appeal = appealRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("Appeal with id $id not found") }

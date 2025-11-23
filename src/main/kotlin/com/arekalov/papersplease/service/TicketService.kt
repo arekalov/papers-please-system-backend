@@ -146,32 +146,6 @@ class TicketService(
     }
 
     @Transactional
-    fun update(id: String, request: TicketRequest): TicketResponse {
-        val ticket = ticketRepository.findById(UUID.fromString(id))
-            .orElseThrow { ResourceNotFoundException("Ticket with id $id not found") }
-
-        val author = userRepository.findById(UUID.fromString(request.authorId))
-            .orElseThrow { ResourceNotFoundException("User with id ${request.authorId} not found") }
-
-        val executor = request.executorId?.let {
-            userRepository.findById(UUID.fromString(it))
-                .orElseThrow { ResourceNotFoundException("User with id $it not found") }
-        }
-
-        ticket.apply {
-            ticketType = request.ticketType
-            status = request.status
-            priority = request.priority
-            deadlineAt = request.deadlineAt
-            this.author = author
-            this.executor = executor
-            updatedAt = Instant.now()
-        }
-
-        return ticketRepository.save(ticket).toResponse()
-    }
-
-    @Transactional
     fun partialUpdate(id: String, request: TicketRequestPartial): TicketResponse {
         val ticket = ticketRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("Ticket with id $id not found") }

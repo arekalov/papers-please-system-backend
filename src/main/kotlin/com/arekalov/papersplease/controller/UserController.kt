@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -46,15 +45,6 @@ class UserController(
         return ResponseEntity.ok(response)
     }
 
-    @PutMapping("/me")
-    fun updateCurrentUser(
-        authentication: Authentication,
-        @Valid @RequestBody request: UserRequest,
-    ): ResponseEntity<UserResponse> {
-        val response = userService.update(null, authentication.name, request)
-        return ResponseEntity.ok(response)
-    }
-
     @PatchMapping("/me")
     fun partialUpdateCurrentUser(
         authentication: Authentication,
@@ -82,17 +72,6 @@ class UserController(
     ): ResponseEntity<UserResponse> {
         val response = userService.create(authentication.name, request)
         return ResponseEntity.status(HttpStatus.CREATED).body(response)
-    }
-
-    @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('BOSS', 'GOD')")
-    fun updateUser(
-        authentication: Authentication,
-        @PathVariable id: String,
-        @Valid @RequestBody request: UserRequest,
-    ): ResponseEntity<UserResponse> {
-        val response = userService.update(authentication.name, id, request)
-        return ResponseEntity.ok(response)
     }
 
     @PatchMapping("/{id}")

@@ -77,33 +77,6 @@ class ShiftService(
     }
 
     @Transactional
-    fun update(currentUserId: String, id: String, request: ShiftRequest): ShiftResponse {
-        val shift = shiftRepository.findById(UUID.fromString(id))
-            .orElseThrow { ResourceNotFoundException("Shift with id $id not found") }
-
-        checkAccessToShift(currentUserId, shift)
-
-        val currentUser = userRepository.findById(UUID.fromString(currentUserId))
-            .orElseThrow { ResourceNotFoundException("Current user not found") }
-
-        val upk = upkRepository.findById(UUID.fromString(request.upkId))
-            .orElseThrow { ResourceNotFoundException("UPK with id ${request.upkId} not found") }
-
-        checkBossUpkAccess(currentUser, upk, "update shifts")
-
-        val createdBy = userRepository.findById(UUID.fromString(request.createdBy))
-            .orElseThrow { ResourceNotFoundException("User with id ${request.createdBy} not found") }
-
-        shift.apply {
-            shiftDate = request.shiftDate
-            this.upk = upk
-            this.createdBy = createdBy
-        }
-
-        return shiftRepository.save(shift).toResponse()
-    }
-
-    @Transactional
     fun partialUpdate(currentUserId: String, id: String, request: ShiftRequestPartial): ShiftResponse {
         val shift = shiftRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("Shift with id $id not found") }

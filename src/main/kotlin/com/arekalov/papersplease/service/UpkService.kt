@@ -57,25 +57,6 @@ class UpkService(
     }
 
     @Transactional
-    fun update(id: String, request: UpkRequest): UpkResponse {
-        val upk = upkRepository.findById(UUID.fromString(id))
-            .orElseThrow { ResourceNotFoundException("UPK with id $id not found") }
-
-        val boss = request.bossId?.let {
-            userRepository.findById(UUID.fromString(it))
-                .orElseThrow { ResourceNotFoundException("User with id $it not found") }
-        } ?: throw ResourceNotFoundException("Boss is required")
-
-        upk.apply {
-            name = request.name
-            region = request.region
-            this.boss = boss
-        }
-
-        return upkRepository.save(upk).toResponse()
-    }
-
-    @Transactional
     fun partialUpdate(id: String, request: UpkRequestPartial): UpkResponse {
         val upk = upkRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("UPK with id $id not found") }
