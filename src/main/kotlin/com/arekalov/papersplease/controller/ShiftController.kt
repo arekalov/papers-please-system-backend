@@ -9,6 +9,7 @@ import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
@@ -19,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import java.time.Instant
 
 @RestController
 @RequestMapping("/api/v1/shifts")
@@ -30,79 +30,62 @@ class ShiftController(
 
     @GetMapping
     fun getAllShifts(
+        authentication: Authentication,
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
     ): ResponseEntity<PagedResponse<ShiftResponse>> {
-        val response = shiftService.getAll(limit, offset)
+        val response = shiftService.getAll(authentication.name, limit, offset)
         return ResponseEntity.ok(response)
     }
 
     @GetMapping("/{id}")
     fun getShiftById(
+        authentication: Authentication,
         @PathVariable id: String,
     ): ResponseEntity<ShiftResponse> {
-        val response = shiftService.getById(id)
+        val response = shiftService.getById(authentication.name, id)
         return ResponseEntity.ok(response)
-    }
-
-    @GetMapping("/by-upk/{upkId}")
-    fun getShiftsByUpk(
-        @PathVariable upkId: String,
-        @RequestParam(defaultValue = "10") limit: Int,
-        @RequestParam(defaultValue = "0") offset: Int,
-    ): ResponseEntity<PagedResponse<ShiftResponse>> {
-        val response = shiftService.getByUpk(upkId, limit, offset)
-        return ResponseEntity.ok(response)
-    }
-
-    @GetMapping("/by-date")
-    fun getShiftByDate(
-        @RequestParam upkId: String,
-        @RequestParam date: Instant,
-    ): ResponseEntity<ShiftResponse?> {
-        val response = shiftService.getByDate(upkId, date)
-        return if (response != null) {
-            ResponseEntity.ok(response)
-        } else {
-            ResponseEntity.notFound().build()
-        }
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('BOSS', 'SECURITY', 'GOD')")
+    @PreAuthorize("hasAnyRole('BOSS', 'GOD')")
     fun createShift(
+        authentication: Authentication,
         @Valid @RequestBody request: ShiftRequest,
     ): ResponseEntity<ShiftResponse> {
-        val response = shiftService.create(request)
+        val response = shiftService.create(authentication.name, request)
         return ResponseEntity.status(HttpStatus.CREATED).body(response)
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('BOSS', 'SECURITY', 'GOD')")
+    @PreAuthorize("hasAnyRole('BOSS', 'GOD')")
     fun updateShift(
+        authentication: Authentication,
         @PathVariable id: String,
         @Valid @RequestBody request: ShiftRequest,
     ): ResponseEntity<ShiftResponse> {
-        val response = shiftService.update(id, request)
+        val response = shiftService.update(authentication.name, id, request)
         return ResponseEntity.ok(response)
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("hasAnyRole('BOSS', 'SECURITY', 'GOD')")
+    @PreAuthorize("hasAnyRole('BOSS', 'GOD')")
     fun partialUpdateShift(
+        authentication: Authentication,
         @PathVariable id: String,
         @Valid @RequestBody request: ShiftRequestPartial,
     ): ResponseEntity<ShiftResponse> {
-        val response = shiftService.partialUpdate(id, request)
+        val response = shiftService.partialUpdate(authentication.name, id, request)
         return ResponseEntity.ok(response)
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('BOSS', 'GOD')")
     fun deleteShift(
+        authentication: Authentication,
         @PathVariable id: String,
     ): ResponseEntity<Unit> {
-        shiftService.delete(id)
+        shiftService.delete(authentication.name, id)
         return ResponseEntity.noContent().build()
     }
 }

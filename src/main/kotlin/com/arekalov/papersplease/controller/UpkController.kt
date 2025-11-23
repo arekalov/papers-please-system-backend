@@ -4,7 +4,6 @@ import com.arekalov.papersplease.dto.PagedResponse
 import com.arekalov.papersplease.dto.upk.UpkRequest
 import com.arekalov.papersplease.dto.upk.UpkRequestPartial
 import com.arekalov.papersplease.dto.upk.UpkResponse
-import com.arekalov.papersplease.model.enums.Region
 import com.arekalov.papersplease.service.UpkService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
@@ -23,12 +22,12 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/v1/upks")
-@PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'GOD')")
 class UpkController(
     private val upkService: UpkService,
 ) {
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('BOSS', 'GOD')")
     fun getAllUpks(
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
@@ -38,20 +37,11 @@ class UpkController(
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('BOSS', 'GOD')")
     fun getUpkById(
         @PathVariable id: String,
     ): ResponseEntity<UpkResponse> {
         val response = upkService.getById(id)
-        return ResponseEntity.ok(response)
-    }
-
-    @GetMapping("/by-region/{region}")
-    fun getUpksByRegion(
-        @PathVariable region: Region,
-        @RequestParam(defaultValue = "10") limit: Int,
-        @RequestParam(defaultValue = "0") offset: Int,
-    ): ResponseEntity<PagedResponse<UpkResponse>> {
-        val response = upkService.getByRegion(region, limit, offset)
         return ResponseEntity.ok(response)
     }
 

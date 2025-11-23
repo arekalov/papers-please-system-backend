@@ -5,6 +5,7 @@ import com.arekalov.papersplease.dto.user.UserRequest
 import com.arekalov.papersplease.dto.user.UserRequestPartial
 import com.arekalov.papersplease.dto.user.UserResponse
 import com.arekalov.papersplease.exception.ConflictException
+import com.arekalov.papersplease.exception.ForbiddenException
 import com.arekalov.papersplease.exception.ResourceNotFoundException
 import com.arekalov.papersplease.mapper.toResponse
 import com.arekalov.papersplease.model.entity.User
@@ -25,9 +26,23 @@ class UserService(
 ) {
 
     @Transactional(readOnly = true)
-    fun getAll(limit: Int, offset: Int): PagedResponse<UserResponse> {
+    fun getAll(currentUserId: String?, limit: Int, offset: Int): PagedResponse<UserResponse> {
         val pageable = PageRequest.of(offset / limit, limit)
-        val page = userRepository.findAll(pageable)
+
+        val currentUser = currentUserId?.let {
+            userRepository.findById(UUID.fromString(it)).orElse(null)
+        }
+
+        val page = if (currentUser?.role == Role.BOSS) {
+            val upkId = currentUser.upk?.id
+            if (upkId != null) {
+                userRepository.findByUpk_Id(upkId, pageable)
+            } else {
+                userRepository.findAll(pageable)
+            }
+        } else {
+            userRepository.findAll(pageable)
+        }
 
         return PagedResponse(
             items = page.content.map { it.toResponse() },
@@ -38,38 +53,37 @@ class UserService(
     }
 
     @Transactional(readOnly = true)
-    fun getById(id: String): UserResponse {
+    fun getById(currentUserId: String?, id: String): UserResponse {
         val user = userRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("User with id $id not found") }
+
+        currentUserId?.let { checkAccessToUser(it, user) }
+
         return user.toResponse()
     }
 
-    @Transactional(readOnly = true)
-    fun getByRole(role: Role, limit: Int, offset: Int): PagedResponse<UserResponse> {
-        val users = userRepository.findByRole(role)
-        val totalCount = users.size.toLong()
-
-        val paginatedUsers = users
-            .drop(offset)
-            .take(limit)
-
-        return PagedResponse(
-            items = paginatedUsers.map { it.toResponse() },
-            total = totalCount,
-            limit = limit,
-            offset = offset,
-        )
-    }
-
     @Transactional
-    fun create(request: UserRequest): UserResponse {
+    fun create(currentUserId: String?, request: UserRequest): UserResponse {
         if (userRepository.findByEmail(request.email) != null) {
             throw ConflictException("User with email ${request.email} already exists")
+        }
+
+        val currentUser = currentUserId?.let {
+            userRepository.findById(UUID.fromString(it)).orElse(null)
         }
 
         val upk = request.upkId?.let {
             upkRepository.findById(UUID.fromString(it))
                 .orElseThrow { ResourceNotFoundException("UPK with id $it not found") }
+        }
+
+        if (currentUser?.role == Role.BOSS) {
+            if (currentUser.upk == null) {
+                throw ForbiddenException("Boss must be assigned to UPK")
+            }
+            if (upk?.id != currentUser.upk!!.id) {
+                throw ForbiddenException("Boss can only create users in their own UPK")
+            }
         }
 
         val user = User(
@@ -84,17 +98,32 @@ class UserService(
     }
 
     @Transactional
-    fun update(id: String, request: UserRequest): UserResponse {
+    fun update(currentUserId: String?, id: String, request: UserRequest): UserResponse {
         val user = userRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("User with id $id not found") }
+
+        currentUserId?.let { checkAccessToUser(it, user) }
 
         if (request.email != user.email && userRepository.findByEmail(request.email) != null) {
             throw ConflictException("User with email ${request.email} already exists")
         }
 
+        val currentUser = currentUserId?.let {
+            userRepository.findById(UUID.fromString(it)).orElse(null)
+        }
+
         val upk = request.upkId?.let {
             upkRepository.findById(UUID.fromString(it))
                 .orElseThrow { ResourceNotFoundException("UPK with id $it not found") }
+        }
+
+        if (currentUser?.role == Role.BOSS) {
+            if (currentUser.upk == null) {
+                throw ForbiddenException("Boss must be assigned to UPK")
+            }
+            if (upk?.id != currentUser.upk!!.id) {
+                throw ForbiddenException("Boss can only assign users to their own UPK")
+            }
         }
 
         user.apply {
@@ -108,9 +137,11 @@ class UserService(
     }
 
     @Transactional
-    fun partialUpdate(id: String, request: UserRequestPartial): UserResponse {
+    fun partialUpdate(currentUserId: String?, id: String, request: UserRequestPartial): UserResponse {
         val user = userRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("User with id $id not found") }
+
+        currentUserId?.let { checkAccessToUser(it, user) }
 
         request.email?.let { newEmail ->
             if (newEmail != user.email && userRepository.findByEmail(newEmail) != null) {
@@ -119,20 +150,52 @@ class UserService(
             user.email = newEmail
         }
 
+        val currentUser = currentUserId?.let {
+            userRepository.findById(UUID.fromString(it)).orElse(null)
+        }
+
         request.name?.let { user.name = it }
         request.role?.let { user.role = it }
         request.upkId?.let { upkId ->
-            user.upk = upkRepository.findById(UUID.fromString(upkId))
+            val upk = upkRepository.findById(UUID.fromString(upkId))
                 .orElseThrow { ResourceNotFoundException("UPK with id $upkId not found") }
+
+            if (currentUser?.role == Role.BOSS) {
+                if (currentUser.upk == null) {
+                    throw ForbiddenException("Boss must be assigned to UPK")
+                }
+                if (upk.id != currentUser.upk!!.id) {
+                    throw ForbiddenException("Boss can only assign users to their own UPK")
+                }
+            }
+
+            user.upk = upk
         }
 
         return userRepository.save(user).toResponse()
     }
 
     @Transactional
-    fun delete(id: String) {
+    fun delete(currentUserId: String?, id: String) {
         val user = userRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("User with id $id not found") }
+
+        currentUserId?.let { checkAccessToUser(it, user) }
+
         userRepository.delete(user)
+    }
+
+    private fun checkAccessToUser(currentUserId: String, targetUser: User) {
+        val currentUser = userRepository.findById(UUID.fromString(currentUserId))
+            .orElseThrow { ResourceNotFoundException("Current user not found") }
+
+        if (currentUser.role == Role.BOSS) {
+            if (currentUser.upk == null) {
+                throw ForbiddenException("Boss must be assigned to UPK")
+            }
+            if (targetUser.upk?.id != currentUser.upk!!.id) {
+                throw ForbiddenException("Boss can only access users from their own UPK")
+            }
+        }
     }
 }

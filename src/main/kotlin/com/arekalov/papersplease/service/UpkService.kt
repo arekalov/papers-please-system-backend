@@ -7,7 +7,6 @@ import com.arekalov.papersplease.dto.upk.UpkResponse
 import com.arekalov.papersplease.exception.ResourceNotFoundException
 import com.arekalov.papersplease.mapper.toResponse
 import com.arekalov.papersplease.model.entity.Upk
-import com.arekalov.papersplease.model.enums.Region
 import com.arekalov.papersplease.repository.UpkRepository
 import com.arekalov.papersplease.repository.UserRepository
 import org.springframework.data.domain.PageRequest
@@ -39,23 +38,6 @@ class UpkService(
         val upk = upkRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("UPK with id $id not found") }
         return upk.toResponse()
-    }
-
-    @Transactional(readOnly = true)
-    fun getByRegion(region: Region, limit: Int, offset: Int): PagedResponse<UpkResponse> {
-        val upks = upkRepository.findByRegion(region)
-        val totalCount = upks.size.toLong()
-
-        val paginatedUpks = upks
-            .drop(offset)
-            .take(limit)
-
-        return PagedResponse(
-            items = paginatedUpks.map { it.toResponse() },
-            total = totalCount,
-            limit = limit,
-            offset = offset,
-        )
     }
 
     @Transactional
