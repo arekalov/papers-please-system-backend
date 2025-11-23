@@ -130,18 +130,19 @@ fun TicketRequest.toEntity(
 
 fun Document.toResponse() = DocumentResponse(
     id = id.toString(),
-    userId = "",
+    userId = owner.id.toString(),
     documentType = documentType,
     body = emptyMap(),
     validFrom = issuedAt,
     validUntil = expiresAt,
 )
 
-fun DocumentRequest.toEntity() = Document(
+fun DocumentRequest.toEntity(owner: User) = Document(
     documentType = documentType,
     body = "",
     issuedAt = validFrom ?: Instant.now(),
     expiresAt = validUntil,
+    owner = owner,
 )
 
 fun Notification.toResponse() = NotificationResponse(

@@ -6,7 +6,9 @@ import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.FetchType
+import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToMany
+import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import java.time.Instant
 
@@ -28,6 +30,10 @@ class Document(
 
     @Column(name = "uploaded_at", nullable = false)
     var uploadedAt: Instant = Instant.now(),
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id", nullable = false)
+    var owner: User,
 ) : BaseEntity() {
     @ManyToMany(mappedBy = "documents", fetch = FetchType.LAZY)
     val tickets: MutableSet<Ticket> = mutableSetOf()
