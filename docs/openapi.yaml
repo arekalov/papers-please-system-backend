@@ -1751,8 +1751,6 @@ components:
           type: string
         name:
           type: string
-        bossId:
-          type: string
         region:
           type: string
           enum:
@@ -1855,29 +1853,31 @@ components:
           type: string
     ShiftRequest:
       required:
-      - createdBy
-      - shiftDate
       - upkId
       type: object
       properties:
-        shiftDate:
+        startTime:
           type: string
           format: date-time
-        createdBy:
+        endTime:
           type: string
+          format: date-time
         upkId:
           type: string
     ShiftResponse:
       required:
       - createdBy
       - id
-      - shiftDate
+      - startTime
       - upkId
       type: object
       properties:
         id:
           type: string
-        shiftDate:
+        startTime:
+          type: string
+          format: date-time
+        endTime:
           type: string
           format: date-time
         createdBy:
@@ -2096,6 +2096,7 @@ components:
       - email
       - name
       - password
+      - region
       type: object
       properties:
         name:
@@ -2108,8 +2109,12 @@ components:
           maxLength: 100
           minLength: 8
           type: string
-        upkId:
+        region:
           type: string
+          enum:
+          - ORVECH_VONOR
+          - EAST_GRESTIN
+          - PARADIZNA
     AuthResponse:
       required:
       - accessToken
@@ -2294,11 +2299,12 @@ components:
     ShiftRequestPartial:
       type: object
       properties:
-        shiftDate:
+        startTime:
           type: string
           format: date-time
-        createdBy:
+        endTime:
           type: string
+          format: date-time
         upkId:
           type: string
     ParticipationRequestPartial:

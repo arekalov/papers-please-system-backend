@@ -12,11 +12,17 @@ import java.util.UUID
 interface ShiftRepository : JpaRepository<Shift, UUID> {
     fun findByUpk_Id(upkId: UUID): List<Shift>
 
-    fun findByShiftDateAndUpk_Id(shiftDate: Instant, upkId: UUID): Shift?
+    fun findByUpk_Id(upkId: UUID, pageable: Pageable): Page<Shift>
+
+    fun findByStartTimeAndUpk_Id(startTime: Instant, upkId: UUID): Shift?
 
     fun findByCreatedBy_Id(createdById: UUID): List<Shift>
 
     fun findByCreatedBy_Id(createdById: UUID, pageable: Pageable): Page<Shift>
 
     fun findByParticipations_User_Id(userId: UUID, pageable: Pageable): Page<Shift>
+
+    fun findByEndTimeIsNull(): List<Shift>
+
+    fun findByEndTimeIsNull(pageable: Pageable): Page<Shift>
 }

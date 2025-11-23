@@ -12,10 +12,18 @@ config:
   warningsAsErrors: false
 
 comments:
-  active: false
+  active: true
+  AbsentOrWrongFileLicense:
+    active: false
   CommentOverPrivateFunction:
     active: false
   CommentOverPrivateProperty:
+    active: false
+  DeprecatedBlockTag:
+    active: false
+  EndOfSentenceFormat:
+    active: false
+  OutdatedDocumentation:
     active: false
   UndocumentedPublicClass:
     active: false
@@ -265,7 +273,11 @@ style:
   ExpressionBodySyntax:
     active: false
   ForbiddenComment:
-    active: false
+    active: true
+    autoCorrect: true
+    comments:
+      - value: '.*'
+    allowedPatterns: ''
   ForbiddenImport:
     active: false
   FunctionOnlyReturningConstant:

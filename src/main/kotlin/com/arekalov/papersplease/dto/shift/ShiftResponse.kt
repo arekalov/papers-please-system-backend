@@ -4,7 +4,8 @@ import java.time.Instant
 
 data class ShiftResponse(
     val id: String,
-    val shiftDate: Instant,
+    val startTime: Instant,
+    val endTime: Instant?,
     val createdBy: String,
     val upkId: String,
 )

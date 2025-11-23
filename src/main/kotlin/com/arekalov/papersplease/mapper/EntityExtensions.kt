@@ -12,7 +12,6 @@ import com.arekalov.papersplease.dto.notification.NotificationRequest
 import com.arekalov.papersplease.dto.notification.NotificationResponse
 import com.arekalov.papersplease.dto.participation.ParticipationRequest
 import com.arekalov.papersplease.dto.participation.ParticipationResponse
-import com.arekalov.papersplease.dto.shift.ShiftRequest
 import com.arekalov.papersplease.dto.shift.ShiftResponse
 import com.arekalov.papersplease.dto.ticket.TicketRequest
 import com.arekalov.papersplease.dto.ticket.TicketResponse
@@ -63,15 +62,10 @@ fun UpkRequest.toEntity() = Upk(
 
 fun Shift.toResponse() = ShiftResponse(
     id = id.toString(),
-    shiftDate = shiftDate,
+    startTime = startTime,
+    endTime = endTime,
     createdBy = createdBy.id.toString(),
     upkId = upk.id.toString(),
-)
-
-fun ShiftRequest.toEntity(upk: Upk, createdBy: User) = Shift(
-    shiftDate = shiftDate,
-    createdBy = createdBy,
-    upk = upk,
 )
 
 fun Participation.toResponse() = ParticipationResponse(
