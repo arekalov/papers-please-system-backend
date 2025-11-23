@@ -1,20 +1,17 @@
 package com.arekalov.papersplease.controller
 
 import com.arekalov.papersplease.dto.PagedResponse
-import com.arekalov.papersplease.dto.notification.NotificationRequest
 import com.arekalov.papersplease.dto.notification.NotificationRequestPartial
 import com.arekalov.papersplease.dto.notification.NotificationResponse
-import com.arekalov.papersplease.model.enums.NotificationType
 import com.arekalov.papersplease.service.NotificationService
 import jakarta.validation.Valid
-import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -28,11 +25,12 @@ class NotificationController(
 ) {
 
     @GetMapping
-    fun getAllNotifications(
+    fun getMyNotifications(
+        authentication: Authentication,
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
     ): ResponseEntity<PagedResponse<NotificationResponse>> {
-        val response = notificationService.getAll(limit, offset)
+        val response = notificationService.getByUser(authentication.name, limit, offset)
         return ResponseEntity.ok(response)
     }
 
@@ -44,37 +42,8 @@ class NotificationController(
         return ResponseEntity.ok(response)
     }
 
-    @GetMapping("/by-user/{userId}")
-    fun getNotificationsByUser(
-        @PathVariable userId: String,
-        @RequestParam(defaultValue = "10") limit: Int,
-        @RequestParam(defaultValue = "0") offset: Int,
-    ): ResponseEntity<PagedResponse<NotificationResponse>> {
-        val response = notificationService.getByUser(userId, limit, offset)
-        return ResponseEntity.ok(response)
-    }
-
-    @GetMapping("/by-type/{type}")
-    fun getNotificationsByType(
-        @PathVariable type: NotificationType,
-        @RequestParam(defaultValue = "10") limit: Int,
-        @RequestParam(defaultValue = "0") offset: Int,
-    ): ResponseEntity<PagedResponse<NotificationResponse>> {
-        val response = notificationService.getByType(type, limit, offset)
-        return ResponseEntity.ok(response)
-    }
-
-    @PostMapping
-    @PreAuthorize("hasAnyRole('BOSS', 'SECURITY', 'GOD')")
-    fun createNotification(
-        @Valid @RequestBody request: NotificationRequest,
-    ): ResponseEntity<NotificationResponse> {
-        val response = notificationService.create(request)
-        return ResponseEntity.status(HttpStatus.CREATED).body(response)
-    }
-
     @PatchMapping("/{id}")
-    fun partialUpdateNotification(
+    fun markAsRead(
         @PathVariable id: String,
         @Valid @RequestBody request: NotificationRequestPartial,
     ): ResponseEntity<NotificationResponse> {

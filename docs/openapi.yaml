@@ -376,56 +376,17 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ParticipationResponse"
-  /api/v1/notifications:
-    get:
-      tags:
-      - notification-controller
-      operationId: getAllNotifications
-      parameters:
-      - name: limit
-        in: query
-        required: false
-        schema:
-          type: integer
-          format: int32
-          default: 10
-      - name: offset
-        in: query
-        required: false
-        schema:
-          type: integer
-          format: int32
-          default: 0
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/PagedResponseNotificationResponse"
-    post:
-      tags:
-      - notification-controller
-      operationId: createNotification
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/NotificationRequest"
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/NotificationResponse"
   /api/v1/events:
     get:
       tags:
       - event-controller
       operationId: getAllEvents
       parameters:
+      - name: shiftId
+        in: query
+        required: false
+        schema:
+          type: string
       - name: limit
         in: query
         required: false
@@ -942,7 +903,7 @@ paths:
     patch:
       tags:
       - notification-controller
-      operationId: partialUpdateNotification
+      operationId: markAsRead
       parameters:
       - name: id
         in: path
@@ -1118,17 +1079,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/DocumentResponse"
-  /api/v1/notifications/by-user/{userId}:
+  /api/v1/notifications:
     get:
       tags:
       - notification-controller
-      operationId: getNotificationsByUser
+      operationId: getMyNotifications
       parameters:
-      - name: userId
-        in: path
-        required: true
-        schema:
-          type: string
       - name: limit
         in: query
         required: false
@@ -1150,76 +1106,6 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/PagedResponseNotificationResponse"
-  /api/v1/notifications/by-type/{type}:
-    get:
-      tags:
-      - notification-controller
-      operationId: getNotificationsByType
-      parameters:
-      - name: type
-        in: path
-        required: true
-        schema:
-          type: string
-          enum:
-          - TICKET_STATUS_CHANGE
-          - TICKET_ASSIGNED
-          - SHIFT_INVITATION
-          - APPEAL_RESULT
-          - EVENT_UPDATE
-      - name: limit
-        in: query
-        required: false
-        schema:
-          type: integer
-          format: int32
-          default: 10
-      - name: offset
-        in: query
-        required: false
-        schema:
-          type: integer
-          format: int32
-          default: 0
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/PagedResponseNotificationResponse"
-  /api/v1/events/by-shift/{shiftId}:
-    get:
-      tags:
-      - event-controller
-      operationId: getEventsByShift
-      parameters:
-      - name: shiftId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: limit
-        in: query
-        required: false
-        schema:
-          type: integer
-          format: int32
-          default: 10
-      - name: offset
-        in: query
-        required: false
-        schema:
-          type: integer
-          format: int32
-          default: 0
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/PagedResponseEventResponse"
 components:
   schemas:
     UserRequest:
@@ -1522,58 +1408,6 @@ components:
           - WORK
           - TRANSIT
           - SPECIAL
-    NotificationRequest:
-      required:
-      - message
-      - notificationType
-      - userId
-      type: object
-      properties:
-        userId:
-          type: string
-        relatedTicketId:
-          type: string
-        message:
-          type: string
-        notificationType:
-          type: string
-          enum:
-          - TICKET_STATUS_CHANGE
-          - TICKET_ASSIGNED
-          - SHIFT_INVITATION
-          - APPEAL_RESULT
-          - EVENT_UPDATE
-    NotificationResponse:
-      required:
-      - id
-      - isRead
-      - message
-      - notificationType
-      - sentAt
-      - userId
-      type: object
-      properties:
-        id:
-          type: string
-        userId:
-          type: string
-        relatedTicketId:
-          type: string
-        message:
-          type: string
-        notificationType:
-          type: string
-          enum:
-          - TICKET_STATUS_CHANGE
-          - TICKET_ASSIGNED
-          - SHIFT_INVITATION
-          - APPEAL_RESULT
-          - EVENT_UPDATE
-        sentAt:
-          type: string
-          format: date-time
-        isRead:
-          type: boolean
     EventRequest:
       required:
       - description
@@ -1871,13 +1705,44 @@ components:
         notificationType:
           type: string
           enum:
-          - TICKET_STATUS_CHANGE
           - TICKET_ASSIGNED
-          - SHIFT_INVITATION
+          - TICKET_UPDATED
+          - SHIFT_STARTED
           - APPEAL_RESULT
           - EVENT_UPDATE
         message:
           type: string
+        isRead:
+          type: boolean
+    NotificationResponse:
+      required:
+      - id
+      - isRead
+      - message
+      - notificationType
+      - sentAt
+      - userId
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        relatedTicketId:
+          type: string
+        message:
+          type: string
+        notificationType:
+          type: string
+          enum:
+          - TICKET_ASSIGNED
+          - TICKET_UPDATED
+          - SHIFT_STARTED
+          - APPEAL_RESULT
+          - EVENT_UPDATE
+        sentAt:
+          type: string
+          format: date-time
         isRead:
           type: boolean
     EventRequestPartial:

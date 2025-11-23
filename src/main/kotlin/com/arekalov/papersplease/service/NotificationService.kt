@@ -7,8 +7,10 @@ import com.arekalov.papersplease.dto.notification.NotificationResponse
 import com.arekalov.papersplease.exception.ResourceNotFoundException
 import com.arekalov.papersplease.mapper.toEntity
 import com.arekalov.papersplease.mapper.toResponse
+import com.arekalov.papersplease.model.entity.Notification
 import com.arekalov.papersplease.model.enums.NotificationType
 import com.arekalov.papersplease.repository.NotificationRepository
+import com.arekalov.papersplease.repository.ShiftRepository
 import com.arekalov.papersplease.repository.UserRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
@@ -19,6 +21,7 @@ import java.util.UUID
 class NotificationService(
     private val notificationRepository: NotificationRepository,
     private val userRepository: UserRepository,
+    private val shiftRepository: ShiftRepository,
 ) {
 
     @Transactional(readOnly = true)
@@ -114,5 +117,31 @@ class NotificationService(
         val notification = notificationRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("Notification with id $id not found") }
         notificationRepository.delete(notification)
+    }
+
+    @Transactional
+    fun createSystemNotification(userId: UUID, type: NotificationType, message: String, shiftId: UUID? = null) {
+        val user = userRepository.findById(userId)
+            .orElseThrow { ResourceNotFoundException("User with id $userId not found") }
+
+        val shift = shiftId?.let {
+            shiftRepository.findById(it).orElse(null)
+        }
+
+        val notification = Notification(
+            notificationType = type,
+            user = user,
+            message = message,
+            isRead = false,
+            shift = shift,
+        )
+
+        notificationRepository.save(notification)
+    }
+
+    @Transactional
+    fun deleteByShift(shiftId: UUID) {
+        val notifications = notificationRepository.findByShift_Id(shiftId)
+        notificationRepository.deleteAll(notifications)
     }
 }

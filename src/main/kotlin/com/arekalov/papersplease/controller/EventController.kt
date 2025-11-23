@@ -30,10 +30,15 @@ class EventController(
     @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'GOD')")
     fun getAllEvents(
         authentication: Authentication,
+        @RequestParam(required = false) shiftId: String?,
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
     ): ResponseEntity<PagedResponse<EventResponse>> {
-        val response = eventService.getAll(authentication.name, limit, offset)
+        val response = if (shiftId != null) {
+            eventService.getByShift(authentication.name, shiftId, limit, offset)
+        } else {
+            eventService.getAll(authentication.name, limit, offset)
+        }
         return ResponseEntity.ok(response)
     }
 
@@ -44,18 +49,6 @@ class EventController(
         @PathVariable id: String,
     ): ResponseEntity<EventResponse> {
         val response = eventService.getById(authentication.name, id)
-        return ResponseEntity.ok(response)
-    }
-
-    @GetMapping("/by-shift/{shiftId}")
-    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'GOD')")
-    fun getEventsByShift(
-        authentication: Authentication,
-        @PathVariable shiftId: String,
-        @RequestParam(defaultValue = "10") limit: Int,
-        @RequestParam(defaultValue = "0") offset: Int,
-    ): ResponseEntity<PagedResponse<EventResponse>> {
-        val response = eventService.getByShift(authentication.name, shiftId, limit, offset)
         return ResponseEntity.ok(response)
     }
 

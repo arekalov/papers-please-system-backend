@@ -11,6 +11,7 @@ import com.arekalov.papersplease.mapper.toEntity
 import com.arekalov.papersplease.mapper.toResponse
 import com.arekalov.papersplease.model.entity.Ticket
 import com.arekalov.papersplease.model.entity.User
+import com.arekalov.papersplease.model.enums.NotificationType
 import com.arekalov.papersplease.model.enums.Priority
 import com.arekalov.papersplease.model.enums.Role
 import com.arekalov.papersplease.model.enums.TicketStatus
@@ -32,6 +33,7 @@ class TicketService(
     private val userRepository: UserRepository,
     private val shiftRepository: ShiftRepository,
     private val documentRepository: DocumentRepository,
+    private val notificationService: NotificationService,
 ) {
 
     @Transactional(readOnly = true)
@@ -216,7 +218,17 @@ class TicketService(
 
         val ticket = request.toEntity(author, subject, executor, shift)
 
-        return ticketRepository.save(ticket).toResponse()
+        val savedTicket = ticketRepository.save(ticket)
+
+        executor?.let {
+            notificationService.createSystemNotification(
+                userId = it.id!!,
+                type = NotificationType.TICKET_ASSIGNED,
+                message = "You have been assigned to ticket #${savedTicket.id}: ${savedTicket.description}",
+            )
+        }
+
+        return savedTicket.toResponse()
     }
 
     @Transactional
@@ -228,6 +240,8 @@ class TicketService(
             .orElseThrow { ResourceNotFoundException("Ticket with id $id not found") }
 
         checkUpdateAccess(currentUser, ticket)
+
+        val oldExecutorId = ticket.executor?.id
 
         request.ticketType?.let { ticket.ticketType = it }
         request.status?.let { ticket.status = it }
@@ -247,7 +261,23 @@ class TicketService(
 
         ticket.updatedAt = Instant.now()
 
-        return ticketRepository.save(ticket).toResponse()
+        val savedTicket = ticketRepository.save(ticket)
+
+        if (ticket.executor != null && ticket.executor?.id != oldExecutorId) {
+            notificationService.createSystemNotification(
+                userId = ticket.executor!!.id!!,
+                type = NotificationType.TICKET_ASSIGNED,
+                message = "You have been assigned to ticket #${savedTicket.id}: ${savedTicket.description}",
+            )
+        } else if (ticket.executor != null && oldExecutorId == ticket.executor?.id) {
+            notificationService.createSystemNotification(
+                userId = ticket.executor!!.id!!,
+                type = NotificationType.TICKET_UPDATED,
+                message = "Your ticket #${savedTicket.id} has been updated",
+            )
+        }
+
+        return savedTicket.toResponse()
     }
 
     @Transactional

@@ -11,6 +11,7 @@ import com.arekalov.papersplease.mapper.toEntity
 import com.arekalov.papersplease.mapper.toResponse
 import com.arekalov.papersplease.model.entity.Participation
 import com.arekalov.papersplease.model.entity.Upk
+import com.arekalov.papersplease.model.enums.NotificationType
 import com.arekalov.papersplease.model.enums.Role
 import com.arekalov.papersplease.repository.ParticipationRepository
 import com.arekalov.papersplease.repository.ShiftRepository
@@ -23,8 +24,9 @@ import java.util.UUID
 @Service
 class ParticipationService(
     private val participationRepository: ParticipationRepository,
-    private val shiftRepository: ShiftRepository,
     private val userRepository: UserRepository,
+    private val shiftRepository: ShiftRepository,
+    private val notificationService: NotificationService,
 ) {
 
     @Transactional(readOnly = true)
@@ -168,7 +170,16 @@ class ParticipationService(
 
         val participation = request.toEntity(shift, user)
 
-        return participationRepository.save(participation).toResponse()
+        val savedParticipation = participationRepository.save(participation)
+
+        notificationService.createSystemNotification(
+            userId = user.id!!,
+            type = NotificationType.SHIFT_STARTED,
+            message = "You have been assigned to shift at ${shift.upk.name} (${shift.startTime} - ${shift.endTime})",
+            shiftId = shift.id!!,
+        )
+
+        return savedParticipation.toResponse()
     }
 
     @Transactional
@@ -217,6 +228,8 @@ class ParticipationService(
             .orElseThrow { ResourceNotFoundException("Participation with id $id not found") }
 
         checkAccessToUpk(currentUser, participation.shift.upk)
+
+        notificationService.deleteByShift(participation.shift.id!!)
 
         participationRepository.delete(participation)
     }

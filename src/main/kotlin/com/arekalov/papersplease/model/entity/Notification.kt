@@ -30,4 +30,8 @@ class Notification(
 
     @Column(name = "created_at", nullable = false)
     var createdAt: Instant = Instant.now(),
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "shift_id")
+    var shift: Shift? = null,
 ) : BaseEntity()

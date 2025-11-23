@@ -23,6 +23,8 @@ interface NotificationRepository : JpaRepository<Notification, UUID> {
 
     fun findByNotificationType(type: NotificationType, pageable: Pageable): Page<Notification>
 
+    fun findByShift_Id(shiftId: UUID): List<Notification>
+
     @Modifying
     @Query("UPDATE Notification n SET n.isRead = true WHERE n.user.id = :userId")
     fun markAllAsReadByUserId(@Param("userId") userId: UUID)
