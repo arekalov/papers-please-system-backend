@@ -90,6 +90,9 @@ class DocumentService(
         checkUpdateAccess(currentUser, document)
 
         request.documentType?.let { document.documentType = it }
+        request.body?.let {
+            document.body = com.fasterxml.jackson.module.kotlin.jacksonObjectMapper().writeValueAsString(it)
+        }
         request.validFrom?.let { document.issuedAt = it }
         request.validUntil?.let { document.expiresAt = it }
 

@@ -3,6 +3,7 @@ package com.arekalov.papersplease.security
 import com.arekalov.papersplease.security.Roles.BOSS
 import com.arekalov.papersplease.security.Roles.GOD
 import com.arekalov.papersplease.security.Roles.INSPECTOR
+import com.arekalov.papersplease.security.Roles.MIGRANT
 import com.arekalov.papersplease.security.Roles.SECURITY
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -57,7 +58,7 @@ class SecurityConfig(
                     // Ticket endpoints
                     .requestMatchers("/api/v1/tickets/**").hasAnyRole(INSPECTOR, BOSS, SECURITY, GOD)
                     // Document endpoints
-                    .requestMatchers("/api/v1/documents/**").hasAnyRole(INSPECTOR, BOSS, SECURITY, GOD)
+                    .requestMatchers("/api/v1/documents/**").hasAnyRole(INSPECTOR, BOSS, SECURITY, MIGRANT, GOD)
                     // Appeal endpoints
                     .requestMatchers("/api/v1/appeals/**").hasAnyRole(BOSS, SECURITY, GOD)
                     // Notification endpoints (all authenticated users)

@@ -128,22 +128,39 @@ fun TicketRequest.toEntity(
     resolution = null,
 )
 
-fun Document.toResponse() = DocumentResponse(
-    id = id.toString(),
-    userId = owner.id.toString(),
-    documentType = documentType,
-    body = emptyMap(),
-    validFrom = issuedAt,
-    validUntil = expiresAt,
-)
+fun Document.toResponse(): DocumentResponse {
+    val bodyMap = try {
+        com.fasterxml.jackson.module.kotlin.jacksonObjectMapper().readValue(
+            body,
+            object : com.fasterxml.jackson.core.type.TypeReference<Map<String, Any>>() {},
+        )
+    } catch (e: com.fasterxml.jackson.core.JsonProcessingException) {
+        org.slf4j.LoggerFactory.getLogger(Document::class.java)
+            .warn("Failed to parse document body as JSON: {}", e.message)
+        emptyMap()
+    }
 
-fun DocumentRequest.toEntity(owner: User) = Document(
-    documentType = documentType,
-    body = "",
-    issuedAt = validFrom ?: Instant.now(),
-    expiresAt = validUntil,
-    owner = owner,
-)
+    return DocumentResponse(
+        id = id.toString(),
+        userId = owner.id.toString(),
+        documentType = documentType,
+        body = bodyMap,
+        validFrom = issuedAt,
+        validUntil = expiresAt,
+    )
+}
+
+fun DocumentRequest.toEntity(owner: User): Document {
+    val bodyJson = com.fasterxml.jackson.module.kotlin.jacksonObjectMapper().writeValueAsString(body)
+
+    return Document(
+        documentType = documentType,
+        body = bodyJson,
+        issuedAt = validFrom ?: Instant.now(),
+        expiresAt = validUntil,
+        owner = owner,
+    )
+}
 
 fun Notification.toResponse() = NotificationResponse(
     id = id.toString(),
