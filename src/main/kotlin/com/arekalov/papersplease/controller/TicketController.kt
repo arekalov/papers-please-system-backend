@@ -98,7 +98,7 @@ class TicketController(
     }
 
     @GetMapping("/{id}/documents")
-    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'MIGRANT', 'GOD')")
+    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'GOD')")
     fun getTicketDocuments(
         authentication: Authentication,
         @PathVariable id: String,
@@ -124,13 +124,13 @@ class TicketController(
         authentication: Authentication,
         @PathVariable id: String,
         @PathVariable documentId: String,
-    ): ResponseEntity<TicketResponse> {
-        val response = ticketService.removeDocument(authentication.name, id, documentId)
-        return ResponseEntity.ok(response)
+    ): ResponseEntity<Unit> {
+        ticketService.removeDocument(authentication.name, id, documentId)
+        return ResponseEntity.noContent().build()
     }
 
     @GetMapping("/{id}/related")
-    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'MIGRANT', 'GOD')")
+    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'GOD')")
     fun getRelatedTickets(
         authentication: Authentication,
         @PathVariable id: String,
@@ -156,8 +156,8 @@ class TicketController(
         authentication: Authentication,
         @PathVariable id: String,
         @PathVariable relatedTicketId: String,
-    ): ResponseEntity<TicketResponse> {
-        val response = ticketService.removeRelatedTicket(authentication.name, id, relatedTicketId)
-        return ResponseEntity.ok(response)
+    ): ResponseEntity<Unit> {
+        ticketService.removeRelatedTicket(authentication.name, id, relatedTicketId)
+        return ResponseEntity.noContent().build()
     }
 }

@@ -322,7 +322,7 @@ class TicketService(
     }
 
     @Transactional
-    fun removeDocument(currentUserId: String, ticketId: String, documentId: String): TicketResponse {
+    fun removeDocument(currentUserId: String, ticketId: String, documentId: String) {
         val currentUser = userRepository.findById(UUID.fromString(currentUserId))
             .orElseThrow { ResourceNotFoundException("Current user not found") }
 
@@ -337,7 +337,7 @@ class TicketService(
         ticket.documents.remove(document)
         ticket.updatedAt = Instant.now()
 
-        return ticketRepository.save(ticket).toResponse()
+        ticketRepository.save(ticket)
     }
 
     @Transactional(readOnly = true)
@@ -390,7 +390,7 @@ class TicketService(
     }
 
     @Transactional
-    fun removeRelatedTicket(currentUserId: String, ticketId: String, relatedTicketId: String): TicketResponse {
+    fun removeRelatedTicket(currentUserId: String, ticketId: String, relatedTicketId: String) {
         val currentUser = userRepository.findById(UUID.fromString(currentUserId))
             .orElseThrow { ResourceNotFoundException("Current user not found") }
 
@@ -405,6 +405,6 @@ class TicketService(
         ticket.relatedTickets.remove(relatedTicket)
         ticket.updatedAt = Instant.now()
 
-        return ticketRepository.save(ticket).toResponse()
+        ticketRepository.save(ticket)
     }
 }
