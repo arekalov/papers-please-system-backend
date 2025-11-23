@@ -31,9 +31,7 @@ import com.arekalov.papersplease.model.entity.Upk
 import com.arekalov.papersplease.model.entity.User
 import com.arekalov.papersplease.model.enums.AppealDecision
 import com.arekalov.papersplease.model.enums.Priority
-import com.arekalov.papersplease.model.enums.Role
 import com.arekalov.papersplease.model.enums.TicketStatus
-import com.arekalov.papersplease.repository.UserRepository
 import java.time.Instant
 
 fun User.toResponse() = UserResponse(
@@ -52,10 +50,9 @@ fun UserRequest.toEntity(upk: Upk?) = User(
     upk = upk,
 )
 
-fun Upk.toResponse(userRepository: UserRepository) = UpkResponse(
+fun Upk.toResponse() = UpkResponse(
     id = id.toString(),
     name = name,
-    bossId = userRepository.findByRoleAndUpk_Id(Role.BOSS, id!!).firstOrNull()?.id?.toString(),
     region = region,
 )
 

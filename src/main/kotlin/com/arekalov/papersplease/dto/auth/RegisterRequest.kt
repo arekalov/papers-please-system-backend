@@ -1,8 +1,9 @@
 package com.arekalov.papersplease.dto.auth
 
-import com.arekalov.papersplease.validation.ValidUUID
+import com.arekalov.papersplease.model.enums.Region
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 
 data class RegisterRequest(
@@ -18,6 +19,6 @@ data class RegisterRequest(
     @field:Size(min = 8, max = 100, message = "Password must be between 8 and 100 characters")
     val password: String,
 
-    @field:ValidUUID(message = "UPK ID must be a valid UUID")
-    val upkId: String? = null,
+    @field:NotNull(message = "Region is required")
+    val region: Region,
 )

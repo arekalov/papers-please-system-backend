@@ -36,10 +36,11 @@ class AuthService(
             throw ConflictException("User with email ${request.email} already exists")
         }
 
-        val upk = request.upkId?.let {
-            upkRepository.findById(UUID.fromString(it))
-                .orElseThrow { ResourceNotFoundException("UPK with id $it not found") }
-        }
+        val upk = upkRepository.findByRegion(request.region).firstOrNull()
+            ?: throw ResourceNotFoundException(
+                "UPK not found for region ${request.region}." +
+                    " Please contact administrator.",
+            )
 
         val user = User(
             name = request.name,

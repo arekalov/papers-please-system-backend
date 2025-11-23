@@ -4,11 +4,11 @@ import com.arekalov.papersplease.dto.PagedResponse
 import com.arekalov.papersplease.dto.upk.UpkRequest
 import com.arekalov.papersplease.dto.upk.UpkRequestPartial
 import com.arekalov.papersplease.dto.upk.UpkResponse
+import com.arekalov.papersplease.exception.ConflictException
 import com.arekalov.papersplease.exception.ResourceNotFoundException
 import com.arekalov.papersplease.mapper.toResponse
 import com.arekalov.papersplease.model.entity.Upk
 import com.arekalov.papersplease.repository.UpkRepository
-import com.arekalov.papersplease.repository.UserRepository
 import jakarta.persistence.EntityManager
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
@@ -18,7 +18,6 @@ import java.util.UUID
 @Service
 class UpkService(
     private val upkRepository: UpkRepository,
-    private val userRepository: UserRepository,
     private val entityManager: EntityManager,
 ) {
 
@@ -28,7 +27,7 @@ class UpkService(
         val page = upkRepository.findAll(pageable)
 
         return PagedResponse(
-            items = page.content.map { it.toResponse(userRepository) },
+            items = page.content.map { it.toResponse() },
             total = page.totalElements,
             limit = limit,
             offset = offset,
@@ -39,17 +38,22 @@ class UpkService(
     fun getById(id: String): UpkResponse {
         val upk = upkRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("UPK with id $id not found") }
-        return upk.toResponse(userRepository)
+        return upk.toResponse()
     }
 
     @Transactional
     fun create(request: UpkRequest): UpkResponse {
+        val existingUpk = upkRepository.findByRegion(request.region).firstOrNull()
+        if (existingUpk != null) {
+            throw ConflictException("UPK for region ${request.region} already exists")
+        }
+
         val upk = Upk(
             name = request.name,
             region = request.region,
         )
 
-        return upkRepository.save(upk).toResponse(userRepository)
+        return upkRepository.save(upk).toResponse()
     }
 
     @Transactional
@@ -60,7 +64,7 @@ class UpkService(
         request.name?.let { upk.name = it }
         request.region?.let { upk.region = it }
 
-        return upkRepository.save(upk).toResponse(userRepository)
+        return upkRepository.save(upk).toResponse()
     }
 
     @Transactional

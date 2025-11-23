@@ -14,6 +14,6 @@ class Upk(
     var name: String,
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "region", nullable = false)
+    @Column(name = "region", nullable = false, unique = true)
     var region: Region,
 ) : BaseEntity()
