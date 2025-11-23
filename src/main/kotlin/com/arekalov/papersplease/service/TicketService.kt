@@ -1,6 +1,7 @@
 package com.arekalov.papersplease.service
 
 import com.arekalov.papersplease.dto.PagedResponse
+import com.arekalov.papersplease.dto.document.DocumentResponse
 import com.arekalov.papersplease.dto.ticket.TicketRequest
 import com.arekalov.papersplease.dto.ticket.TicketRequestPartial
 import com.arekalov.papersplease.dto.ticket.TicketResponse
@@ -14,6 +15,7 @@ import com.arekalov.papersplease.model.enums.Priority
 import com.arekalov.papersplease.model.enums.Role
 import com.arekalov.papersplease.model.enums.TicketStatus
 import com.arekalov.papersplease.model.enums.TicketType
+import com.arekalov.papersplease.repository.DocumentRepository
 import com.arekalov.papersplease.repository.ShiftRepository
 import com.arekalov.papersplease.repository.TicketRepository
 import com.arekalov.papersplease.repository.UserRepository
@@ -29,6 +31,7 @@ class TicketService(
     private val ticketRepository: TicketRepository,
     private val userRepository: UserRepository,
     private val shiftRepository: ShiftRepository,
+    private val documentRepository: DocumentRepository,
 ) {
 
     @Transactional(readOnly = true)
@@ -297,5 +300,111 @@ class TicketService(
             Role.BOSS -> return
             Role.INSPECTOR, Role.SECURITY -> throw ForbiddenException("You don't have permission to delete tickets")
         }
+    }
+
+    @Transactional
+    fun addDocument(currentUserId: String, ticketId: String, documentId: String): TicketResponse {
+        val currentUser = userRepository.findById(UUID.fromString(currentUserId))
+            .orElseThrow { ResourceNotFoundException("Current user not found") }
+
+        val ticket = ticketRepository.findById(UUID.fromString(ticketId))
+            .orElseThrow { ResourceNotFoundException("Ticket with id $ticketId not found") }
+
+        checkUpdateAccess(currentUser, ticket)
+
+        val document = documentRepository.findById(UUID.fromString(documentId))
+            .orElseThrow { ResourceNotFoundException("Document with id $documentId not found") }
+
+        ticket.documents.add(document)
+        ticket.updatedAt = Instant.now()
+
+        return ticketRepository.save(ticket).toResponse()
+    }
+
+    @Transactional
+    fun removeDocument(currentUserId: String, ticketId: String, documentId: String): TicketResponse {
+        val currentUser = userRepository.findById(UUID.fromString(currentUserId))
+            .orElseThrow { ResourceNotFoundException("Current user not found") }
+
+        val ticket = ticketRepository.findById(UUID.fromString(ticketId))
+            .orElseThrow { ResourceNotFoundException("Ticket with id $ticketId not found") }
+
+        checkUpdateAccess(currentUser, ticket)
+
+        val document = documentRepository.findById(UUID.fromString(documentId))
+            .orElseThrow { ResourceNotFoundException("Document with id $documentId not found") }
+
+        ticket.documents.remove(document)
+        ticket.updatedAt = Instant.now()
+
+        return ticketRepository.save(ticket).toResponse()
+    }
+
+    @Transactional(readOnly = true)
+    fun getDocuments(currentUserId: String, ticketId: String): List<DocumentResponse> {
+        val currentUser = userRepository.findById(UUID.fromString(currentUserId))
+            .orElseThrow { ResourceNotFoundException("Current user not found") }
+
+        val ticket = ticketRepository.findById(UUID.fromString(ticketId))
+            .orElseThrow { ResourceNotFoundException("Ticket with id $ticketId not found") }
+
+        if (!checkReadAccess(currentUser, ticket)) {
+            throw ForbiddenException("You don't have access to this ticket")
+        }
+
+        return ticket.documents.map { it.toResponse() }
+    }
+
+    @Transactional(readOnly = true)
+    fun getRelatedTickets(currentUserId: String, ticketId: String): List<TicketResponse> {
+        val currentUser = userRepository.findById(UUID.fromString(currentUserId))
+            .orElseThrow { ResourceNotFoundException("Current user not found") }
+
+        val ticket = ticketRepository.findById(UUID.fromString(ticketId))
+            .orElseThrow { ResourceNotFoundException("Ticket with id $ticketId not found") }
+
+        if (!checkReadAccess(currentUser, ticket)) {
+            throw ForbiddenException("You don't have access to this ticket")
+        }
+
+        return ticket.relatedTickets.filter { checkReadAccess(currentUser, it) }.map { it.toResponse() }
+    }
+
+    @Transactional
+    fun addRelatedTicket(currentUserId: String, ticketId: String, relatedTicketId: String): TicketResponse {
+        val currentUser = userRepository.findById(UUID.fromString(currentUserId))
+            .orElseThrow { ResourceNotFoundException("Current user not found") }
+
+        val ticket = ticketRepository.findById(UUID.fromString(ticketId))
+            .orElseThrow { ResourceNotFoundException("Ticket with id $ticketId not found") }
+
+        checkUpdateAccess(currentUser, ticket)
+
+        val relatedTicket = ticketRepository.findById(UUID.fromString(relatedTicketId))
+            .orElseThrow { ResourceNotFoundException("Related ticket with id $relatedTicketId not found") }
+
+        ticket.relatedTickets.add(relatedTicket)
+        ticket.updatedAt = Instant.now()
+
+        return ticketRepository.save(ticket).toResponse()
+    }
+
+    @Transactional
+    fun removeRelatedTicket(currentUserId: String, ticketId: String, relatedTicketId: String): TicketResponse {
+        val currentUser = userRepository.findById(UUID.fromString(currentUserId))
+            .orElseThrow { ResourceNotFoundException("Current user not found") }
+
+        val ticket = ticketRepository.findById(UUID.fromString(ticketId))
+            .orElseThrow { ResourceNotFoundException("Ticket with id $ticketId not found") }
+
+        checkUpdateAccess(currentUser, ticket)
+
+        val relatedTicket = ticketRepository.findById(UUID.fromString(relatedTicketId))
+            .orElseThrow { ResourceNotFoundException("Related ticket with id $relatedTicketId not found") }
+
+        ticket.relatedTickets.remove(relatedTicket)
+        ticket.updatedAt = Instant.now()
+
+        return ticketRepository.save(ticket).toResponse()
     }
 }

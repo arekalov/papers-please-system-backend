@@ -188,13 +188,18 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/TicketResponse"
-  /api/v1/tickets/{id}/reopen:
+  /api/v1/tickets/{id}/related/{relatedTicketId}:
     post:
       tags:
       - ticket-controller
-      operationId: reopenTicket
+      operationId: addRelatedTicket
       parameters:
       - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: relatedTicketId
         in: path
         required: true
         schema:
@@ -206,19 +211,18 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/TicketResponse"
-  /api/v1/tickets/{id}/close:
-    post:
+    delete:
       tags:
       - ticket-controller
-      operationId: closeTicket
+      operationId: removeRelatedTicket
       parameters:
       - name: id
         in: path
         required: true
         schema:
           type: string
-      - name: resolution
-        in: query
+      - name: relatedTicketId
+        in: path
         required: true
         schema:
           type: string
@@ -229,19 +233,41 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/TicketResponse"
-  /api/v1/tickets/{id}/assign:
+  /api/v1/tickets/{id}/documents/{documentId}:
     post:
       tags:
       - ticket-controller
-      operationId: assignExecutor
+      operationId: addDocumentToTicket
       parameters:
       - name: id
         in: path
         required: true
         schema:
           type: string
-      - name: executorId
-        in: query
+      - name: documentId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TicketResponse"
+    delete:
+      tags:
+      - ticket-controller
+      operationId: removeDocumentFromTicket
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: documentId
+        in: path
         required: true
         schema:
           type: string
@@ -1193,6 +1219,46 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/AppealResponse"
+  /api/v1/tickets/{id}/related:
+    get:
+      tags:
+      - ticket-controller
+      operationId: getRelatedTickets
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TicketResponse"
+  /api/v1/tickets/{id}/documents:
+    get:
+      tags:
+      - ticket-controller
+      operationId: getTicketDocuments
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DocumentResponse"
   /api/v1/notifications/by-user/{userId}:
     get:
       tags:
@@ -1473,8 +1539,10 @@ components:
     TicketRequest:
       required:
       - authorId
+      - description
       - priority
       - status
+      - subjectId
       - ticketType
       type: object
       properties:
@@ -1506,17 +1574,27 @@ components:
           format: date-time
         authorId:
           type: string
+        subjectId:
+          type: string
         executorId:
           type: string
-        parentTicketId:
+        shiftId:
+          type: string
+        description:
+          type: string
+        resolution:
           type: string
     TicketResponse:
       required:
       - authorId
       - createdAt
+      - description
+      - documentIds
       - id
       - priority
+      - relatedTicketIds
       - status
+      - subjectId
       - ticketType
       - updatedAt
       type: object
@@ -1555,15 +1633,26 @@ components:
         deadlineAt:
           type: string
           format: date-time
-        resolvedAt:
-          type: string
-          format: date-time
         authorId:
+          type: string
+        subjectId:
           type: string
         executorId:
           type: string
-        parentTicketId:
+        shiftId:
           type: string
+        description:
+          type: string
+        resolution:
+          type: string
+        relatedTicketIds:
+          type: array
+          items:
+            type: string
+        documentIds:
+          type: array
+          items:
+            type: string
     ShiftRequest:
       required:
       - upkId
@@ -2002,13 +2091,14 @@ components:
         deadlineAt:
           type: string
           format: date-time
-        authorId:
-          type: string
         executorId:
           type: string
-        resolvedAt:
+        shiftId:
           type: string
-          format: date-time
+        description:
+          type: string
+        resolution:
+          type: string
     ShiftRequestPartial:
       type: object
       properties:

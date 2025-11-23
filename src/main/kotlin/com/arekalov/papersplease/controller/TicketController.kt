@@ -1,6 +1,7 @@
 package com.arekalov.papersplease.controller
 
 import com.arekalov.papersplease.dto.PagedResponse
+import com.arekalov.papersplease.dto.document.DocumentResponse
 import com.arekalov.papersplease.dto.ticket.TicketRequest
 import com.arekalov.papersplease.dto.ticket.TicketRequestPartial
 import com.arekalov.papersplease.dto.ticket.TicketResponse
@@ -94,5 +95,69 @@ class TicketController(
     ): ResponseEntity<Unit> {
         ticketService.delete(authentication.name, id)
         return ResponseEntity.noContent().build()
+    }
+
+    @GetMapping("/{id}/documents")
+    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'MIGRANT', 'GOD')")
+    fun getTicketDocuments(
+        authentication: Authentication,
+        @PathVariable id: String,
+    ): ResponseEntity<List<DocumentResponse>> {
+        val response = ticketService.getDocuments(authentication.name, id)
+        return ResponseEntity.ok(response)
+    }
+
+    @PostMapping("/{id}/documents/{documentId}")
+    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'GOD')")
+    fun addDocumentToTicket(
+        authentication: Authentication,
+        @PathVariable id: String,
+        @PathVariable documentId: String,
+    ): ResponseEntity<TicketResponse> {
+        val response = ticketService.addDocument(authentication.name, id, documentId)
+        return ResponseEntity.ok(response)
+    }
+
+    @DeleteMapping("/{id}/documents/{documentId}")
+    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'GOD')")
+    fun removeDocumentFromTicket(
+        authentication: Authentication,
+        @PathVariable id: String,
+        @PathVariable documentId: String,
+    ): ResponseEntity<TicketResponse> {
+        val response = ticketService.removeDocument(authentication.name, id, documentId)
+        return ResponseEntity.ok(response)
+    }
+
+    @GetMapping("/{id}/related")
+    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'MIGRANT', 'GOD')")
+    fun getRelatedTickets(
+        authentication: Authentication,
+        @PathVariable id: String,
+    ): ResponseEntity<List<TicketResponse>> {
+        val response = ticketService.getRelatedTickets(authentication.name, id)
+        return ResponseEntity.ok(response)
+    }
+
+    @PostMapping("/{id}/related/{relatedTicketId}")
+    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'GOD')")
+    fun addRelatedTicket(
+        authentication: Authentication,
+        @PathVariable id: String,
+        @PathVariable relatedTicketId: String,
+    ): ResponseEntity<TicketResponse> {
+        val response = ticketService.addRelatedTicket(authentication.name, id, relatedTicketId)
+        return ResponseEntity.ok(response)
+    }
+
+    @DeleteMapping("/{id}/related/{relatedTicketId}")
+    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'GOD')")
+    fun removeRelatedTicket(
+        authentication: Authentication,
+        @PathVariable id: String,
+        @PathVariable relatedTicketId: String,
+    ): ResponseEntity<TicketResponse> {
+        val response = ticketService.removeRelatedTicket(authentication.name, id, relatedTicketId)
+        return ResponseEntity.ok(response)
     }
 }
