@@ -23,6 +23,8 @@ spring:
   jackson:
     serialization:
       write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: true
     time-zone: UTC
     default-property-inclusion: non_null
 
@@ -35,6 +37,9 @@ server:
 jwt:
   secret: ${JWT_SECRET:default-secret-key-please-change-in-production}
   expiration: 86400000
+
+god:
+  secret-key: ${GOD_SECRET_KEY:super-secret-god-key-change-in-production}
 
 logging:
   level:

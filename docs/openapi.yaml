@@ -443,6 +443,24 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/AuthResponse"
+  /api/v1/auth/register-god:
+    post:
+      tags:
+      - auth-controller
+      operationId: registerGod
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterGodRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
   /api/v1/auth/refresh:
     post:
       tags:
@@ -1658,6 +1676,7 @@ components:
       required:
       - email
       - name
+      - password
       - role
       type: object
       properties:
@@ -1666,6 +1685,10 @@ components:
           minLength: 2
           type: string
         email:
+          type: string
+        password:
+          maxLength: 100
+          minLength: 8
           type: string
         role:
           type: string
@@ -2077,7 +2100,6 @@ components:
       - email
       - name
       - password
-      - role
       type: object
       properties:
         name:
@@ -2090,14 +2112,6 @@ components:
           maxLength: 100
           minLength: 8
           type: string
-        role:
-          type: string
-          enum:
-          - MIGRANT
-          - INSPECTOR
-          - BOSS
-          - SECURITY
-          - GOD
         upkId:
           type: string
     AuthResponse:
@@ -2113,6 +2127,26 @@ components:
           type: string
         user:
           $ref: "#/components/schemas/UserResponse"
+    RegisterGodRequest:
+      required:
+      - email
+      - name
+      - password
+      - secretKey
+      type: object
+      properties:
+        name:
+          maxLength: 100
+          minLength: 2
+          type: string
+        email:
+          type: string
+        password:
+          maxLength: 100
+          minLength: 8
+          type: string
+        secretKey:
+          type: string
     RefreshRequest:
       required:
       - refreshToken

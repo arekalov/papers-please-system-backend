@@ -3,6 +3,7 @@ package com.arekalov.papersplease.controller
 import com.arekalov.papersplease.dto.auth.AuthResponse
 import com.arekalov.papersplease.dto.auth.LoginRequest
 import com.arekalov.papersplease.dto.auth.RefreshRequest
+import com.arekalov.papersplease.dto.auth.RegisterGodRequest
 import com.arekalov.papersplease.dto.auth.RegisterRequest
 import com.arekalov.papersplease.service.AuthService
 import jakarta.validation.Valid
@@ -24,6 +25,14 @@ class AuthController(
         @Valid @RequestBody request: RegisterRequest,
     ): ResponseEntity<AuthResponse> {
         val response = authService.register(request)
+        return ResponseEntity.status(HttpStatus.CREATED).body(response)
+    }
+
+    @PostMapping("/register-god")
+    fun registerGod(
+        @Valid @RequestBody request: RegisterGodRequest,
+    ): ResponseEntity<AuthResponse> {
+        val response = authService.registerGod(request)
         return ResponseEntity.status(HttpStatus.CREATED).body(response)
     }
 

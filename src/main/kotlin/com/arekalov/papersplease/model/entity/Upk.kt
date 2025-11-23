@@ -17,7 +17,7 @@ class Upk(
     var name: String,
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "boss_id", nullable = false)
+    @JoinColumn(name = "boss_id", nullable = false, unique = true)
     var boss: User,
 
     @Enumerated(EnumType.STRING)

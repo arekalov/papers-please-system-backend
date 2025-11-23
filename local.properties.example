@@ -9,3 +9,5 @@ db.password=username
 jwt.secret=your-jwt-secret-key-min-256-bits-for-hs256-algorithm
 jwt.expiration=86400000
 
+# GOD Registration Secret Key
+# Настраивается через переменную окружения GOD_SECRET_KEY или используется значение по умолчанию из application.yaml

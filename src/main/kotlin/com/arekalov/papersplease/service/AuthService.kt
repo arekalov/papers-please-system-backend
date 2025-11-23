@@ -3,6 +3,7 @@ package com.arekalov.papersplease.service
 import com.arekalov.papersplease.dto.auth.AuthResponse
 import com.arekalov.papersplease.dto.auth.LoginRequest
 import com.arekalov.papersplease.dto.auth.RefreshRequest
+import com.arekalov.papersplease.dto.auth.RegisterGodRequest
 import com.arekalov.papersplease.dto.auth.RegisterRequest
 import com.arekalov.papersplease.exception.ConflictException
 import com.arekalov.papersplease.exception.ResourceNotFoundException
@@ -13,6 +14,7 @@ import com.arekalov.papersplease.model.enums.Role
 import com.arekalov.papersplease.repository.UpkRepository
 import com.arekalov.papersplease.repository.UserRepository
 import com.arekalov.papersplease.security.JwtTokenProvider
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -24,6 +26,8 @@ class AuthService(
     private val upkRepository: UpkRepository,
     private val passwordEncoder: PasswordEncoder,
     private val jwtTokenProvider: JwtTokenProvider,
+    @Value("\${god.secret-key}")
+    private val godSecretKey: String,
 ) {
 
     @Transactional
@@ -43,6 +47,36 @@ class AuthService(
             passwordHash = passwordEncoder.encode(request.password),
             role = Role.MIGRANT,
             upk = upk,
+        )
+
+        val savedUser = userRepository.save(user)
+
+        val accessToken = jwtTokenProvider.generateAccessToken(savedUser.id.toString(), savedUser.role.name)
+        val refreshToken = jwtTokenProvider.generateRefreshToken(savedUser.id.toString())
+
+        return AuthResponse(
+            accessToken = accessToken,
+            refreshToken = refreshToken,
+            user = savedUser.toResponse(),
+        )
+    }
+
+    @Transactional
+    fun registerGod(request: RegisterGodRequest): AuthResponse {
+        if (request.secretKey != godSecretKey) {
+            throw UnauthorizedException("Invalid secret key")
+        }
+
+        if (userRepository.findByEmail(request.email) != null) {
+            throw ConflictException("User with email ${request.email} already exists")
+        }
+
+        val user = User(
+            name = request.name,
+            email = request.email,
+            passwordHash = passwordEncoder.encode(request.password),
+            role = Role.GOD,
+            upk = null,
         )
 
         val savedUser = userRepository.save(user)

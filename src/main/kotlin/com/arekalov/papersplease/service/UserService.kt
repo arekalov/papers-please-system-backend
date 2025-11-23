@@ -83,7 +83,7 @@ class UserService(
         val user = User(
             name = request.name,
             email = request.email,
-            passwordHash = passwordEncoder.encode("defaultPassword123"),
+            passwordHash = passwordEncoder.encode(request.password),
             role = request.role,
             upk = upk,
         )

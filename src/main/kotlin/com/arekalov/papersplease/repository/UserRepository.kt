@@ -21,4 +21,6 @@ interface UserRepository : JpaRepository<User, UUID> {
     fun findByUpk_Id(upkId: UUID, pageable: Pageable): Page<User>
 
     fun findByRoleAndUpk_Id(role: Role, upkId: UUID): List<User>
+
+    fun deleteByUpk_Id(upkId: UUID)
 }
