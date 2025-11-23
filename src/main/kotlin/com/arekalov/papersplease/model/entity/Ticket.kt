@@ -1,5 +1,6 @@
 package com.arekalov.papersplease.model.entity
 
+import com.arekalov.papersplease.model.enums.AppealDecision
 import com.arekalov.papersplease.model.enums.Priority
 import com.arekalov.papersplease.model.enums.TicketStatus
 import com.arekalov.papersplease.model.enums.TicketType
@@ -60,6 +61,10 @@ class Ticket(
 
     @Column(name = "resolution", columnDefinition = "TEXT")
     var resolution: String? = null,
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "appeal_decision")
+    var appealDecision: AppealDecision? = null,
 ) : BaseEntity() {
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(

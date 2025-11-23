@@ -1,5 +1,6 @@
 package com.arekalov.papersplease.dto.ticket
 
+import com.arekalov.papersplease.model.enums.AppealDecision
 import com.arekalov.papersplease.model.enums.Priority
 import com.arekalov.papersplease.model.enums.TicketStatus
 import com.arekalov.papersplease.model.enums.TicketType
@@ -19,6 +20,7 @@ data class TicketResponse(
     val shiftId: String? = null,
     val description: String,
     val resolution: String? = null,
+    val appealDecision: AppealDecision? = null,
     val relatedTicketIds: List<String> = emptyList(),
     val documentIds: List<String> = emptyList(),
 )

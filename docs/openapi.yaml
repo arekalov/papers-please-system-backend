@@ -232,7 +232,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/TicketResponse"
+                $ref: "#/components/schemas/Unit"
   /api/v1/tickets/{id}/documents/{documentId}:
     post:
       tags:
@@ -277,7 +277,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/TicketResponse"
+                $ref: "#/components/schemas/Unit"
   /api/v1/shifts:
     get:
       tags:
@@ -585,89 +585,6 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/AuthResponse"
-  /api/v1/appeals:
-    get:
-      tags:
-      - appeal-controller
-      operationId: getAllAppeals
-      parameters:
-      - name: limit
-        in: query
-        required: false
-        schema:
-          type: integer
-          format: int32
-          default: 10
-      - name: offset
-        in: query
-        required: false
-        schema:
-          type: integer
-          format: int32
-          default: 0
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/PagedResponseAppealResponse"
-    post:
-      tags:
-      - appeal-controller
-      operationId: createAppeal
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AppealRequest"
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AppealResponse"
-  /api/v1/appeals/{id}/process:
-    post:
-      tags:
-      - appeal-controller
-      operationId: processAppeal
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: decision
-        in: query
-        required: true
-        schema:
-          type: string
-          enum:
-          - APPROVED
-          - REJECTED
-          - PUNISH_EXECUTOR
-          - PUNISH_CHECKER
-          - PUNISH_BOTH
-      - name: decidedById
-        in: query
-        required: true
-        schema:
-          type: string
-      - name: notes
-        in: query
-        required: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AppealResponse"
   /api/v1/users/{id}:
     get:
       tags:
@@ -1161,64 +1078,6 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/DocumentResponse"
-  /api/v1/appeals/{id}:
-    get:
-      tags:
-      - appeal-controller
-      operationId: getAppealById
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AppealResponse"
-    delete:
-      tags:
-      - appeal-controller
-      operationId: deleteAppeal
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/Unit"
-    patch:
-      tags:
-      - appeal-controller
-      operationId: partialUpdateAppeal
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AppealRequestPartial"
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AppealResponse"
   /api/v1/tickets/{id}/related:
     get:
       tags:
@@ -1361,94 +1220,6 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/PagedResponseEventResponse"
-  /api/v1/appeals/by-ticket/{ticketId}:
-    get:
-      tags:
-      - appeal-controller
-      operationId: getAppealByTicket
-      parameters:
-      - name: ticketId
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AppealResponse"
-  /api/v1/appeals/by-filed-by/{userId}:
-    get:
-      tags:
-      - appeal-controller
-      operationId: getAppealsByFiledBy
-      parameters:
-      - name: userId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: limit
-        in: query
-        required: false
-        schema:
-          type: integer
-          format: int32
-          default: 10
-      - name: offset
-        in: query
-        required: false
-        schema:
-          type: integer
-          format: int32
-          default: 0
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/PagedResponseAppealResponse"
-  /api/v1/appeals/by-decision/{decision}:
-    get:
-      tags:
-      - appeal-controller
-      operationId: getAppealsByDecision
-      parameters:
-      - name: decision
-        in: path
-        required: true
-        schema:
-          type: string
-          enum:
-          - APPROVED
-          - REJECTED
-          - PUNISH_EXECUTOR
-          - PUNISH_CHECKER
-          - PUNISH_BOTH
-      - name: limit
-        in: query
-        required: false
-        schema:
-          type: integer
-          format: int32
-          default: 10
-      - name: offset
-        in: query
-        required: false
-        schema:
-          type: integer
-          format: int32
-          default: 0
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/PagedResponseAppealResponse"
 components:
   schemas:
     UserRequest:
@@ -1645,6 +1416,14 @@ components:
           type: string
         resolution:
           type: string
+        appealDecision:
+          type: string
+          enum:
+          - APPROVED
+          - REJECTED
+          - PUNISH_EXECUTOR
+          - PUNISH_CHECKER
+          - PUNISH_BOTH
         relatedTicketIds:
           type: array
           items:
@@ -1967,69 +1746,6 @@ components:
           type: string
         password:
           type: string
-    AppealRequest:
-      required:
-      - createdBy
-      - status
-      - ticketId
-      type: object
-      properties:
-        ticketId:
-          type: string
-        createdBy:
-          type: string
-        status:
-          type: string
-          enum:
-          - OPEN
-          - IN_PROGRESS
-          - NEED_INFO
-          - CLOSED
-          - REJECTED
-        comment:
-          type: string
-    AppealResponse:
-      required:
-      - createdAt
-      - createdBy
-      - id
-      - status
-      - ticketId
-      - verdict
-      type: object
-      properties:
-        id:
-          type: string
-        ticketId:
-          type: string
-        createdBy:
-          type: string
-        status:
-          type: string
-          enum:
-          - OPEN
-          - IN_PROGRESS
-          - NEED_INFO
-          - CLOSED
-          - REJECTED
-        verdict:
-          type: string
-          enum:
-          - APPROVED
-          - REJECTED
-          - PUNISH_EXECUTOR
-          - PUNISH_CHECKER
-          - PUNISH_BOTH
-        comment:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
-        checkedBy:
-          type: string
-        checkedAt:
-          type: string
-          format: date-time
     UserRequestPartial:
       type: object
       properties:
@@ -2099,6 +1815,14 @@ components:
           type: string
         resolution:
           type: string
+        appealDecision:
+          type: string
+          enum:
+          - APPROVED
+          - REJECTED
+          - PUNISH_EXECUTOR
+          - PUNISH_CHECKER
+          - PUNISH_BOTH
     ShiftRequestPartial:
       type: object
       properties:
@@ -2183,36 +1907,6 @@ components:
           type: string
           format: date-time
         validUntil:
-          type: string
-          format: date-time
-    AppealRequestPartial:
-      type: object
-      properties:
-        ticketId:
-          type: string
-        createdBy:
-          type: string
-        status:
-          type: string
-          enum:
-          - OPEN
-          - IN_PROGRESS
-          - NEED_INFO
-          - CLOSED
-          - REJECTED
-        verdict:
-          type: string
-          enum:
-          - APPROVED
-          - REJECTED
-          - PUNISH_EXECUTOR
-          - PUNISH_CHECKER
-          - PUNISH_BOTH
-        comment:
-          type: string
-        checkedBy:
-          type: string
-        checkedAt:
           type: string
           format: date-time
     PagedResponseUserResponse:
@@ -2374,27 +2068,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/DocumentResponse"
-        total:
-          type: integer
-          format: int64
-        limit:
-          type: integer
-          format: int32
-        offset:
-          type: integer
-          format: int32
-    PagedResponseAppealResponse:
-      required:
-      - items
-      - limit
-      - offset
-      - total
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: "#/components/schemas/AppealResponse"
         total:
           type: integer
           format: int64

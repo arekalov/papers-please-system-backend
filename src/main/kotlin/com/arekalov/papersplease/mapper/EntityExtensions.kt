@@ -2,8 +2,6 @@
 
 package com.arekalov.papersplease.mapper
 
-import com.arekalov.papersplease.dto.appeal.AppealRequest
-import com.arekalov.papersplease.dto.appeal.AppealResponse
 import com.arekalov.papersplease.dto.document.DocumentRequest
 import com.arekalov.papersplease.dto.document.DocumentResponse
 import com.arekalov.papersplease.dto.event.EventRequest
@@ -19,7 +17,6 @@ import com.arekalov.papersplease.dto.upk.UpkRequest
 import com.arekalov.papersplease.dto.upk.UpkResponse
 import com.arekalov.papersplease.dto.user.UserRequest
 import com.arekalov.papersplease.dto.user.UserResponse
-import com.arekalov.papersplease.model.entity.Appeal
 import com.arekalov.papersplease.model.entity.Document
 import com.arekalov.papersplease.model.entity.Event
 import com.arekalov.papersplease.model.entity.Notification
@@ -28,9 +25,7 @@ import com.arekalov.papersplease.model.entity.Shift
 import com.arekalov.papersplease.model.entity.Ticket
 import com.arekalov.papersplease.model.entity.Upk
 import com.arekalov.papersplease.model.entity.User
-import com.arekalov.papersplease.model.enums.AppealDecision
 import com.arekalov.papersplease.model.enums.Priority
-import com.arekalov.papersplease.model.enums.TicketStatus
 import java.time.Instant
 
 fun User.toResponse() = UserResponse(
@@ -112,6 +107,7 @@ fun Ticket.toResponse() = TicketResponse(
     shiftId = shift?.id?.toString(),
     description = description,
     resolution = resolution,
+    appealDecision = appealDecision,
     relatedTicketIds = relatedTickets.mapNotNull { it.id?.toString() },
     documentIds = documents.mapNotNull { it.id?.toString() },
 )
@@ -182,26 +178,4 @@ fun NotificationRequest.toEntity(user: User) = Notification(
     user = user,
     notificationType = notificationType,
     message = message,
-)
-
-fun Appeal.toResponse() = AppealResponse(
-    id = id.toString(),
-    ticketId = ticket.id.toString(),
-    createdBy = createdBy.id.toString(),
-    status = TicketStatus.OPEN,
-    verdict = decision ?: AppealDecision.REJECTED,
-    comment = reason,
-    createdAt = createdAt,
-    checkedBy = decidedBy?.id?.toString(),
-    checkedAt = decidedAt,
-)
-
-fun AppealRequest.toEntity(ticket: Ticket, createdBy: User) = Appeal(
-    ticket = ticket,
-    createdBy = createdBy,
-    reason = comment.orEmpty(),
-    decision = null,
-    decidedBy = null,
-    decidedAt = null,
-    decisionNotes = null,
 )

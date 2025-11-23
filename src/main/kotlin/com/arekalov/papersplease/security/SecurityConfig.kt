@@ -59,8 +59,6 @@ class SecurityConfig(
                     .requestMatchers("/api/v1/tickets/**").hasAnyRole(INSPECTOR, BOSS, SECURITY, MIGRANT, GOD)
                     // Document endpoints
                     .requestMatchers("/api/v1/documents/**").hasAnyRole(INSPECTOR, BOSS, SECURITY, MIGRANT, GOD)
-                    // Appeal endpoints
-                    .requestMatchers("/api/v1/appeals/**").hasAnyRole(BOSS, SECURITY, GOD)
                     // Notification endpoints (all authenticated users)
                     .requestMatchers("/api/v1/notifications/**").authenticated()
                     // Report endpoints

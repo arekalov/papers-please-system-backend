@@ -185,8 +185,17 @@ class TicketService(
         val currentUser = userRepository.findById(UUID.fromString(currentUserId))
             .orElseThrow { ResourceNotFoundException("Current user not found") }
 
-        if (currentUser.role == Role.MIGRANT && request.ticketType != TicketType.EXTERNAL) {
-            throw ForbiddenException("Migrants can only create EXTERNAL tickets")
+        if (currentUser.role == Role.MIGRANT &&
+            request.ticketType != TicketType.EXTERNAL &&
+            request.ticketType != TicketType.APPEAL
+        ) {
+            throw ForbiddenException("Migrants can only create EXTERNAL and APPEAL tickets")
+        }
+
+        if (request.ticketType == TicketType.APPEAL && currentUser.role != Role.MIGRANT &&
+            currentUser.role != Role.GOD
+        ) {
+            throw ForbiddenException("Only migrants can create APPEAL tickets")
         }
 
         val author = userRepository.findById(UUID.fromString(request.authorId))
@@ -226,6 +235,7 @@ class TicketService(
         request.deadlineAt?.let { ticket.deadlineAt = it }
         request.description?.let { ticket.description = it }
         request.resolution?.let { ticket.resolution = it }
+        request.appealDecision?.let { ticket.appealDecision = it }
         request.executorId?.let { executorId ->
             ticket.executor = userRepository.findById(UUID.fromString(executorId))
                 .orElseThrow { ResourceNotFoundException("User with id $executorId not found") }
@@ -254,6 +264,10 @@ class TicketService(
     }
 
     private fun checkReadAccess(currentUser: User, ticket: Ticket): Boolean {
+        if (ticket.ticketType == TicketType.APPEAL) {
+            return currentUser.role == Role.GOD || currentUser.role == Role.BOSS
+        }
+
         return when (currentUser.role) {
             Role.GOD -> true
             Role.MIGRANT -> ticket.author.id == currentUser.id
@@ -261,6 +275,7 @@ class TicketService(
                 val upkId = currentUser.upk?.id ?: return false
                 ticket.subject.upk?.id == upkId
             }
+
             Role.INSPECTOR, Role.SECURITY -> {
                 val upkId = currentUser.upk?.id ?: return false
                 ticket.subject.upk?.id == upkId
@@ -269,6 +284,13 @@ class TicketService(
     }
 
     private fun checkUpdateAccess(currentUser: User, ticket: Ticket) {
+        if (ticket.ticketType == TicketType.APPEAL) {
+            if (currentUser.role != Role.GOD && currentUser.role != Role.BOSS) {
+                throw ForbiddenException("Only bosses and gods can update APPEAL tickets")
+            }
+            return
+        }
+
         when (currentUser.role) {
             Role.GOD -> return
             Role.MIGRANT -> throw ForbiddenException("Migrants cannot update tickets")
@@ -279,6 +301,7 @@ class TicketService(
                     throw ForbiddenException("You can only update tickets for users in your UPK")
                 }
             }
+
             Role.INSPECTOR, Role.SECURITY -> {
                 val upkId = currentUser.upk?.id
                     ?: throw ForbiddenException("Employee must be assigned to UPK")
@@ -290,6 +313,13 @@ class TicketService(
     }
 
     private fun checkDeleteAccess(currentUser: User, ticket: Ticket) {
+        if (ticket.ticketType == TicketType.APPEAL) {
+            if (currentUser.role != Role.GOD && currentUser.role != Role.BOSS) {
+                throw ForbiddenException("Only bosses and gods can delete APPEAL tickets")
+            }
+            return
+        }
+
         when (currentUser.role) {
             Role.GOD -> return
             Role.MIGRANT -> {
@@ -297,6 +327,7 @@ class TicketService(
                     throw ForbiddenException("Migrants can only delete their own tickets")
                 }
             }
+
             Role.BOSS -> return
             Role.INSPECTOR, Role.SECURITY -> throw ForbiddenException("You don't have permission to delete tickets")
         }
