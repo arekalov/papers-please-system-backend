@@ -6,6 +6,7 @@ import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.FetchType
+import jakarta.persistence.Index
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToMany
 import jakarta.persistence.ManyToOne
@@ -13,7 +14,12 @@ import jakarta.persistence.Table
 import java.time.Instant
 
 @Entity
-@Table(name = "documents")
+@Table(
+    name = "documents",
+    indexes = [
+        Index(name = "idx_document_owner", columnList = "owner_id"),
+    ],
+)
 class Document(
     @Enumerated(EnumType.STRING)
     @Column(name = "document_type", nullable = false)

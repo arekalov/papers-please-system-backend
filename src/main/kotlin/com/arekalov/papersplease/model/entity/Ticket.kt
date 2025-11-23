@@ -9,6 +9,7 @@ import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.FetchType
+import jakarta.persistence.Index
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.JoinTable
 import jakarta.persistence.ManyToMany
@@ -17,7 +18,13 @@ import jakarta.persistence.Table
 import java.time.Instant
 
 @Entity
-@Table(name = "tickets")
+@Table(
+    name = "tickets",
+    indexes = [
+        Index(name = "idx_ticket_executor_status", columnList = "executor_id, status"),
+        Index(name = "idx_ticket_author", columnList = "author_id"),
+    ],
+)
 class Ticket(
     @Enumerated(EnumType.STRING)
     @Column(name = "ticket_type", nullable = false)
@@ -79,6 +86,10 @@ class Ticket(
         name = "ticket_documents",
         joinColumns = [JoinColumn(name = "ticket_id")],
         inverseJoinColumns = [JoinColumn(name = "document_id")],
+        indexes = [
+            Index(name = "idx_ticket_documents_ticket", columnList = "ticket_id"),
+            Index(name = "idx_ticket_documents_document", columnList = "document_id"),
+        ],
     )
     val documents: MutableSet<Document> = mutableSetOf()
 }
