@@ -9,6 +9,7 @@ import com.arekalov.papersplease.exception.ResourceNotFoundException
 import com.arekalov.papersplease.exception.UnauthorizedException
 import com.arekalov.papersplease.mapper.toResponse
 import com.arekalov.papersplease.model.entity.User
+import com.arekalov.papersplease.model.enums.Role
 import com.arekalov.papersplease.repository.UpkRepository
 import com.arekalov.papersplease.repository.UserRepository
 import com.arekalov.papersplease.security.JwtTokenProvider
@@ -40,7 +41,7 @@ class AuthService(
             name = request.name,
             email = request.email,
             passwordHash = passwordEncoder.encode(request.password),
-            role = request.role,
+            role = Role.MIGRANT,
             upk = upk,
         )
 
