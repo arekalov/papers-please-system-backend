@@ -249,7 +249,7 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ShiftResponse"
-  /api/v1/participationsKate:
+  /api/v1/participations:
     get:
       tags:
       - participation-controller
