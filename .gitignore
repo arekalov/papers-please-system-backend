@@ -42,3 +42,6 @@ out/
 ### Local Configuration ###
 local.properties
 .env
+
+### Production Configuration ###
+deployment/application-prod.yaml
