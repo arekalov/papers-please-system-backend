@@ -13,6 +13,7 @@ import org.springframework.validation.FieldError
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.servlet.NoHandlerFoundException
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
@@ -128,6 +129,15 @@ class GlobalExceptionHandler {
             code = "BAD_REQUEST",
         )
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error)
+    }
+
+    @ExceptionHandler(NoHandlerFoundException::class)
+    fun handleNoHandlerFound(ex: NoHandlerFoundException): ResponseEntity<ErrorResponse> {
+        val error = ErrorResponse(
+            message = "Endpoint not found: ${ex.requestURL}",
+            code = "NOT_FOUND",
+        )
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error)
     }
 
     @ExceptionHandler(Exception::class)

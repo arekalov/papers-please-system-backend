@@ -82,7 +82,7 @@ class UpkController(
         authentication: Authentication,
         @PathVariable id: String,
     ): ResponseEntity<List<UserResponse>> {
-        val response = userService.getUsersByUpk(authentication.name, id)
+        val response = userService.getUsersByUpkBossOnly(authentication.name, id)
         return ResponseEntity.ok(response)
     }
 }

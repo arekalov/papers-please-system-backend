@@ -21,7 +21,7 @@ interface DocumentRepository : JpaRepository<Document, UUID> {
      * Получить все активные (не истекшие) документы пользователя
      * Использует PL/pgSQL функцию get_active_documents
      */
-    @Query(value = "SELECT * FROM get_active_documents(CAST(:ownerId AS BIGINT))", nativeQuery = true)
+    @Query(value = "SELECT * FROM get_active_documents(CAST(:ownerId AS UUID))", nativeQuery = true)
     fun findActiveDocumentsByOwnerId(@Param("ownerId") ownerId: UUID): List<Document>
 
     /**
@@ -29,7 +29,7 @@ interface DocumentRepository : JpaRepository<Document, UUID> {
      * Использует PL/pgSQL функцию get_ticket_documents
      */
     @Query(
-        value = "SELECT d.* FROM get_ticket_documents(CAST(:ticketId AS BIGINT)) td " +
+        value = "SELECT d.* FROM get_ticket_documents(CAST(:ticketId AS UUID)) td " +
             "JOIN documents d ON d.id = td.id",
         nativeQuery = true,
     )

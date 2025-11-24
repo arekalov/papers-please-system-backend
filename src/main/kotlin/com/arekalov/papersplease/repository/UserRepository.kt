@@ -31,6 +31,6 @@ interface UserRepository : JpaRepository<User, UUID> {
      * Получить всех сотрудников УПК с использованием PL/pgSQL функции
      * Использует функцию get_users_by_upk для оптимизированного получения данных
      */
-    @Query(value = "SELECT * FROM get_users_by_upk(CAST(:upkId AS BIGINT))", nativeQuery = true)
+    @Query(value = "SELECT * FROM get_users_by_upk(CAST(:upkId AS UUID))", nativeQuery = true)
     fun findUsersByUpkUsingFunction(@Param("upkId") upkId: UUID): List<User>
 }

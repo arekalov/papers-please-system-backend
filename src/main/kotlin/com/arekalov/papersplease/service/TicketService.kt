@@ -417,6 +417,26 @@ class TicketService(
     }
 
     @Transactional(readOnly = true)
+    fun getDocumentsWithUpkCheck(currentUserId: String, ticketId: String): List<DocumentResponse> {
+        val currentUser = userRepository.findById(UUID.fromString(currentUserId))
+            .orElseThrow { ResourceNotFoundException("Current user not found") }
+
+        val ticket = ticketRepository.findById(UUID.fromString(ticketId))
+            .orElseThrow { ResourceNotFoundException("Ticket with id $ticketId not found") }
+
+        val currentUserUpkId = currentUser.upk?.id
+        val ticketUpkId = ticket.subject.upk?.id
+
+        if (currentUser.role != Role.GOD) {
+            if (currentUserUpkId == null || ticketUpkId == null || currentUserUpkId != ticketUpkId) {
+                throw ForbiddenException("Access denied: You can only view documents from tickets in your UPK")
+            }
+        }
+
+        return ticket.documents.map { it.toResponse() }
+    }
+
+    @Transactional(readOnly = true)
     fun getRelatedTickets(currentUserId: String, ticketId: String): List<TicketResponse> {
         val currentUser = userRepository.findById(UUID.fromString(currentUserId))
             .orElseThrow { ResourceNotFoundException("Current user not found") }

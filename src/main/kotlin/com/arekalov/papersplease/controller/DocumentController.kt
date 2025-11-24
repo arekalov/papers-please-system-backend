@@ -80,12 +80,10 @@ class DocumentController(
     }
 
     @GetMapping("/active")
-    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'GOD', 'MIGRANT')")
     fun getActiveDocuments(
-        authentication: Authentication,
         @RequestParam userId: String,
     ): ResponseEntity<List<DocumentResponse>> {
-        val response = documentService.getActiveDocumentsByUserId(authentication.name, userId)
+        val response = documentService.getActiveDocumentsByUserIdPublic(userId)
         return ResponseEntity.ok(response)
     }
 
@@ -95,7 +93,7 @@ class DocumentController(
         authentication: Authentication,
         @PathVariable ticketId: String,
     ): ResponseEntity<List<DocumentResponse>> {
-        val response = documentService.getDocumentsByTicketId(authentication.name, ticketId)
+        val response = documentService.getDocumentsByTicketIdWithUpkCheck(authentication.name, ticketId)
         return ResponseEntity.ok(response)
     }
 }

@@ -103,7 +103,7 @@ class TicketController(
         authentication: Authentication,
         @PathVariable id: String,
     ): ResponseEntity<List<DocumentResponse>> {
-        val response = ticketService.getDocuments(authentication.name, id)
+        val response = ticketService.getDocumentsWithUpkCheck(authentication.name, id)
         return ResponseEntity.ok(response)
     }
 

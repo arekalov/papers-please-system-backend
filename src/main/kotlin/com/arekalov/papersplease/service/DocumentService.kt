@@ -12,6 +12,7 @@ import com.arekalov.papersplease.model.entity.Document
 import com.arekalov.papersplease.model.entity.User
 import com.arekalov.papersplease.model.enums.Role
 import com.arekalov.papersplease.repository.DocumentRepository
+import com.arekalov.papersplease.repository.TicketRepository
 import com.arekalov.papersplease.repository.UserRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
@@ -22,6 +23,7 @@ import java.util.UUID
 class DocumentService(
     private val documentRepository: DocumentRepository,
     private val userRepository: UserRepository,
+    private val ticketRepository: TicketRepository,
 ) {
 
     @Transactional(readOnly = true)
@@ -71,6 +73,17 @@ class DocumentService(
     }
 
     @Transactional(readOnly = true)
+    fun getActiveDocumentsByUserIdPublic(userId: String): List<DocumentResponse> {
+        val targetUserId = UUID.fromString(userId)
+        val targetUser = userRepository.findById(targetUserId)
+            .orElseThrow { ResourceNotFoundException("User with id $userId not found") }
+
+        val activeDocuments = documentRepository.findActiveDocumentsByOwnerId(targetUserId)
+
+        return activeDocuments.map { it.toResponse() }
+    }
+
+    @Transactional(readOnly = true)
     fun getDocumentsByTicketId(
         currentUserId: String,
         ticketId: String,
@@ -83,6 +96,31 @@ class DocumentService(
         documents.forEach { document ->
             checkReadAccessToDocument(currentUser, document)
         }
+
+        return documents.map { it.toResponse() }
+    }
+
+    @Transactional(readOnly = true)
+    fun getDocumentsByTicketIdWithUpkCheck(
+        currentUserId: String,
+        ticketId: String,
+    ): List<DocumentResponse> {
+        val currentUser = userRepository.findById(UUID.fromString(currentUserId))
+            .orElseThrow { ResourceNotFoundException("Current user not found") }
+
+        val ticket = ticketRepository.findById(UUID.fromString(ticketId))
+            .orElseThrow { ResourceNotFoundException("Ticket with id $ticketId not found") }
+
+        val currentUserUpkId = currentUser.upk?.id
+        val ticketUpkId = ticket.subject.upk?.id
+
+        if (currentUser.role != Role.GOD) {
+            if (currentUserUpkId == null || ticketUpkId == null || currentUserUpkId != ticketUpkId) {
+                throw ForbiddenException("Access denied: You can only view documents from tickets in your UPK")
+            }
+        }
+
+        val documents = documentRepository.findDocumentsByTicketId(UUID.fromString(ticketId))
 
         return documents.map { it.toResponse() }
     }

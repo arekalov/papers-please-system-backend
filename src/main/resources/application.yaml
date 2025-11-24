@@ -2,6 +2,13 @@ spring:
   application:
     name: papersplease
   
+  web:
+    resources:
+      add-mappings: false
+  
+  mvc:
+    throw-exception-if-no-handler-found: true
+  
   datasource:
     url: ${DB_URL:jdbc:postgresql://ep-fancy-mud-a4icq7ux-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require}
     username: ${DB_USERNAME:neondb_owner}
