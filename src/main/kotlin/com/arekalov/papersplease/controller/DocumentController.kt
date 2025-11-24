@@ -78,4 +78,24 @@ class DocumentController(
         documentService.delete(authentication.name, id)
         return ResponseEntity.noContent().build()
     }
+
+    @GetMapping("/active")
+    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'GOD', 'MIGRANT')")
+    fun getActiveDocuments(
+        authentication: Authentication,
+        @RequestParam userId: String,
+    ): ResponseEntity<List<DocumentResponse>> {
+        val response = documentService.getActiveDocumentsByUserId(authentication.name, userId)
+        return ResponseEntity.ok(response)
+    }
+
+    @GetMapping("/ticket/{ticketId}")
+    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'GOD')")
+    fun getDocumentsByTicket(
+        authentication: Authentication,
+        @PathVariable ticketId: String,
+    ): ResponseEntity<List<DocumentResponse>> {
+        val response = documentService.getDocumentsByTicketId(authentication.name, ticketId)
+        return ResponseEntity.ok(response)
+    }
 }

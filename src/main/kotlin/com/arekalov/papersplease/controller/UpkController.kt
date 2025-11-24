@@ -4,11 +4,14 @@ import com.arekalov.papersplease.dto.PagedResponse
 import com.arekalov.papersplease.dto.upk.UpkRequest
 import com.arekalov.papersplease.dto.upk.UpkRequestPartial
 import com.arekalov.papersplease.dto.upk.UpkResponse
+import com.arekalov.papersplease.dto.user.UserResponse
 import com.arekalov.papersplease.service.UpkService
+import com.arekalov.papersplease.service.UserService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
@@ -23,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/v1/upks")
 class UpkController(
     private val upkService: UpkService,
+    private val userService: UserService,
 ) {
 
     @GetMapping
@@ -70,5 +74,15 @@ class UpkController(
     ): ResponseEntity<Unit> {
         upkService.delete(id)
         return ResponseEntity.noContent().build()
+    }
+
+    @GetMapping("/{id}/employees")
+    @PreAuthorize("hasAnyRole('BOSS', 'GOD')")
+    fun getUpkEmployees(
+        authentication: Authentication,
+        @PathVariable id: String,
+    ): ResponseEntity<List<UserResponse>> {
+        val response = userService.getUsersByUpk(authentication.name, id)
+        return ResponseEntity.ok(response)
     }
 }

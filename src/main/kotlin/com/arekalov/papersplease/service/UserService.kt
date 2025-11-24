@@ -54,6 +54,31 @@ class UserService(
     }
 
     @Transactional(readOnly = true)
+    fun getUsersByUpk(currentUserId: String?, upkId: String): List<UserResponse> {
+        val currentUser = currentUserId?.let {
+            userRepository.findById(UUID.fromString(it))
+                .orElseThrow { ResourceNotFoundException("Current user not found") }
+        }
+
+        val targetUpkId = UUID.fromString(upkId)
+
+        upkRepository.findById(targetUpkId)
+            .orElseThrow { ResourceNotFoundException("UPK with id $upkId not found") }
+
+        if (currentUser?.role == Role.BOSS) {
+            val currentUserUpkId = currentUser.upk?.id
+                ?: throw ForbiddenException("Boss must be assigned to UPK")
+            if (targetUpkId != currentUserUpkId) {
+                throw ForbiddenException("Boss can only get users from their own UPK")
+            }
+        }
+
+        val users = userRepository.findUsersByUpkUsingFunction(targetUpkId)
+
+        return users.map { it.toResponse() }
+    }
+
+    @Transactional(readOnly = true)
     fun getById(currentUserId: String?, id: String): UserResponse {
         val user = userRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("User with id $id not found") }

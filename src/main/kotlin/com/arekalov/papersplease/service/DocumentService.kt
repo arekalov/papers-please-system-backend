@@ -52,6 +52,42 @@ class DocumentService(
     }
 
     @Transactional(readOnly = true)
+    fun getActiveDocumentsByUserId(
+        currentUserId: String,
+        userId: String,
+    ): List<DocumentResponse> {
+        val currentUser = userRepository.findById(UUID.fromString(currentUserId))
+            .orElseThrow { ResourceNotFoundException("Current user not found") }
+
+        val targetUserId = UUID.fromString(userId)
+        val targetUser = userRepository.findById(targetUserId)
+            .orElseThrow { ResourceNotFoundException("User with id $userId not found") }
+
+        checkReadAccessByUserId(currentUser, targetUser)
+
+        val activeDocuments = documentRepository.findActiveDocumentsByOwnerId(targetUserId)
+
+        return activeDocuments.map { it.toResponse() }
+    }
+
+    @Transactional(readOnly = true)
+    fun getDocumentsByTicketId(
+        currentUserId: String,
+        ticketId: String,
+    ): List<DocumentResponse> {
+        val currentUser = userRepository.findById(UUID.fromString(currentUserId))
+            .orElseThrow { ResourceNotFoundException("Current user not found") }
+
+        val documents = documentRepository.findDocumentsByTicketId(UUID.fromString(ticketId))
+
+        documents.forEach { document ->
+            checkReadAccessToDocument(currentUser, document)
+        }
+
+        return documents.map { it.toResponse() }
+    }
+
+    @Transactional(readOnly = true)
     fun getById(currentUserId: String, id: String): DocumentResponse {
         val currentUser = userRepository.findById(UUID.fromString(currentUserId))
             .orElseThrow { ResourceNotFoundException("Current user not found") }
