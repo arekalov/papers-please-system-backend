@@ -91,6 +91,8 @@
 | `GET /me` | GET | **ВСЕ** | Получить информацию о текущем пользователе |
 | `PATCH /me` | PATCH | **ВСЕ** | Обновить информацию о текущем пользователе |
 | `GET /{id}` | GET | BOSS, SECURITY, GOD | Получить пользователя по ID |
+| `GET /{id}/boss-details` | GET | BOSS, GOD | Получить детальную информацию о боссе (подчинённые, смены) |
+| `GET /{id}/details` | GET | BOSS, SECURITY, GOD | Получить полную информацию о пользователе (смены, участие) |
 | `POST /` | POST | BOSS, GOD | Создать нового пользователя |
 | `PATCH /{id}` | PATCH | BOSS, GOD | Обновить пользователя |
 | `DELETE /{id}` | DELETE | BOSS, GOD | Удалить пользователя |
@@ -146,6 +148,7 @@
 |----------|-------|------|----------|
 | `GET /` | GET | INSPECTOR, BOSS, SECURITY, GOD | Получить все смены |
 | `GET /{id}` | GET | INSPECTOR, BOSS, SECURITY, GOD | Получить смену по ID |
+| `GET /{id}/details` | GET | INSPECTOR, BOSS, SECURITY, GOD | Получить детали смены (инспекторы, статистика) |
 | `POST /` | POST | BOSS, GOD | Создать новую смену |
 | `PATCH /{id}` | PATCH | BOSS, GOD | Обновить смену |
 | `DELETE /{id}` | DELETE | GOD | Удалить смену |
@@ -166,6 +169,149 @@
 |----------|-------|------|----------|
 | `GET /` | GET | BOSS, GOD | Получить все события (с фильтрацией) |
 | `GET /{id}` | GET | BOSS, GOD | Получить событие по ID |
+
+---
+
+## 📊 Детальные endpoints
+
+### 👤 GET `/api/v1/users/{id}/boss-details`
+
+**Описание**: Получить детальную информацию о боссе УПК (работает только для пользователей с ролью BOSS)
+
+**Роли**: BOSS, GOD
+
+**Формат ответа**:
+```json
+{
+  "id": "uuid",
+  "name": "string",
+  "email": "string",
+  "role": "BOSS",
+  "upk": {
+    "id": "uuid",
+    "name": "string",
+    "region": "REGION"
+  },
+  "subordinates": [
+    {
+      "id": "uuid",
+      "name": "string",
+      "email": "string",
+      "role": "INSPECTOR | SECURITY",
+      "upkId": "uuid"
+    }
+  ],
+  "shifts": [
+    {
+      "id": "uuid",
+      "startTime": "2024-01-01T08:00:00Z",
+      "endTime": "2024-01-01T20:00:00Z",
+      "createdBy": "uuid",
+      "upkId": "uuid"
+    }
+  ]
+}
+```
+
+### 👤 GET `/api/v1/users/{id}/details`
+
+**Описание**: Получить полную информацию о пользователе со всеми сменами и статистикой
+
+**Роли**: BOSS, SECURITY, GOD
+
+**Формат ответа**:
+```json
+{
+  "id": "uuid",
+  "name": "string",
+  "email": "string",
+  "passwordHash": null,
+  "role": "INSPECTOR | SECURITY | etc",
+  "upk": {
+    "id": "uuid",
+    "name": "string",
+    "region": "REGION"
+  },
+  "boss": {
+    "id": "uuid",
+    "name": "string",
+    "email": "string",
+    "role": "BOSS"
+  },
+  "shifts": [
+    {
+      "id": "uuid",
+      "startTime": "2024-01-01T08:00:00Z",
+      "endTime": "2024-01-01T20:00:00Z",
+      "createdBy": "uuid",
+      "upkId": "uuid",
+      "boss": {
+        "id": "uuid",
+        "name": "string",
+        "email": "string",
+        "role": "BOSS"
+      },
+      "upk": {
+        "id": "uuid",
+        "name": "string",
+        "region": "REGION"
+      },
+      "participation": {
+        "userId": "uuid",
+        "shiftId": "uuid",
+        "wage": 1.5,
+        "penalty": 0.2,
+        "specialization": "PASSPORT | LOCALS | WORK | TRANSIT | SPECIAL",
+        "resolvedTickets": 15
+      }
+    }
+  ]
+}
+```
+
+### 👥 GET `/api/v1/shifts/{id}/details`
+
+**Описание**: Получить детальную информацию о смене с инспекторами и статистикой
+
+**Роли**: INSPECTOR, BOSS, SECURITY, GOD
+
+**Формат ответа**:
+```json
+{
+  "id": "uuid",
+  "startTime": "2024-01-01T08:00:00Z",
+  "endTime": "2024-01-01T20:00:00Z",
+  "createdBy": "uuid",
+  "upk": {
+    "id": "uuid",
+    "name": "string",
+    "region": "REGION"
+  },
+  "boss": {
+    "id": "uuid",
+    "name": "string",
+    "email": "string",
+    "role": "BOSS"
+  },
+  "inspectors": [
+    {
+      "userId": "uuid",
+      "shiftId": "uuid",
+      "wage": 1.5,
+      "penalty": 0.2,
+      "specialization": "PASSPORT | LOCALS | WORK | TRANSIT | SPECIAL",
+      "resolvedTickets": 15,
+      "passedCrossChecks": 8
+    }
+  ]
+}
+```
+
+**Поля участия (participation)**:
+- `wage` - коэффициент оплаты/премии (вместо старого `coeffBonus`)
+- `penalty` - коэффициент штрафа (вместо старого `coeffPenalty`)
+- `resolvedTickets` - количество решённых тикетов инспектором
+- `passedCrossChecks` - количество пройденных кросс-проверок
 
 ---
 
@@ -422,7 +568,6 @@ java -jar build/libs/papersplease-0.0.1-SNAPSHOT.jar
 
 Приложение будет доступно по адресу: `http://localhost:8080`
 
-### Применение SQL функций
 
 Если функции еще не созданы, выполните:
 
@@ -430,3 +575,104 @@ java -jar build/libs/papersplease-0.0.1-SNAPSHOT.jar
 psql -U your_username -d papersplease -f scripts/fix-functions.sql
 ```
 
+### Загрузка тестовых данных
+
+Для загрузки тестовых данных используйте:
+
+```bash
+psql -U your_username -d papersplease -f scripts/seed-data-prod.sql
+```
+
+Для очистки данных:
+
+```bash
+psql -U your_username -d papersplease -f scripts/clear-data-prod.sql
+```
+
+---
+
+## 📝 Изменения в API
+
+### Переименованные поля (v1.1.0)
+
+В версии 1.1.0 были переименованы поля для лучшей читаемости:
+
+**Таблица `participations`**:
+- ~~`bonus_coefficient`~~ → **`wage`** (коэффициент оплаты/премии)
+- ~~`penalty_coefficient`~~ → **`penalty`** (коэффициент штрафа)
+
+**API endpoints** (Request/Response):
+- ~~`coeffBonus`~~ → **`wage`**
+- ~~`coeffPenalty`~~ → **`penalty`**
+
+**Примеры**:
+
+Старый формат (deprecated):
+```json
+{
+  "coeffBonus": 1.5,
+  "coeffPenalty": 0.2
+}
+```
+
+Новый формат:
+```json
+{
+  "wage": 1.5,
+  "penalty": 0.2
+}
+```
+
+---
+
+## 🔧 Линтинг
+
+Проект использует Detekt для статического анализа кода:
+
+```bash
+# Запуск линтера
+./gradlew detekt
+
+# Автоматическое исправление проблем (где возможно)
+./gradlew detektFormat
+```
+
+---
+
+## 📚 Документация API
+
+OpenAPI спецификация доступна в файле `docs/openapi.yaml` или по адресу:
+```
+http://localhost:8080/v3/api-docs
+http://localhost:8080/v3/api-docs.yaml
+```
+
+---
+
+## 🤝 Вклад в проект
+
+1. Fork проекта
+2. Создайте feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit изменения (`git commit -m 'Add some AmazingFeature'`)
+4. Push в branch (`git push origin feature/AmazingFeature`)
+5. Откройте Pull Request
+
+---
+
+## 📄 Лицензия
+
+Этот проект является учебным и не имеет лицензии.
+
+---
+
+## 👨‍💻 Автор
+
+**Papers, Please System** - Система управления УПК
+
+Разработано как учебный проект для демонстрации:
+- Spring Boot + Kotlin
+- REST API design
+- JWT authentication
+- PostgreSQL + JPA
+- Multi-role authorization
+- Clean Architecture

@@ -1039,6 +1039,42 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/DocumentResponse"
+  /api/v1/users/{id}/details:
+    get:
+      tags:
+      - user-controller
+      operationId: getUserFullDetailsById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/UserFullDetailedResponse"
+  /api/v1/users/{id}/boss-details:
+    get:
+      tags:
+      - user-controller
+      operationId: getUserDetailsById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/UserDetailedResponse"
   /api/v1/upks/{id}/employees:
     get:
       tags:
@@ -1099,6 +1135,24 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/DocumentResponse"
+  /api/v1/shifts/{id}/details:
+    get:
+      tags:
+      - shift-controller
+      operationId: getShiftDetailsById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ShiftDetailedResponse"
   /api/v1/notifications:
     get:
       tags:
@@ -1413,21 +1467,21 @@ components:
           type: string
     ParticipationRequest:
       required:
-      - coeffBonus
-      - coeffPenalty
+      - penalty
       - shiftId
       - specialization
       - userId
+      - wage
       type: object
       properties:
         userId:
           type: string
         shiftId:
           type: string
-        coeffBonus:
+        wage:
           type: number
           format: float
-        coeffPenalty:
+        penalty:
           type: number
           format: float
         specialization:
@@ -1440,12 +1494,12 @@ components:
           - SPECIAL
     ParticipationResponse:
       required:
-      - coeffBonus
-      - coeffPenalty
       - id
+      - penalty
       - shiftId
       - specialization
       - userId
+      - wage
       type: object
       properties:
         id:
@@ -1454,10 +1508,10 @@ components:
           type: string
         shiftId:
           type: string
-        coeffBonus:
+        wage:
           type: number
           format: float
-        coeffPenalty:
+        penalty:
           type: number
           format: float
         specialization:
@@ -1743,10 +1797,10 @@ components:
           type: string
         userId:
           type: string
-        coeffBonus:
+        wage:
           type: number
           format: float
-        coeffPenalty:
+        penalty:
           type: number
           format: float
         specialization:
@@ -1867,6 +1921,133 @@ components:
         offset:
           type: integer
           format: int32
+    UserFullDetailedResponse:
+      required:
+      - email
+      - id
+      - name
+      - role
+      - shifts
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        passwordHash:
+          type: string
+        role:
+          type: string
+          enum:
+          - MIGRANT
+          - INSPECTOR
+          - BOSS
+          - SECURITY
+          - GOD
+        upk:
+          $ref: "#/components/schemas/UpkResponse"
+        boss:
+          $ref: "#/components/schemas/UserResponse"
+        shifts:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserShiftInfo"
+    UserParticipationInfo:
+      required:
+      - penalty
+      - resolvedTickets
+      - shiftId
+      - specialization
+      - userId
+      - wage
+      type: object
+      properties:
+        userId:
+          type: string
+        shiftId:
+          type: string
+        wage:
+          type: number
+          format: float
+        penalty:
+          type: number
+          format: float
+        specialization:
+          type: string
+          enum:
+          - PASSPORT
+          - LOCALS
+          - WORK
+          - TRANSIT
+          - SPECIAL
+        resolvedTickets:
+          type: integer
+          format: int32
+    UserShiftInfo:
+      required:
+      - boss
+      - createdBy
+      - id
+      - participation
+      - startTime
+      - upk
+      - upkId
+      type: object
+      properties:
+        id:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        upkId:
+          type: string
+        boss:
+          $ref: "#/components/schemas/UserResponse"
+        upk:
+          $ref: "#/components/schemas/UpkResponse"
+        participation:
+          $ref: "#/components/schemas/UserParticipationInfo"
+    UserDetailedResponse:
+      required:
+      - email
+      - id
+      - name
+      - role
+      - shifts
+      - subordinates
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum:
+          - MIGRANT
+          - INSPECTOR
+          - BOSS
+          - SECURITY
+          - GOD
+        upk:
+          $ref: "#/components/schemas/UpkResponse"
+        subordinates:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserResponse"
+        shifts:
+          type: array
+          items:
+            $ref: "#/components/schemas/ShiftResponse"
     PagedResponseUpkResponse:
       required:
       - items
@@ -1930,6 +2111,69 @@ components:
         offset:
           type: integer
           format: int32
+    InspectorShiftInfo:
+      required:
+      - passedCrossChecks
+      - penalty
+      - resolvedTickets
+      - shiftId
+      - specialization
+      - userId
+      - wage
+      type: object
+      properties:
+        userId:
+          type: string
+        shiftId:
+          type: string
+        wage:
+          type: number
+          format: float
+        penalty:
+          type: number
+          format: float
+        specialization:
+          type: string
+          enum:
+          - PASSPORT
+          - LOCALS
+          - WORK
+          - TRANSIT
+          - SPECIAL
+        resolvedTickets:
+          type: integer
+          format: int32
+        passedCrossChecks:
+          type: integer
+          format: int32
+    ShiftDetailedResponse:
+      required:
+      - boss
+      - createdBy
+      - id
+      - inspectors
+      - startTime
+      - upk
+      type: object
+      properties:
+        id:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        upk:
+          $ref: "#/components/schemas/UpkResponse"
+        boss:
+          $ref: "#/components/schemas/UserResponse"
+        inspectors:
+          type: array
+          items:
+            $ref: "#/components/schemas/InspectorShiftInfo"
     PagedResponseParticipationResponse:
       required:
       - items
