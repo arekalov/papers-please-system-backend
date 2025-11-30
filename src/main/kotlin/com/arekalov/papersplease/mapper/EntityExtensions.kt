@@ -66,8 +66,8 @@ fun Participation.toResponse() = ParticipationResponse(
     id = id.toString(),
     userId = user.id.toString(),
     shiftId = shift.id.toString(),
-    coeffBonus = bonusCoefficient ?: 1.0f,
-    coeffPenalty = penaltyCoefficient ?: 1.0f,
+    wage = wage,
+    penalty = penalty,
     specialization = specialization,
 )
 
@@ -75,8 +75,8 @@ fun ParticipationRequest.toEntity(shift: Shift, user: User) = Participation(
     shift = shift,
     user = user,
     specialization = specialization,
-    bonusCoefficient = coeffBonus,
-    penaltyCoefficient = coeffPenalty,
+    wage = wage,
+    penalty = penalty,
 )
 
 fun Event.toResponse() = EventResponse(

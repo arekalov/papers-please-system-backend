@@ -12,11 +12,11 @@ data class ParticipationRequest(
     @field:NotBlank(message = "Shift ID is required")
     val shiftId: String,
 
-    @field:PositiveOrZero(message = "Bonus coefficient must be positive or zero")
-    val coeffBonus: Float = 1.0f,
+    @field:PositiveOrZero(message = "Wage must be positive or zero")
+    val wage: Float = 1.0f,
 
-    @field:PositiveOrZero(message = "Penalty coefficient must be positive or zero")
-    val coeffPenalty: Float = 0.0f,
+    @field:PositiveOrZero(message = "Penalty must be positive or zero")
+    val penalty: Float = 0.0f,
 
     @field:NotNull(message = "Specialization is required")
     val specialization: Specialization,

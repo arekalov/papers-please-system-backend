@@ -1,6 +1,8 @@
 package com.arekalov.papersplease.controller
 
 import com.arekalov.papersplease.dto.PagedResponse
+import com.arekalov.papersplease.dto.user.UserDetailedResponse
+import com.arekalov.papersplease.dto.user.UserFullDetailedResponse
 import com.arekalov.papersplease.dto.user.UserRequest
 import com.arekalov.papersplease.dto.user.UserRequestPartial
 import com.arekalov.papersplease.dto.user.UserResponse
@@ -61,6 +63,26 @@ class UserController(
         @PathVariable id: String,
     ): ResponseEntity<UserResponse> {
         val response = userService.getById(authentication.name, id)
+        return ResponseEntity.ok(response)
+    }
+
+    @GetMapping("/{id}/boss-details")
+    @PreAuthorize("hasAnyRole('BOSS', 'GOD')")
+    fun getUserDetailsById(
+        authentication: Authentication,
+        @PathVariable id: String,
+    ): ResponseEntity<UserDetailedResponse> {
+        val response = userService.getDetailedById(authentication.name, id)
+        return ResponseEntity.ok(response)
+    }
+
+    @GetMapping("/{id}/details")
+    @PreAuthorize("hasAnyRole('BOSS', 'SECURITY', 'GOD')")
+    fun getUserFullDetailsById(
+        authentication: Authentication,
+        @PathVariable id: String,
+    ): ResponseEntity<UserFullDetailedResponse> {
+        val response = userService.getFullDetailedById(authentication.name, id)
         return ResponseEntity.ok(response)
     }
 

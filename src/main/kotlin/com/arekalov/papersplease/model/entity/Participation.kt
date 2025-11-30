@@ -34,9 +34,9 @@ class Participation(
     @Column(name = "accepted", nullable = false)
     var accepted: Boolean = false,
 
-    @Column(name = "bonus_coefficient", nullable = false)
-    var bonusCoefficient: Float = 1.0f,
+    @Column(name = "wage", nullable = false)
+    var wage: Float = 1.0f,
 
-    @Column(name = "penalty_coefficient", nullable = false)
-    var penaltyCoefficient: Float = 0.0f,
+    @Column(name = "penalty", nullable = false)
+    var penalty: Float = 0.0f,
 ) : BaseEntity()

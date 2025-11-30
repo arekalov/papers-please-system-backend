@@ -213,8 +213,8 @@ class ParticipationService(
             participation.user = newUser
         }
         request.specialization?.let { participation.specialization = it }
-        request.coeffBonus?.let { participation.bonusCoefficient = it }
-        request.coeffPenalty?.let { participation.penaltyCoefficient = it }
+        request.wage?.let { participation.wage = it }
+        request.penalty?.let { participation.penalty = it }
 
         return participationRepository.save(participation).toResponse()
     }

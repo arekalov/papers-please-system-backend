@@ -1,6 +1,7 @@
 package com.arekalov.papersplease.controller
 
 import com.arekalov.papersplease.dto.PagedResponse
+import com.arekalov.papersplease.dto.shift.ShiftDetailedResponse
 import com.arekalov.papersplease.dto.shift.ShiftRequest
 import com.arekalov.papersplease.dto.shift.ShiftRequestPartial
 import com.arekalov.papersplease.dto.shift.ShiftResponse
@@ -43,6 +44,15 @@ class ShiftController(
         @PathVariable id: String,
     ): ResponseEntity<ShiftResponse> {
         val response = shiftService.getById(authentication.name, id)
+        return ResponseEntity.ok(response)
+    }
+
+    @GetMapping("/{id}/details")
+    fun getShiftDetailsById(
+        authentication: Authentication,
+        @PathVariable id: String,
+    ): ResponseEntity<ShiftDetailedResponse> {
+        val response = shiftService.getDetailedById(authentication.name, id)
         return ResponseEntity.ok(response)
     }
 

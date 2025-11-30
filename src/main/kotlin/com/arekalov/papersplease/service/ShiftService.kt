@@ -1,6 +1,7 @@
 package com.arekalov.papersplease.service
 
 import com.arekalov.papersplease.dto.PagedResponse
+import com.arekalov.papersplease.dto.shift.ShiftDetailedResponse
 import com.arekalov.papersplease.dto.shift.ShiftRequest
 import com.arekalov.papersplease.dto.shift.ShiftRequestPartial
 import com.arekalov.papersplease.dto.shift.ShiftResponse
@@ -28,6 +29,9 @@ class ShiftService(
     private val shiftRepository: ShiftRepository,
     private val upkRepository: UpkRepository,
     private val userRepository: UserRepository,
+    private val participationRepository: com.arekalov.papersplease.repository.ParticipationRepository,
+    private val ticketRepository: com.arekalov.papersplease.repository.TicketRepository,
+    private val eventRepository: com.arekalov.papersplease.repository.EventRepository,
 ) {
 
     @Transactional(readOnly = true)
@@ -71,6 +75,64 @@ class ShiftService(
         checkAccessToShift(currentUserId, shift)
 
         return shift.toResponse()
+    }
+
+    @Transactional(readOnly = true)
+    fun getDetailedById(currentUserId: String, id: String): ShiftDetailedResponse {
+        val shift = shiftRepository.findById(UUID.fromString(id))
+            .orElseThrow { ResourceNotFoundException("Shift with id $id not found") }
+
+        checkAccessToShift(currentUserId, shift)
+
+        val boss = userRepository.findByRoleAndUpk_Id(Role.BOSS, shift.upk.id!!)
+            .firstOrNull() ?: throw ResourceNotFoundException("Boss not found for UPK ${shift.upk.id}")
+
+        val participations = participationRepository.findByShift_Id(shift.id!!)
+
+        val events = eventRepository.findByShift_Id(shift.id!!)
+
+        val inspectors = participations
+            .filter { it.user.role == Role.INSPECTOR }
+            .map { participation ->
+                val userId = participation.user.id!!
+
+                val resolvedTickets = ticketRepository.findByExecutor_Id(
+                    userId,
+                    org.springframework.data.domain.Pageable.unpaged(),
+                )
+                    .content
+                    .count { ticket ->
+                        ticket.shift?.id == shift.id &&
+                            (
+                                ticket.status == com.arekalov.papersplease.model.enums.TicketStatus.CLOSED ||
+                                    ticket.status == com.arekalov.papersplease.model.enums.TicketStatus.REJECTED
+                                )
+                    }
+
+                val passedCrossChecks = events.count { event ->
+                    event.specialization == participation.specialization
+                }
+
+                com.arekalov.papersplease.dto.shift.InspectorShiftInfo(
+                    userId = userId.toString(),
+                    shiftId = shift.id.toString(),
+                    wage = participation.wage,
+                    penalty = participation.penalty,
+                    specialization = participation.specialization,
+                    resolvedTickets = resolvedTickets,
+                    passedCrossChecks = passedCrossChecks,
+                )
+            }
+
+        return ShiftDetailedResponse(
+            id = shift.id.toString(),
+            startTime = shift.startTime,
+            endTime = shift.endTime,
+            createdBy = shift.createdBy.id.toString(),
+            upk = shift.upk.toResponse(),
+            boss = boss.toResponse(),
+            inspectors = inspectors,
+        )
     }
 
     @Transactional

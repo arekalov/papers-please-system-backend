@@ -1,9 +1,13 @@
 package com.arekalov.papersplease.service
 
 import com.arekalov.papersplease.dto.PagedResponse
+import com.arekalov.papersplease.dto.user.UserDetailedResponse
+import com.arekalov.papersplease.dto.user.UserFullDetailedResponse
+import com.arekalov.papersplease.dto.user.UserParticipationInfo
 import com.arekalov.papersplease.dto.user.UserRequest
 import com.arekalov.papersplease.dto.user.UserRequestPartial
 import com.arekalov.papersplease.dto.user.UserResponse
+import com.arekalov.papersplease.dto.user.UserShiftInfo
 import com.arekalov.papersplease.exception.ConflictException
 import com.arekalov.papersplease.exception.ForbiddenException
 import com.arekalov.papersplease.exception.ResourceNotFoundException
@@ -24,6 +28,9 @@ class UserService(
     private val userRepository: UserRepository,
     private val upkRepository: UpkRepository,
     private val passwordEncoder: PasswordEncoder,
+    private val shiftRepository: com.arekalov.papersplease.repository.ShiftRepository,
+    private val participationRepository: com.arekalov.papersplease.repository.ParticipationRepository,
+    private val ticketRepository: com.arekalov.papersplease.repository.TicketRepository,
 ) {
 
     @Transactional(readOnly = true)
@@ -113,6 +120,98 @@ class UserService(
         currentUserId?.let { checkAccessToUser(it, user) }
 
         return user.toResponse()
+    }
+
+    @Transactional(readOnly = true)
+    fun getDetailedById(currentUserId: String?, id: String): UserDetailedResponse {
+        val user = userRepository.findById(UUID.fromString(id))
+            .orElseThrow { ResourceNotFoundException("User with id $id not found") }
+
+        if (user.role != Role.BOSS) {
+            throw ForbiddenException("This endpoint is only available for users with BOSS role")
+        }
+
+        currentUserId?.let { checkAccessToUser(it, user) }
+
+        val subordinates = user.upk?.id?.let { upkId ->
+            userRepository.findByUpk_Id(upkId).map { it.toResponse() }
+        } ?: emptyList()
+
+        val shifts = shiftRepository.findByCreatedBy_Id(user.id!!).map { it.toResponse() }
+
+        return UserDetailedResponse(
+            id = user.id.toString(),
+            name = user.name,
+            email = user.email,
+            role = user.role,
+            upk = user.upk?.toResponse(),
+            subordinates = subordinates,
+            shifts = shifts,
+        )
+    }
+
+    @Transactional(readOnly = true)
+    fun getFullDetailedById(currentUserId: String?, id: String): UserFullDetailedResponse {
+        val user = userRepository.findById(UUID.fromString(id))
+            .orElseThrow { ResourceNotFoundException("User with id $id not found") }
+
+        currentUserId?.let { checkAccessToUser(it, user) }
+
+        val boss = user.upk?.id?.let { upkId ->
+            userRepository.findByRoleAndUpk_Id(Role.BOSS, upkId).firstOrNull()
+        }
+
+        val participations = participationRepository.findByUser_Id(user.id!!)
+
+        val shifts = participations.map { participation ->
+            val shift = participation.shift
+            val shiftBoss = userRepository.findByRoleAndUpk_Id(Role.BOSS, shift.upk.id!!)
+                .firstOrNull() ?: throw ResourceNotFoundException("Boss not found for UPK ${shift.upk.id}")
+
+            val resolvedTickets = ticketRepository.findByExecutor_Id(
+                user.id!!,
+                org.springframework.data.domain.Pageable.unpaged(),
+            )
+                .content
+                .count { ticket ->
+                    ticket.shift?.id == shift.id &&
+                        (
+                            ticket.status == com.arekalov.papersplease.model.enums.TicketStatus.CLOSED ||
+                                ticket.status == com.arekalov.papersplease.model.enums.TicketStatus.REJECTED
+                            )
+                }
+
+            val participationInfo = UserParticipationInfo(
+                userId = user.id.toString(),
+                shiftId = shift.id.toString(),
+                wage = participation.wage,
+                penalty = participation.penalty,
+                specialization = participation.specialization,
+                resolvedTickets = resolvedTickets,
+            )
+
+            UserShiftInfo(
+                id = shift.id.toString(),
+                startTime = shift.startTime,
+                endTime = shift.endTime,
+                createdBy = shift.createdBy.id.toString(),
+                upkId = shift.upk.id.toString(),
+                boss = shiftBoss.toResponse(),
+                upk = shift.upk.toResponse(),
+                participation = participationInfo,
+            )
+        }
+
+        return UserFullDetailedResponse(
+            id = user.id.toString(),
+            name = user.name,
+            email = user.email,
+            passwordHash = null,
+            role = user.role,
+            upk = user.upk?.toResponse(),
+            boss = boss?.toResponse(),
+            shifts = shifts,
+        )
     }
 
     @Transactional

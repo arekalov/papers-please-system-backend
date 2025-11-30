@@ -7,11 +7,11 @@ data class ParticipationRequestPartial(
     val shiftId: String? = null,
     val userId: String? = null,
 
-    @field:PositiveOrZero(message = "Bonus coefficient must be positive or zero")
-    val coeffBonus: Float? = null,
+    @field:PositiveOrZero(message = "Wage must be positive or zero")
+    val wage: Float? = null,
 
-    @field:PositiveOrZero(message = "Penalty coefficient must be positive or zero")
-    val coeffPenalty: Float? = null,
+    @field:PositiveOrZero(message = "Penalty must be positive or zero")
+    val penalty: Float? = null,
 
     val specialization: Specialization? = null,
 )
