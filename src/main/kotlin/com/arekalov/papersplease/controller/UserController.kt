@@ -77,7 +77,6 @@ class UserController(
     }
 
     @GetMapping("/{id}/details")
-    @PreAuthorize("hasAnyRole('BOSS', 'SECURITY', 'GOD')")
     fun getUserFullDetailsById(
         authentication: Authentication,
         @PathVariable id: String,

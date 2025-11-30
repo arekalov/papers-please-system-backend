@@ -59,7 +59,7 @@ class SecurityConfig(
                     .requestMatchers(HttpMethod.PATCH, "/api/v1/upks/**").hasAnyRole(BOSS, GOD)
                     .requestMatchers(HttpMethod.DELETE, "/api/v1/upks/**").hasRole(GOD)
                     // User management endpoints
-                    .requestMatchers("/api/v1/users/**").hasAnyRole(BOSS, SECURITY, GOD)
+                    .requestMatchers("/api/v1/users/**").hasAnyRole(BOSS, SECURITY, INSPECTOR, GOD)
                     // Shift endpoints - MIGRANT explicitly excluded
                     .requestMatchers("/api/v1/shifts/**").hasAnyRole(INSPECTOR, BOSS, SECURITY, GOD)
                     // Participation endpoints

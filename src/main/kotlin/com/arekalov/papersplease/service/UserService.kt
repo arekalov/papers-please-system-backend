@@ -287,6 +287,10 @@ class UserService(
         val currentUser = userRepository.findById(UUID.fromString(currentUserId))
             .orElseThrow { ResourceNotFoundException("Current user not found") }
 
+        if (currentUser.id == targetUser.id) {
+            return
+        }
+
         if (currentUser.role == Role.BOSS) {
             currentUser.upk?.id?.let { currentUserUpkId ->
                 if (targetUser.upk?.id != currentUserUpkId) {
