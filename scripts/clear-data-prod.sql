@@ -39,6 +39,10 @@ DELETE FROM users;
 -- Clear upks (last, as users reference it)
 DELETE FROM upks;
 
+-- Fix migration: Remove old columns if they still exist
+ALTER TABLE participations DROP COLUMN IF EXISTS bonus_coefficient;
+ALTER TABLE participations DROP COLUMN IF EXISTS penalty_coefficient;
+
 -- Commit transaction
 COMMIT;
 

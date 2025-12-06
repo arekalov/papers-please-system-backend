@@ -26,21 +26,81 @@ INSERT INTO shifts (id, end_time, start_time, created_by, upk_id) VALUES ('681b3
 INSERT INTO shifts (id, end_time, start_time, created_by, upk_id) VALUES ('9754d5d7-08d7-430c-a4c8-ece8ca62b53d', NULL, '2025-11-25 16:04:10.898247+00:00', '0247d06e-7f44-4835-b7af-25cc2c9d8afb', 'ba31cff1-55db-434c-9902-0c7a8c5c05d5') ON CONFLICT (id) DO NOTHING;
 
 -- Data for table: participations
-INSERT INTO participations (id, accepted, wage, penalty, specialization, shift_id, user_id) VALUES ('662d84c1-0264-4a1f-a421-7a9c723846eb', false, 1.0, 0.0, 'PASSPORT', 'feefbbd1-f842-4c33-88c9-cf131aef0c78', 'ae3df3bc-77fe-436d-a2fb-e35426621451') ON CONFLICT DO NOTHING;
-INSERT INTO participations (id, accepted, wage, penalty, specialization, shift_id, user_id) VALUES ('1949de4d-2e9d-42c4-a181-edf02b08ce50', false, 1.0, 0.0, 'LOCALS', 'feefbbd1-f842-4c33-88c9-cf131aef0c78', 'ae3df3bc-77fe-436d-a2fb-e35426621451') ON CONFLICT DO NOTHING;
-INSERT INTO participations (id, accepted, wage, penalty, specialization, shift_id, user_id) VALUES ('534dd2e2-00ce-485e-87fa-3b5f06d89587', false, 1.0, 0.0, 'PASSPORT', '681b3a76-3860-4066-999f-f6b9f86b4468', 'ae3df3bc-77fe-436d-a2fb-e35426621451') ON CONFLICT DO NOTHING;
-INSERT INTO participations (id, accepted, wage, penalty, specialization, shift_id, user_id) VALUES ('a3267a39-be05-4796-aa2d-e3f929aca98a', false, 1.0, 0.0, 'PASSPORT', '9754d5d7-08d7-430c-a4c8-ece8ca62b53d', 'ae3df3bc-77fe-436d-a2fb-e35426621451') ON CONFLICT DO NOTHING;
-INSERT INTO participations (id, accepted, wage, penalty, specialization, shift_id, user_id) VALUES ('65d3ac38-2969-4b36-b4ed-9384b3cb0518', false, 1.0, 0.0, 'PASSPORT', '9754d5d7-08d7-430c-a4c8-ece8ca62b53d', 'f8c7eed2-5a92-4d6e-874b-8a9bf2e42a75') ON CONFLICT DO NOTHING;
+-- Tim участвует во всех трех сменах с разными специализациями
+INSERT INTO participations (id, accepted, wage, penalty, specialization, shift_id, user_id) 
+VALUES ('279632b7-7da6-4493-91da-845b69ac28ae', true, 100.0, 0.0, 'PASSPORT', 'feefbbd1-f842-4c33-88c9-cf131aef0c78', 'ae3df3bc-77fe-436d-a2fb-e35426621451') ON CONFLICT DO NOTHING;
+
+INSERT INTO participations (id, accepted, wage, penalty, specialization, shift_id, user_id) 
+VALUES ('4dbd89c8-6123-41cf-8c89-39dae72bf456', true, 100.0, 0.0, 'PASSPORT', '681b3a76-3860-4066-999f-f6b9f86b4468', 'ae3df3bc-77fe-436d-a2fb-e35426621451') ON CONFLICT DO NOTHING;
+
+INSERT INTO participations (id, accepted, wage, penalty, specialization, shift_id, user_id) 
+VALUES ('1de49f13-d108-4950-a179-d5fa0420cf8c', true, 100.0, 0.0, 'PASSPORT', '9754d5d7-08d7-430c-a4c8-ece8ca62b53d', 'ae3df3bc-77fe-436d-a2fb-e35426621451') ON CONFLICT DO NOTHING;
+
+-- Stephan участвует в третьей смене
+INSERT INTO participations (id, accepted, wage, penalty, specialization, shift_id, user_id) 
+VALUES ('65d3ac38-2969-4b36-b4ed-9384b3cb0518', true, 80.0, 0.1, 'LOCALS', '9754d5d7-08d7-430c-a4c8-ece8ca62b53d', 'f8c7eed2-5a92-4d6e-874b-8a9bf2e42a75') ON CONFLICT DO NOTHING;
+
+-- George участвует во второй смене
+INSERT INTO participations (id, accepted, wage, penalty, specialization, shift_id, user_id) 
+VALUES ('88a4f2c9-1a3b-4d5e-9f8c-7e6d5c4b3a21', true, 90.0, 0.0, 'WORK', '681b3a76-3860-4066-999f-f6b9f86b4468', '49f05c98-2d2d-44fb-89c6-75c254e7c20d') ON CONFLICT DO NOTHING;
 
 -- Data for table: tickets
+
+-- Заявка мигранта 1 (не назначена)
 INSERT INTO tickets (id, created_at, deadline_at, description, priority, resolution, status, ticket_type, updated_at, author_id, executor_id, shift_id, subject_id, appeal_decision) 
 VALUES ('5ed93a7e-cb4c-40c3-b4f3-be4ad5e2588b', '2025-11-23 19:00:56.476695+00:00', NULL, 'Заявка мигранта 1', 'LOW', NULL, 'OPEN', 'EXTERNAL', '2025-11-23 19:00:56.476699+00:00', '091b55a5-f94b-429d-8569-9dbfd050ae3c', NULL, NULL, '091b55a5-f94b-429d-8569-9dbfd050ae3c', NULL) ON CONFLICT (id) DO NOTHING;
 
+-- Заявка мигранта 2 (не назначена)
 INSERT INTO tickets (id, created_at, deadline_at, description, priority, resolution, status, ticket_type, updated_at, author_id, executor_id, shift_id, subject_id, appeal_decision) 
 VALUES ('a4f2b630-3067-4279-8f0e-24f5664e0602', '2025-11-23 18:56:42.018205+00:00', NULL, 'Заявка мигранта 2', 'LOW', NULL, 'OPEN', 'EXTERNAL', '2025-11-23 19:12:58.108161+00:00', '091b55a5-f94b-429d-8569-9dbfd050ae3c', NULL, NULL, '091b55a5-f94b-429d-8569-9dbfd050ae3c', NULL) ON CONFLICT (id) DO NOTHING;
 
+-- === ПЕРВАЯ СМЕНА (feefbbd1-f842-4c33-88c9-cf131aef0c78) - Tim executor ===
+-- Тикет 1: CLOSED (завершен Tim)
 INSERT INTO tickets (id, created_at, deadline_at, description, priority, resolution, status, ticket_type, updated_at, author_id, executor_id, shift_id, subject_id, appeal_decision) 
-VALUES ('0dcc6758-1989-49a7-8ff0-5bc1d9e1f61e', '2025-11-23 19:02:56.652086+00:00', NULL, 'Технический тикет', 'NORMAL', NULL, 'IN_PROGRESS', 'INTERNAL', '2025-11-23 19:02:56.652092+00:00', '0247d06e-7f44-4835-b7af-25cc2c9d8afb', 'ae3df3bc-77fe-436d-a2fb-e35426621451', 'feefbbd1-f842-4c33-88c9-cf131aef0c78', '0247d06e-7f44-4835-b7af-25cc2c9d8afb', NULL) ON CONFLICT (id) DO NOTHING;
+VALUES ('11111111-1111-1111-1111-111111111111', '2025-11-23 10:00:00+00:00', NULL, 'Проверка паспорта мигранта Иванова', 'HIGH', 'Документы в порядке, проверка пройдена', 'CLOSED', 'EXTERNAL', '2025-11-23 12:30:00+00:00', '0247d06e-7f44-4835-b7af-25cc2c9d8afb', 'ae3df3bc-77fe-436d-a2fb-e35426621451', 'feefbbd1-f842-4c33-88c9-cf131aef0c78', '091b55a5-f94b-429d-8569-9dbfd050ae3c', NULL) ON CONFLICT (id) DO NOTHING;
+
+-- Тикет 2: CLOSED (завершен Tim)
+INSERT INTO tickets (id, created_at, deadline_at, description, priority, resolution, status, ticket_type, updated_at, author_id, executor_id, shift_id, subject_id, appeal_decision) 
+VALUES ('22222222-2222-2222-2222-222222222222', '2025-11-23 11:00:00+00:00', NULL, 'Регистрация въезда туриста', 'NORMAL', 'Регистрация оформлена успешно', 'CLOSED', 'EXTERNAL', '2025-11-23 13:00:00+00:00', '0247d06e-7f44-4835-b7af-25cc2c9d8afb', 'ae3df3bc-77fe-436d-a2fb-e35426621451', 'feefbbd1-f842-4c33-88c9-cf131aef0c78', '091b55a5-f94b-429d-8569-9dbfd050ae3c', NULL) ON CONFLICT (id) DO NOTHING;
+
+-- Тикет 3: CLOSED (завершен Tim)
+INSERT INTO tickets (id, created_at, deadline_at, description, priority, resolution, status, ticket_type, updated_at, author_id, executor_id, shift_id, subject_id, appeal_decision) 
+VALUES ('33333333-3333-3333-3333-333333333333', '2025-11-23 12:00:00+00:00', NULL, 'Проверка рабочей визы', 'NORMAL', 'Виза действительна до 2026 года', 'CLOSED', 'EXTERNAL', '2025-11-23 14:00:00+00:00', '0247d06e-7f44-4835-b7af-25cc2c9d8afb', 'ae3df3bc-77fe-436d-a2fb-e35426621451', 'feefbbd1-f842-4c33-88c9-cf131aef0c78', '091b55a5-f94b-429d-8569-9dbfd050ae3c', NULL) ON CONFLICT (id) DO NOTHING;
+
+-- Тикет 4: IN_PROGRESS (Tim работает)
+INSERT INTO tickets (id, created_at, deadline_at, description, priority, resolution, status, ticket_type, updated_at, author_id, executor_id, shift_id, subject_id, appeal_decision) 
+VALUES ('44444444-4444-4444-4444-444444444444', '2025-11-23 14:00:00+00:00', NULL, 'Проверка документов на вывоз товара', 'HIGH', NULL, 'IN_PROGRESS', 'INTERNAL', '2025-11-23 14:30:00+00:00', '0247d06e-7f44-4835-b7af-25cc2c9d8afb', 'ae3df3bc-77fe-436d-a2fb-e35426621451', 'feefbbd1-f842-4c33-88c9-cf131aef0c78', '091b55a5-f94b-429d-8569-9dbfd050ae3c', NULL) ON CONFLICT (id) DO NOTHING;
+
+-- Тикет 5: NEED_INFO (Tim ждет информацию)
+INSERT INTO tickets (id, created_at, deadline_at, description, priority, resolution, status, ticket_type, updated_at, author_id, executor_id, shift_id, subject_id, appeal_decision) 
+VALUES ('55555555-5555-5555-5555-555555555555', '2025-11-23 15:00:00+00:00', NULL, 'Несоответствие данных в документах', 'HIGH', NULL, 'NEED_INFO', 'EXTERNAL', '2025-11-23 15:30:00+00:00', '0247d06e-7f44-4835-b7af-25cc2c9d8afb', 'ae3df3bc-77fe-436d-a2fb-e35426621451', 'feefbbd1-f842-4c33-88c9-cf131aef0c78', '091b55a5-f94b-429d-8569-9dbfd050ae3c', NULL) ON CONFLICT (id) DO NOTHING;
+
+-- Тикет 6: REJECTED (Tim отклонил)
+INSERT INTO tickets (id, created_at, deadline_at, description, priority, resolution, status, ticket_type, updated_at, author_id, executor_id, shift_id, subject_id, appeal_decision) 
+VALUES ('66666666-6666-6666-6666-666666666666', '2025-11-23 16:00:00+00:00', NULL, 'Подозрение на поддельные документы', 'CRITICAL', 'Документы признаны поддельными. Отказано во въезде', 'REJECTED', 'EXTERNAL', '2025-11-23 17:00:00+00:00', '0247d06e-7f44-4835-b7af-25cc2c9d8afb', 'ae3df3bc-77fe-436d-a2fb-e35426621451', 'feefbbd1-f842-4c33-88c9-cf131aef0c78', '091b55a5-f94b-429d-8569-9dbfd050ae3c', NULL) ON CONFLICT (id) DO NOTHING;
+
+-- === ВТОРАЯ СМЕНА (681b3a76-3860-4066-999f-f6b9f86b4468) - Tim executor ===
+-- Тикет 7: OPEN (назначен Tim, но еще не начат)
+INSERT INTO tickets (id, created_at, deadline_at, description, priority, resolution, status, ticket_type, updated_at, author_id, executor_id, shift_id, subject_id, appeal_decision) 
+VALUES ('77777777-7777-7777-7777-777777777777', '2025-11-24 09:00:00+00:00', NULL, 'Новая заявка на проверку', 'NORMAL', NULL, 'OPEN', 'EXTERNAL', '2025-11-24 09:00:00+00:00', '0247d06e-7f44-4835-b7af-25cc2c9d8afb', 'ae3df3bc-77fe-436d-a2fb-e35426621451', '681b3a76-3860-4066-999f-f6b9f86b4468', '091b55a5-f94b-429d-8569-9dbfd050ae3c', NULL) ON CONFLICT (id) DO NOTHING;
+
+-- Тикет 8: IN_PROGRESS (Tim работает)
+INSERT INTO tickets (id, created_at, deadline_at, description, priority, resolution, status, ticket_type, updated_at, author_id, executor_id, shift_id, subject_id, appeal_decision) 
+VALUES ('88888888-8888-8888-8888-888888888888', '2025-11-24 10:00:00+00:00', NULL, 'Проверка транзитной визы', 'NORMAL', NULL, 'IN_PROGRESS', 'EXTERNAL', '2025-11-24 10:30:00+00:00', '0247d06e-7f44-4835-b7af-25cc2c9d8afb', 'ae3df3bc-77fe-436d-a2fb-e35426621451', '681b3a76-3860-4066-999f-f6b9f86b4468', '091b55a5-f94b-429d-8569-9dbfd050ae3c', NULL) ON CONFLICT (id) DO NOTHING;
+
+-- === ТРЕТЬЯ СМЕНА (9754d5d7-08d7-430c-a4c8-ece8ca62b53d) - Tim executor ===
+-- Тикет 9: OPEN (только назначен)
+INSERT INTO tickets (id, created_at, deadline_at, description, priority, resolution, status, ticket_type, updated_at, author_id, executor_id, shift_id, subject_id, appeal_decision) 
+VALUES ('99999999-9999-9999-9999-999999999999', '2025-11-25 08:00:00+00:00', NULL, 'Срочная проверка документов', 'HIGH', NULL, 'OPEN', 'EXTERNAL', '2025-11-25 08:00:00+00:00', '0247d06e-7f44-4835-b7af-25cc2c9d8afb', 'ae3df3bc-77fe-436d-a2fb-e35426621451', '9754d5d7-08d7-430c-a4c8-ece8ca62b53d', '091b55a5-f94b-429d-8569-9dbfd050ae3c', NULL) ON CONFLICT (id) DO NOTHING;
+
+-- === Тикеты для других исполнителей ===
+-- Тикет Stephan в третьей смене (CLOSED)
+INSERT INTO tickets (id, created_at, deadline_at, description, priority, resolution, status, ticket_type, updated_at, author_id, executor_id, shift_id, subject_id, appeal_decision) 
+VALUES ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '2025-11-25 09:00:00+00:00', NULL, 'Проверка местных документов', 'LOW', 'Проверка завершена успешно', 'CLOSED', 'INTERNAL', '2025-11-25 11:00:00+00:00', '0247d06e-7f44-4835-b7af-25cc2c9d8afb', 'f8c7eed2-5a92-4d6e-874b-8a9bf2e42a75', '9754d5d7-08d7-430c-a4c8-ece8ca62b53d', '091b55a5-f94b-429d-8569-9dbfd050ae3c', NULL) ON CONFLICT (id) DO NOTHING;
+
+-- Тикет George во второй смене (IN_PROGRESS)
+INSERT INTO tickets (id, created_at, deadline_at, description, priority, resolution, status, ticket_type, updated_at, author_id, executor_id, shift_id, subject_id, appeal_decision) 
+VALUES ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '2025-11-24 11:00:00+00:00', NULL, 'Проверка рабочего разрешения', 'NORMAL', NULL, 'IN_PROGRESS', 'EXTERNAL', '2025-11-24 11:30:00+00:00', '0247d06e-7f44-4835-b7af-25cc2c9d8afb', '49f05c98-2d2d-44fb-89c6-75c254e7c20d', '681b3a76-3860-4066-999f-f6b9f86b4468', '091b55a5-f94b-429d-8569-9dbfd050ae3c', NULL) ON CONFLICT (id) DO NOTHING;
 
 -- Data for table: documents
 INSERT INTO documents (id, uploaded_at, document_type, body, issued_at, expires_at, owner_id) 
