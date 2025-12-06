@@ -13,6 +13,7 @@ import com.arekalov.papersplease.model.entity.Participation
 import com.arekalov.papersplease.model.entity.Upk
 import com.arekalov.papersplease.model.enums.NotificationType
 import com.arekalov.papersplease.model.enums.Role
+import com.arekalov.papersplease.model.enums.TicketStatus
 import com.arekalov.papersplease.repository.ParticipationRepository
 import com.arekalov.papersplease.repository.ShiftRepository
 import com.arekalov.papersplease.repository.UserRepository
@@ -27,6 +28,7 @@ class ParticipationService(
     private val userRepository: UserRepository,
     private val shiftRepository: ShiftRepository,
     private val notificationService: NotificationService,
+    private val ticketRepository: com.arekalov.papersplease.repository.TicketRepository,
 ) {
 
     @Transactional(readOnly = true)
@@ -53,7 +55,14 @@ class ParticipationService(
         }
 
         return PagedResponse(
-            items = page.content.map { it.toResponse() },
+            items = page.content.map { participation ->
+                val resolvedTickets = ticketRepository.countByExecutor_IdAndStatusAndShift_Id(
+                    participation.user.id!!,
+                    TicketStatus.CLOSED,
+                    participation.shift.id!!,
+                )
+                participation.toResponse(resolvedTickets)
+            },
             total = page.totalElements,
             limit = limit,
             offset = offset,
@@ -67,7 +76,13 @@ class ParticipationService(
 
         checkAccessToParticipation(currentUserId, participation)
 
-        return participation.toResponse()
+        val resolvedTickets = ticketRepository.countByExecutor_IdAndStatusAndShift_Id(
+            participation.user.id!!,
+            TicketStatus.CLOSED,
+            participation.shift.id!!,
+        )
+
+        return participation.toResponse(resolvedTickets)
     }
 
     @Transactional(readOnly = true)
@@ -103,7 +118,14 @@ class ParticipationService(
             .take(limit)
 
         return PagedResponse(
-            items = paginatedParticipations.map { it.toResponse() },
+            items = paginatedParticipations.map { participation ->
+                val resolvedTickets = ticketRepository.countByExecutor_IdAndStatusAndShift_Id(
+                    participation.user.id!!,
+                    TicketStatus.CLOSED,
+                    participation.shift.id!!,
+                )
+                participation.toResponse(resolvedTickets)
+            },
             total = totalCount,
             limit = limit,
             offset = offset,
@@ -146,7 +168,14 @@ class ParticipationService(
             .take(limit)
 
         return PagedResponse(
-            items = paginatedParticipations.map { it.toResponse() },
+            items = paginatedParticipations.map { participation ->
+                val resolvedTickets = ticketRepository.countByExecutor_IdAndStatusAndShift_Id(
+                    participation.user.id!!,
+                    TicketStatus.CLOSED,
+                    participation.shift.id!!,
+                )
+                participation.toResponse(resolvedTickets)
+            },
             total = totalCount,
             limit = limit,
             offset = offset,
@@ -179,7 +208,13 @@ class ParticipationService(
             shiftId = shift.id!!,
         )
 
-        return savedParticipation.toResponse()
+        val resolvedTickets = ticketRepository.countByExecutor_IdAndStatusAndShift_Id(
+            user.id!!,
+            TicketStatus.CLOSED,
+            shift.id!!,
+        )
+
+        return savedParticipation.toResponse(resolvedTickets)
     }
 
     @Transactional
@@ -216,7 +251,15 @@ class ParticipationService(
         request.wage?.let { participation.wage = it }
         request.penalty?.let { participation.penalty = it }
 
-        return participationRepository.save(participation).toResponse()
+        val savedParticipation = participationRepository.save(participation)
+
+        val resolvedTickets = ticketRepository.countByExecutor_IdAndStatusAndShift_Id(
+            savedParticipation.user.id!!,
+            TicketStatus.CLOSED,
+            savedParticipation.shift.id!!,
+        )
+
+        return savedParticipation.toResponse(resolvedTickets)
     }
 
     @Transactional

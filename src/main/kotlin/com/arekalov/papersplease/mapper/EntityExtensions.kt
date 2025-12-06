@@ -62,13 +62,14 @@ fun Shift.toResponse() = ShiftResponse(
     upkId = upk.id.toString(),
 )
 
-fun Participation.toResponse() = ParticipationResponse(
+fun Participation.toResponse(totalResolvedTickets: Long = 0) = ParticipationResponse(
     id = id.toString(),
     userId = user.id.toString(),
     shiftId = shift.id.toString(),
     wage = wage,
     penalty = penalty,
     specialization = specialization,
+    totalResolvedTickets = totalResolvedTickets,
 )
 
 fun ParticipationRequest.toEntity(shift: Shift, user: User) = Participation(

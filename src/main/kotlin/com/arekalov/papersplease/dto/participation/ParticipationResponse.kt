@@ -9,4 +9,5 @@ data class ParticipationResponse(
     val wage: Float,
     val penalty: Float,
     val specialization: Specialization,
+    val totalResolvedTickets: Long,
 )

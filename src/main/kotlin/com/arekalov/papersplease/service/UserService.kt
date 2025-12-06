@@ -134,7 +134,9 @@ class UserService(
         currentUserId?.let { checkAccessToUser(it, user) }
 
         val subordinates = user.upk?.id?.let { upkId ->
-            userRepository.findByUpk_Id(upkId).map { it.toResponse() }
+            userRepository.findByUpk_Id(upkId)
+                .filter { it.id != user.id && it.role != Role.MIGRANT }
+                .map { it.toResponse() }
         } ?: emptyList()
 
         val shifts = shiftRepository.findByCreatedBy_Id(user.id!!).map { it.toResponse() }
