@@ -215,6 +215,11 @@
 }
 ```
 
+**Примечания**:
+- В `subordinates` не включаются пользователи с ролью `MIGRANT`
+- Сам босс не отображается в собственном списке подчиненных
+- Отображаются только сотрудники УПК: `INSPECTOR` и `SECURITY`
+
 ### 👤 GET `/api/v1/users/{id}/details`
 
 **Описание**: Получить полную информацию о пользователе со всеми сменами и статистикой
@@ -317,8 +322,47 @@
 **Поля участия (participation)**:
 - `wage` - коэффициент оплаты/премии (вместо старого `coeffBonus`)
 - `penalty` - коэффициент штрафа (вместо старого `coeffPenalty`)
-- `resolvedTickets` - количество решённых тикетов инспектором
+- `resolvedTickets` - количество решённых тикетов инспектором в этой смене
 - `passedCrossChecks` - количество пройденных кросс-проверок
+
+---
+
+### 👥 GET `/api/v1/participations`
+
+**Описание**: Получить список participations (участий в сменах) с информацией о завершенных тикетах
+
+**Роли**: INSPECTOR, BOSS, SECURITY, GOD
+
+**Query параметры**:
+- `shiftId` (опционально) - фильтр по смене
+- `userId` (опционально) - фильтр по пользователю
+- `limit` (по умолчанию 10) - количество записей на страницу
+- `offset` (по умолчанию 0) - смещение для пагинации
+
+**Формат ответа**:
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "userId": "uuid",
+      "shiftId": "uuid",
+      "wage": 1.5,
+      "penalty": 0.2,
+      "specialization": "PASSPORT | LOCALS | WORK | TRANSIT | SPECIAL",
+      "totalResolvedTickets": 3
+    }
+  ],
+  "total": 10,
+  "limit": 10,
+  "offset": 0
+}
+```
+
+**Поля**:
+- `totalResolvedTickets` - количество завершенных (`CLOSED`) тикетов для данного пользователя в данной смене
+- Значение вычисляется динамически и не хранится в БД
+- Учитываются только тикеты где пользователь является executor'ом
 
 ---
 
@@ -414,6 +458,24 @@ ORDER BY u.role, u.name
 ```
 
 **Применение**: Формирование смены начальником УПК, управление персоналом УПК
+
+---
+
+#### 4. `countByExecutor_IdAndStatusAndShift_Id(executor_id UUID, status VARCHAR, shift_id UUID)`
+**Назначение**: Подсчет количества тикетов с определенным статусом для конкретного исполнителя в рамках смены
+
+**Возвращает**: `BIGINT` - количество тикетов
+
+**Логика**:
+```sql
+SELECT COUNT(*) 
+FROM tickets
+WHERE executor_id = p_executor_id
+  AND status = p_status
+  AND shift_id = p_shift_id
+```
+
+**Применение**: Расчет статистики производительности сотрудника в конкретной смене (поле `totalResolvedTickets` в Participation API)
 
 ---
 
@@ -599,6 +661,73 @@ psql -U your_username -d papersplease -f scripts/clear-data-prod.sql
 ---
 
 ## 📝 Изменения в API
+
+### Обновления v1.2.0
+
+В версии 1.2.0 добавлены следующие улучшения:
+
+#### 1. **Добавлено поле `totalResolvedTickets` в Participation API**
+
+Теперь при получении информации об участии в смене (participation) возвращается количество завершенных тикетов для конкретной смены.
+
+**Endpoints с обновленным форматом**:
+- `GET /api/v1/participations`
+- `GET /api/v1/participations/{id}`
+- `GET /api/v1/participations?shiftId={id}`
+- `GET /api/v1/participations?userId={id}`
+- `POST /api/v1/participations`
+- `PATCH /api/v1/participations/{id}`
+
+**Формат ответа**:
+```json
+{
+  "id": "uuid",
+  "userId": "uuid",
+  "shiftId": "uuid",
+  "wage": 1.5,
+  "penalty": 0.2,
+  "specialization": "PASSPORT",
+  "totalResolvedTickets": 3
+}
+```
+
+**Важно**: 
+- `totalResolvedTickets` подсчитывается динамически и не хранится в БД
+- Считаются только тикеты со статусом `CLOSED` для конкретной смены
+- Подсчет привязан к executor'у (пользователю participation) и конкретной смене
+
+#### 2. **Фильтрация subordinates в Boss Details**
+
+При получении информации о боссе (`GET /api/v1/users/{id}/boss-details`) из списка подчиненных теперь исключаются:
+- **Сам босс** (не отображается в собственном списке подчиненных)
+- **Мигранты** (роль `MIGRANT`)
+
+В списке `subordinates` теперь отображаются только:
+- Инспекторы (`INSPECTOR`)
+- Сотрудники безопасности (`SECURITY`)
+
+**Пример ответа**:
+```json
+{
+  "id": "boss-uuid",
+  "name": "Boss Name",
+  "role": "BOSS",
+  "subordinates": [
+    {
+      "id": "uuid",
+      "name": "Inspector 1",
+      "role": "INSPECTOR",
+      "upkId": "upk-uuid"
+    },
+    {
+      "id": "uuid",
+      "name": "Security 1",
+      "role": "SECURITY",
+      "upkId": "upk-uuid"
+    }
+  ]
+}
+```
 
 ### Переименованные поля (v1.1.0)
 
