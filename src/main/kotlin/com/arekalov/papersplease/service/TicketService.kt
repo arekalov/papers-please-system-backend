@@ -2,11 +2,13 @@ package com.arekalov.papersplease.service
 
 import com.arekalov.papersplease.dto.PagedResponse
 import com.arekalov.papersplease.dto.document.DocumentResponse
+import com.arekalov.papersplease.dto.ticket.TicketDetailedResponse
 import com.arekalov.papersplease.dto.ticket.TicketRequest
 import com.arekalov.papersplease.dto.ticket.TicketRequestPartial
 import com.arekalov.papersplease.dto.ticket.TicketResponse
 import com.arekalov.papersplease.exception.ForbiddenException
 import com.arekalov.papersplease.exception.ResourceNotFoundException
+import com.arekalov.papersplease.mapper.toDetailedResponse
 import com.arekalov.papersplease.mapper.toEntity
 import com.arekalov.papersplease.mapper.toResponse
 import com.arekalov.papersplease.model.entity.Ticket
@@ -69,6 +71,21 @@ class TicketService(
         }
 
         return ticket.toResponse()
+    }
+
+    @Transactional(readOnly = true)
+    fun getByIdDetailed(currentUserId: String, id: String): TicketDetailedResponse {
+        val currentUser = userRepository.findById(UUID.fromString(currentUserId))
+            .orElseThrow { ResourceNotFoundException("Current user not found") }
+
+        val ticket = ticketRepository.findById(UUID.fromString(id))
+            .orElseThrow { ResourceNotFoundException("Ticket with id $id not found") }
+
+        if (!checkReadAccess(currentUser, ticket)) {
+            throw ForbiddenException("You don't have access to this ticket")
+        }
+
+        return ticket.toDetailedResponse()
     }
 
     @Transactional(readOnly = true)

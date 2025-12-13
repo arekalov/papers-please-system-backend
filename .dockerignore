@@ -1,0 +1,39 @@
+# Build artifacts
+build/
+target/
+.gradle/
+*.jar
+*.war
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Logs
+*.log
+logs/
+
+# Deployment
+deployment/
+
+# Documentation
+docs/
+
+# Test data
+scripts/seed-data-prod.sql
+scripts/clear-data-prod.sql
+
+# Local properties
+local.properties
+

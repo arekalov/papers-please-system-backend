@@ -2,6 +2,7 @@ package com.arekalov.papersplease.controller
 
 import com.arekalov.papersplease.dto.PagedResponse
 import com.arekalov.papersplease.dto.document.DocumentResponse
+import com.arekalov.papersplease.dto.ticket.TicketDetailedResponse
 import com.arekalov.papersplease.dto.ticket.TicketRequest
 import com.arekalov.papersplease.dto.ticket.TicketRequestPartial
 import com.arekalov.papersplease.dto.ticket.TicketResponse
@@ -61,8 +62,8 @@ class TicketController(
     fun getTicketById(
         authentication: Authentication,
         @PathVariable id: String,
-    ): ResponseEntity<TicketResponse> {
-        val response = ticketService.getById(authentication.name, id)
+    ): ResponseEntity<TicketDetailedResponse> {
+        val response = ticketService.getByIdDetailed(authentication.name, id)
         return ResponseEntity.ok(response)
     }
 

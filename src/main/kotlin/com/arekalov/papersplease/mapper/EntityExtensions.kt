@@ -11,6 +11,7 @@ import com.arekalov.papersplease.dto.notification.NotificationResponse
 import com.arekalov.papersplease.dto.participation.ParticipationRequest
 import com.arekalov.papersplease.dto.participation.ParticipationResponse
 import com.arekalov.papersplease.dto.shift.ShiftResponse
+import com.arekalov.papersplease.dto.ticket.TicketDetailedResponse
 import com.arekalov.papersplease.dto.ticket.TicketRequest
 import com.arekalov.papersplease.dto.ticket.TicketResponse
 import com.arekalov.papersplease.dto.upk.UpkRequest
@@ -112,6 +113,25 @@ fun Ticket.toResponse() = TicketResponse(
     appealDecision = appealDecision,
     relatedTicketIds = relatedTickets.mapNotNull { it.id?.toString() },
     documentIds = documents.mapNotNull { it.id?.toString() },
+)
+
+fun Ticket.toDetailedResponse() = TicketDetailedResponse(
+    id = id.toString(),
+    ticketType = ticketType,
+    status = status,
+    priority = priority,
+    createdAt = createdAt,
+    updatedAt = updatedAt,
+    deadlineAt = deadlineAt,
+    authorId = author.id.toString(),
+    subjectId = subject.id.toString(),
+    executor = executor?.toResponse(),
+    shiftId = shift?.id?.toString(),
+    description = description,
+    resolution = resolution,
+    appealDecision = appealDecision,
+    relatedTickets = relatedTickets.map { it.toResponse() },
+    documents = documents.map { it.toResponse() },
 )
 
 fun TicketRequest.toEntity(
