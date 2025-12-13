@@ -708,7 +708,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/TicketResponse"
+                $ref: "#/components/schemas/TicketDetailedResponse"
     delete:
       tags:
       - ticket-controller
@@ -1408,8 +1408,8 @@ components:
           type: string
         subjectId:
           type: string
-        executorId:
-          type: string
+        executor:
+          $ref: "#/components/schemas/UserResponse"
         shiftId:
           type: string
         description:
@@ -2094,6 +2094,83 @@ components:
         offset:
           type: integer
           format: int32
+    TicketDetailedResponse:
+      required:
+      - authorId
+      - createdAt
+      - description
+      - documents
+      - id
+      - priority
+      - relatedTickets
+      - status
+      - subjectId
+      - ticketType
+      - updatedAt
+      type: object
+      properties:
+        id:
+          type: string
+        ticketType:
+          type: string
+          enum:
+          - EXTERNAL
+          - INTERNAL
+          - ARREST
+          - CROSSCHECK
+          - APPEAL
+        status:
+          type: string
+          enum:
+          - OPEN
+          - IN_PROGRESS
+          - NEED_INFO
+          - CLOSED
+          - REJECTED
+        priority:
+          type: string
+          enum:
+          - LOW
+          - NORMAL
+          - HIGH
+          - CRITICAL
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        deadlineAt:
+          type: string
+          format: date-time
+        authorId:
+          type: string
+        subjectId:
+          type: string
+        executor:
+          $ref: "#/components/schemas/UserResponse"
+        shiftId:
+          type: string
+        description:
+          type: string
+        resolution:
+          type: string
+        appealDecision:
+          type: string
+          enum:
+          - APPROVED
+          - REJECTED
+          - PUNISH_EXECUTOR
+          - PUNISH_CHECKER
+          - PUNISH_BOTH
+        relatedTickets:
+          type: array
+          items:
+            $ref: "#/components/schemas/TicketResponse"
+        documents:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentResponse"
     PagedResponseShiftResponse:
       required:
       - items

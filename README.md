@@ -117,19 +117,21 @@
 
 | Endpoint | Метод | Роли | Описание |
 |----------|-------|------|----------|
-| `GET /` | GET | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Получить тикеты (с фильтрацией) |
-| `GET /{id}` | GET | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Получить тикет по ID |
+| `GET /` | GET | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Получить тикеты (с фильтрацией), включая полную информацию об executor* |
+| `GET /{id}` | GET | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Получить детали тикета с полными объектами executor, relatedTickets, documents* |
 | `POST /` | POST | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Создать новый тикет |
 | `PATCH /{id}` | PATCH | INSPECTOR, BOSS, SECURITY, GOD | Обновить тикет |
 | `DELETE /{id}` | DELETE | MIGRANT, BOSS, GOD | Удалить тикет |
-| `GET /{id}/documents` | GET | INSPECTOR, BOSS, SECURITY, GOD | Получить документы тикета (только своего УПК)* |
+| `GET /{id}/documents` | GET | INSPECTOR, BOSS, SECURITY, GOD | Получить документы тикета (только своего УПК)** |
 | `POST /{id}/documents/{documentId}` | POST | INSPECTOR, BOSS, SECURITY, GOD | Прикрепить документ к тикету |
 | `DELETE /{id}/documents/{documentId}` | DELETE | INSPECTOR, BOSS, SECURITY, GOD | Открепить документ от тикета |
 | `GET /{id}/related` | GET | INSPECTOR, BOSS, SECURITY, GOD | Получить связанные тикеты |
 | `POST /{id}/related/{relatedTicketId}` | POST | INSPECTOR, BOSS, SECURITY, GOD | Связать тикеты |
 | `DELETE /{id}/related/{relatedTicketId}` | DELETE | INSPECTOR, BOSS, SECURITY, GOD | Удалить связь между тикетами |
 
-> *Доступ только для сотрудников УПК, к которому относится тикет
+> *В версии 1.3.0+ тикеты возвращаются с полными объектами executor (вместо только executorId)
+> 
+> **Доступ только для сотрудников УПК, к которому относится тикет
 
 ### 🏢 Управление УПК (`/api/v1/upks`)
 
@@ -606,6 +608,299 @@ papersplease/
 
 ---
 
+## 📚 Примеры использования API
+
+### 🎫 Работа с тикетами
+
+#### Получить список тикетов с полной информацией об исполнителях
+
+```bash
+GET /api/v1/tickets?limit=10&offset=0
+Authorization: Bearer {token}
+
+# Ответ (v1.3.0+):
+{
+  "items": [
+    {
+      "id": "5ed93a7e-cb4c-40c3-b4f3-be4ad5e2588b",
+      "ticketType": "EXTERNAL",
+      "status": "OPEN",
+      "priority": "HIGH",
+      "createdAt": "2025-01-01T10:00:00Z",
+      "updatedAt": "2025-01-01T11:00:00Z",
+      "authorId": "091b55a5-f94b-429d-8569-9dbfd050ae3c",
+      "subjectId": "091b55a5-f94b-429d-8569-9dbfd050ae3c",
+      "executor": {
+        "id": "ae3df3bc-77fe-436d-a2fb-e35426621451",
+        "name": "Иван Инспектор",
+        "email": "ivan@upk.ru",
+        "role": "INSPECTOR",
+        "upkId": "ba31cff1-55db-434c-9902-0c7a8c5c05d5"
+      },
+      "shiftId": "feefbbd1-f842-4c33-88c9-cf131aef0c78",
+      "description": "Проверка паспорта мигранта",
+      "relatedTicketIds": [],
+      "documentIds": ["a05e96e7-0deb-4147-a1be-2a06f07e5cfb"]
+    }
+  ],
+  "total": 50,
+  "limit": 10,
+  "offset": 0
+}
+```
+
+#### Получить детали тикета с полными объектами
+
+```bash
+GET /api/v1/tickets/{id}
+Authorization: Bearer {token}
+
+# Ответ (v1.3.0+):
+{
+  "id": "5ed93a7e-cb4c-40c3-b4f3-be4ad5e2588b",
+  "ticketType": "EXTERNAL",
+  "status": "OPEN",
+  "priority": "HIGH",
+  "createdAt": "2025-01-01T10:00:00Z",
+  "updatedAt": "2025-01-01T11:00:00Z",
+  "deadlineAt": "2025-01-05T18:00:00Z",
+  "authorId": "091b55a5-f94b-429d-8569-9dbfd050ae3c",
+  "subjectId": "091b55a5-f94b-429d-8569-9dbfd050ae3c",
+  "executor": {
+    "id": "ae3df3bc-77fe-436d-a2fb-e35426621451",
+    "name": "Иван Инспектор",
+    "email": "ivan@upk.ru",
+    "role": "INSPECTOR",
+    "upkId": "ba31cff1-55db-434c-9902-0c7a8c5c05d5"
+  },
+  "shiftId": "feefbbd1-f842-4c33-88c9-cf131aef0c78",
+  "description": "Проверка паспорта мигранта",
+  "resolution": null,
+  "appealDecision": null,
+  "relatedTickets": [
+    {
+      "id": "a4f2b630-3067-4279-8f0e-24f5664e0602",
+      "ticketType": "INTERNAL",
+      "status": "CLOSED",
+      "priority": "LOW",
+      "executor": {
+        "id": "f8c7eed2-5a92-4d6e-874b-8a9bf2e42a75",
+        "name": "Петр Инспектор",
+        "email": "petr@upk.ru",
+        "role": "INSPECTOR"
+      },
+      "description": "Дополнительная проверка"
+    }
+  ],
+  "documents": [
+    {
+      "id": "a05e96e7-0deb-4147-a1be-2a06f07e5cfb",
+      "userId": "091b55a5-f94b-429d-8569-9dbfd050ae3c",
+      "documentType": "PASSPORT",
+      "body": {
+        "number": "123456789",
+        "series": "AB",
+        "issuedBy": "МВД России",
+        "fullName": "Али Хасанов"
+      },
+      "validFrom": "2020-01-01T00:00:00Z",
+      "validUntil": "2030-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+### 📄 Работа с документами мигранта
+
+#### Мигрант загружает свой паспорт
+
+```bash
+POST /api/v1/documents
+Authorization: Bearer {migrant_token}
+Content-Type: application/json
+
+{
+  "userId": "091b55a5-f94b-429d-8569-9dbfd050ae3c",
+  "documentType": "PASSPORT",
+  "body": {
+    "number": "123456789",
+    "series": "AB",
+    "issuedBy": "МВД России",
+    "fullName": "Али Хасанов",
+    "dateOfBirth": "1990-05-15",
+    "placeOfBirth": "Душанбе",
+    "citizenship": "Таджикистан"
+  },
+  "validFrom": "2020-01-01T00:00:00Z",
+  "validUntil": "2030-01-01T00:00:00Z"
+}
+
+# Ответ:
+{
+  "id": "a05e96e7-0deb-4147-a1be-2a06f07e5cfb",
+  "userId": "091b55a5-f94b-429d-8569-9dbfd050ae3c",
+  "documentType": "PASSPORT",
+  "body": {
+    "number": "123456789",
+    "series": "AB",
+    "issuedBy": "МВД России",
+    "fullName": "Али Хасанов",
+    "dateOfBirth": "1990-05-15",
+    "placeOfBirth": "Душанбе",
+    "citizenship": "Таджикистан"
+  },
+  "validFrom": "2020-01-01T00:00:00Z",
+  "validUntil": "2030-01-01T00:00:00Z"
+}
+```
+
+#### Инспектор получает документы мигранта
+
+```bash
+GET /api/v1/documents?userId=091b55a5-f94b-429d-8569-9dbfd050ae3c&limit=10&offset=0
+Authorization: Bearer {inspector_token}
+
+# Ответ:
+{
+  "items": [
+    {
+      "id": "a05e96e7-0deb-4147-a1be-2a06f07e5cfb",
+      "userId": "091b55a5-f94b-429d-8569-9dbfd050ae3c",
+      "documentType": "PASSPORT",
+      "body": {
+        "number": "123456789",
+        "series": "AB",
+        "fullName": "Али Хасанов"
+      },
+      "validFrom": "2020-01-01T00:00:00Z",
+      "validUntil": "2030-01-01T00:00:00Z"
+    },
+    {
+      "id": "b16fa8f8-1efc-5258-b2cf-3b17f18f6dga",
+      "userId": "091b55a5-f94b-429d-8569-9dbfd050ae3c",
+      "documentType": "WORK_PERMIT",
+      "body": {
+        "number": "WP-987654",
+        "employer": "ООО Строймонтаж",
+        "position": "Строитель"
+      },
+      "validFrom": "2024-01-01T00:00:00Z",
+      "validUntil": "2025-01-01T00:00:00Z"
+    }
+  ],
+  "total": 2,
+  "limit": 10,
+  "offset": 0
+}
+```
+
+#### Получить только активные документы (публичный endpoint)
+
+```bash
+GET /api/v1/documents/active?userId=091b55a5-f94b-429d-8569-9dbfd050ae3c
+
+# Ответ (без авторизации):
+[
+  {
+    "id": "a05e96e7-0deb-4147-a1be-2a06f07e5cfb",
+    "userId": "091b55a5-f94b-429d-8569-9dbfd050ae3c",
+    "documentType": "PASSPORT",
+    "body": {
+      "number": "123456789",
+      "series": "AB",
+      "fullName": "Али Хасанов"
+    },
+    "validFrom": "2020-01-01T00:00:00Z",
+    "validUntil": "2030-01-01T00:00:00Z"
+  }
+]
+```
+
+### 👥 Работа со сменами
+
+#### Получить детали смены с информацией о боссе, УПК и инспекторах
+
+```bash
+GET /api/v1/shifts/{id}/details
+Authorization: Bearer {token}
+
+# Ответ:
+{
+  "id": "feefbbd1-f842-4c33-88c9-cf131aef0c78",
+  "startTime": "2025-01-01T08:00:00Z",
+  "endTime": "2025-01-01T20:00:00Z",
+  "createdBy": "0247d06e-7f44-4835-b7af-25cc2c9d8afb",
+  "upk": {
+    "id": "ba31cff1-55db-434c-9902-0c7a8c5c05d5",
+    "name": "УПК Восточный",
+    "region": "ORVECH_VONOR"
+  },
+  "boss": {
+    "id": "0247d06e-7f44-4835-b7af-25cc2c9d8afb",
+    "name": "Максим Начальников",
+    "email": "max@upk.ru",
+    "role": "BOSS",
+    "upkId": "ba31cff1-55db-434c-9902-0c7a8c5c05d5"
+  },
+  "inspectors": [
+    {
+      "userId": "ae3df3bc-77fe-436d-a2fb-e35426621451",
+      "shiftId": "feefbbd1-f842-4c33-88c9-cf131aef0c78",
+      "wage": 1.2,
+      "penalty": 0.0,
+      "specialization": "PASSPORT",
+      "resolvedTickets": 15,
+      "passedCrossChecks": 8
+    },
+    {
+      "userId": "f8c7eed2-5a92-4d6e-874b-8a9bf2e42a75",
+      "shiftId": "feefbbd1-f842-4c33-88c9-cf131aef0c78",
+      "wage": 1.5,
+      "penalty": 0.1,
+      "specialization": "WORK",
+      "resolvedTickets": 20,
+      "passedCrossChecks": 12
+    }
+  ]
+}
+```
+
+### 📊 Статистика participation (участия в сменах)
+
+```bash
+GET /api/v1/participations?userId={userId}&limit=10&offset=0
+Authorization: Bearer {token}
+
+# Ответ (v1.2.0+):
+{
+  "items": [
+    {
+      "id": "279632b7-7da6-4493-91da-845b69ac28ae",
+      "userId": "ae3df3bc-77fe-436d-a2fb-e35426621451",
+      "shiftId": "feefbbd1-f842-4c33-88c9-cf131aef0c78",
+      "wage": 1.2,
+      "penalty": 0.0,
+      "specialization": "PASSPORT",
+      "totalResolvedTickets": 15
+    },
+    {
+      "id": "4dbd89c8-6123-41cf-8c89-39dae72bf456",
+      "userId": "ae3df3bc-77fe-436d-a2fb-e35426621451",
+      "shiftId": "681b3a76-3860-4066-999f-f6b9f86b4468",
+      "wage": 1.0,
+      "penalty": 0.0,
+      "specialization": "PASSPORT",
+      "totalResolvedTickets": 8
+    }
+  ],
+  "total": 2,
+  "limit": 10,
+  "offset": 0
+}
+```
+
+---
+
 ## 🚀 Запуск проекта
 
 ### Требования
@@ -662,6 +957,205 @@ psql -U your_username -d papersplease -f scripts/clear-data-prod.sql
 ---
 
 ## 📝 Изменения в API
+
+### Обновления v1.3.0
+
+В версии 1.3.0 добавлены следующие улучшения для API тикетов и документов:
+
+#### 1. **Расширенная информация в деталях тикета**
+
+Теперь при получении деталей тикета (`GET /api/v1/tickets/{id}`) возвращаются полные объекты вместо только ID:
+
+**Что изменилось**:
+- ✅ **`executor`** - теперь возвращается полный объект `UserResponse` вместо только `executorId`
+- ✅ **`relatedTickets`** - теперь возвращается массив объектов `TicketResponse` вместо `relatedTicketIds`
+- ✅ **`documents`** - теперь возвращается массив объектов `DocumentResponse` вместо `documentIds`
+
+**Формат ответа `TicketDetailedResponse`**:
+```json
+{
+  "id": "uuid",
+  "ticketType": "EXTERNAL",
+  "status": "OPEN",
+  "priority": "HIGH",
+  "createdAt": "2025-01-01T10:00:00Z",
+  "updatedAt": "2025-01-01T11:00:00Z",
+  "deadlineAt": "2025-01-05T18:00:00Z",
+  "authorId": "uuid",
+  "subjectId": "uuid",
+  "executor": {
+    "id": "uuid",
+    "name": "Иван Инспектор",
+    "email": "ivan@upk.ru",
+    "role": "INSPECTOR",
+    "upkId": "uuid"
+  },
+  "shiftId": "uuid",
+  "description": "Проверка документов мигранта",
+  "resolution": "Документы приняты",
+  "appealDecision": null,
+  "relatedTickets": [
+    {
+      "id": "uuid",
+      "ticketType": "INTERNAL",
+      "status": "CLOSED",
+      "priority": "LOW",
+      "executor": {
+        "id": "uuid",
+        "name": "Петр Инспектор",
+        "email": "petr@upk.ru",
+        "role": "INSPECTOR",
+        "upkId": "uuid"
+      },
+      "description": "Связанный тикет",
+      ...
+    }
+  ],
+  "documents": [
+    {
+      "id": "uuid",
+      "userId": "uuid",
+      "documentType": "PASSPORT",
+      "body": {
+        "number": "123456789",
+        "series": "AB",
+        "fullName": "Иванов Иван Иванович"
+      },
+      "validFrom": "2020-01-01T00:00:00Z",
+      "validUntil": "2030-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+#### 2. **Расширенная информация в списках тикетов**
+
+Теперь при получении списка тикетов (`GET /api/v1/tickets`) также возвращается полный объект исполнителя:
+
+**Что изменилось**:
+- ✅ **`executor`** - добавлен полный объект `UserResponse`
+- ❌ **`executorId`** - удален, так как ID теперь доступен внутри объекта `executor`
+
+**Формат ответа `TicketResponse`**:
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "ticketType": "EXTERNAL",
+      "status": "OPEN",
+      "priority": "HIGH",
+      "createdAt": "2025-01-01T10:00:00Z",
+      "updatedAt": "2025-01-01T11:00:00Z",
+      "authorId": "uuid",
+      "subjectId": "uuid",
+      "executor": {
+        "id": "uuid",
+        "name": "Иван Инспектор",
+        "email": "ivan@upk.ru",
+        "role": "INSPECTOR",
+        "upkId": "uuid"
+      },
+      "shiftId": "uuid",
+      "description": "Проверка документов",
+      "relatedTicketIds": ["uuid1", "uuid2"],
+      "documentIds": ["uuid1", "uuid2"]
+    }
+  ],
+  "total": 100,
+  "limit": 10,
+  "offset": 0
+}
+```
+
+**Преимущества**:
+- Меньше запросов к API - не нужно делать отдельные запросы для получения информации об исполнителе
+- Удобнее для фронтенда - вся нужная информация в одном ответе
+- Единообразие API - все связанные сущности возвращаются как полные объекты
+
+#### 3. **API для работы с документами пользователя**
+
+Добавлена полная документация по работе с документами мигрантов:
+
+**Основные endpoints**:
+
+**📤 Загрузка документа мигрантом**:
+```http
+POST /api/v1/documents
+Authorization: Bearer {migrant_token}
+Content-Type: application/json
+
+{
+  "userId": "uuid",
+  "documentType": "PASSPORT",
+  "body": {
+    "number": "123456789",
+    "series": "AB",
+    "issuedBy": "МВД России",
+    "fullName": "Иванов Иван Иванович",
+    "dateOfBirth": "1990-01-01",
+    "placeOfBirth": "Москва"
+  },
+  "validFrom": "2020-01-01T00:00:00Z",
+  "validUntil": "2030-01-01T00:00:00Z"
+}
+```
+
+**📋 Получение всех документов пользователя**:
+```http
+GET /api/v1/documents?userId={uuid}&limit=10&offset=0
+Authorization: Bearer {token}
+```
+
+**✅ Получение только активных документов (публичный endpoint)**:
+```http
+GET /api/v1/documents/active?userId={uuid}
+```
+
+**📄 Получение документов, прикрепленных к тикету**:
+```http
+GET /api/v1/documents/ticket/{ticketId}
+Authorization: Bearer {token}
+```
+
+**Типы документов (`DocumentType`)**:
+- `PASSPORT` - Паспорт
+- `VISA` - Виза
+- `WORK_PERMIT` - Разрешение на работу
+- `ID_CARD` - Удостоверение личности
+
+**Права доступа**:
+- **MIGRANT** - может создавать и обновлять свои документы
+- **INSPECTOR, BOSS, SECURITY** - могут просматривать документы мигрантов своего УПК
+- **GOD** - полный доступ ко всем документам
+
+**Пример структуры документа**:
+```json
+{
+  "id": "uuid",
+  "userId": "uuid",
+  "documentType": "PASSPORT",
+  "body": {
+    "number": "123456789",
+    "series": "AB",
+    "issuedBy": "МВД России",
+    "fullName": "Иванов Иван Иванович",
+    "dateOfBirth": "1990-01-01",
+    "placeOfBirth": "Москва",
+    "citizenship": "Россия"
+  },
+  "validFrom": "2020-01-01T00:00:00Z",
+  "validUntil": "2030-01-01T00:00:00Z"
+}
+```
+
+**Примечания**:
+- Поле `body` - это гибкий JSON-объект (`Map<String, Any>`), который может содержать любые данные в зависимости от типа документа
+- Endpoint `/api/v1/documents/active` не требует авторизации и возвращает только документы с актуальным сроком действия
+- Мигранты могут управлять только своими документами
+- Инспекторы и сотрудники безопасности имеют доступ только к документам мигрантов из своего УПК
+
+---
 
 ### Обновления v1.2.0
 
