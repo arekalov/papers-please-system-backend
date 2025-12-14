@@ -122,16 +122,18 @@
 | `POST /` | POST | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Создать новый тикет |
 | `PATCH /{id}` | PATCH | INSPECTOR, BOSS, SECURITY, GOD | Обновить тикет |
 | `DELETE /{id}` | DELETE | MIGRANT, BOSS, GOD | Удалить тикет |
-| `GET /{id}/documents` | GET | INSPECTOR, BOSS, SECURITY, GOD | Получить документы тикета (только своего УПК)** |
-| `POST /{id}/documents/{documentId}` | POST | INSPECTOR, BOSS, SECURITY, GOD | Прикрепить документ к тикету |
-| `DELETE /{id}/documents/{documentId}` | DELETE | INSPECTOR, BOSS, SECURITY, GOD | Открепить документ от тикета |
+| `GET /{id}/documents` | GET | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Получить документы тикета (только своего УПК)** |
+| `POST /{id}/documents/{documentId}` | POST | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Прикрепить документ к тикету*** |
+| `DELETE /{id}/documents/{documentId}` | DELETE | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Открепить документ от тикета*** |
 | `GET /{id}/related` | GET | INSPECTOR, BOSS, SECURITY, GOD | Получить связанные тикеты |
 | `POST /{id}/related/{relatedTicketId}` | POST | INSPECTOR, BOSS, SECURITY, GOD | Связать тикеты |
 | `DELETE /{id}/related/{relatedTicketId}` | DELETE | INSPECTOR, BOSS, SECURITY, GOD | Удалить связь между тикетами |
 
 > *В версии 1.3.0+ тикеты возвращаются с полными объектами executor (вместо только executorId)
 > 
-> **Доступ только для сотрудников УПК, к которому относится тикет
+> **Доступ только для сотрудников УПК, к которому относится тикет. MIGRANT может просматривать документы только своих тикетов
+>
+> ***MIGRANT может управлять документами только для тикетов, где он является автором
 
 ### 🏢 Управление УПК (`/api/v1/upks`)
 
@@ -605,6 +607,162 @@ papersplease/
 │   └── application-prod.yaml
 └── build.gradle.kts      # Gradle конфигурация
 ```
+
+---
+
+## 🕐 Формат дат и времени
+
+### Типы данных
+
+В системе используется тип **`java.time.Instant`** для всех дат и времени.
+
+### Формат передачи данных
+
+**Все даты в API передаются и возвращаются в формате ISO-8601 (UTC)**:
+
+```
+YYYY-MM-DDTHH:mm:ss.SSSSSSZ
+```
+
+### Конфигурация Jackson
+
+В `application.yaml` настроена сериализация дат:
+
+```yaml
+jackson:
+  serialization:
+    write-dates-as-timestamps: false  # Даты как строки, не timestamp
+  time-zone: UTC                        # Часовой пояс UTC
+```
+
+### Примеры форматов
+
+#### ✅ Правильные форматы:
+
+```json
+{
+  "createdAt": "2025-11-23T19:00:56.476695Z",
+  "startTime": "2025-11-23T16:04:10.898247+00:00",
+  "validFrom": "2020-01-01T00:00:00Z",
+  "validUntil": "2030-01-01T00:00:00Z",
+  "deadlineAt": "2025-01-05T18:00:00Z"
+}
+```
+
+**Форматы, которые Jackson поддерживает**:
+- `2025-11-23T19:00:56.476695Z` (с миллисекундами, UTC)
+- `2025-11-23T16:04:10.898247+00:00` (с миллисекундами и timezone)
+- `2025-11-23T16:04:10Z` (без миллисекунд, UTC)
+- `2025-11-23T16:04:10+00:00` (без миллисекунд, с timezone)
+- `2020-01-01T00:00:00Z` (полночь UTC)
+
+#### ❌ Неправильные форматы:
+
+```json
+{
+  "createdAt": "2025-11-23 19:00:56",        // Нет 'T' и timezone
+  "startTime": "23.11.2025 16:04:10",        // Неправильный формат
+  "validFrom": 1609459200000,                // Timestamp (число)
+  "validUntil": "2030-01-01"                 // Только дата без времени
+}
+```
+
+### Примеры использования в запросах
+
+#### Создание тикета с дедлайном
+
+```bash
+POST /api/v1/tickets
+Content-Type: application/json
+
+{
+  "ticketType": "EXTERNAL",
+  "priority": "HIGH",
+  "authorId": "091b55a5-f94b-429d-8569-9dbfd050ae3c",
+  "subjectId": "091b55a5-f94b-429d-8569-9dbfd050ae3c",
+  "description": "Проверка паспорта",
+  "deadlineAt": "2025-12-31T23:59:59Z"
+}
+```
+
+#### Создание документа со сроком действия
+
+```bash
+POST /api/v1/documents
+Content-Type: application/json
+
+{
+  "userId": "091b55a5-f94b-429d-8569-9dbfd050ae3c",
+  "documentType": "PASSPORT",
+  "body": {
+    "number": "123456789",
+    "series": "AB"
+  },
+  "validFrom": "2020-01-01T00:00:00Z",
+  "validUntil": "2030-01-01T00:00:00Z"
+}
+```
+
+#### Создание смены
+
+```bash
+POST /api/v1/shifts
+Content-Type: application/json
+
+{
+  "upkId": "ba31cff1-55db-434c-9902-0c7a8c5c05d5",
+  "startTime": "2025-12-14T08:00:00Z",
+  "endTime": "2025-12-14T20:00:00Z"
+}
+```
+
+### Автоматические значения
+
+Некоторые поля с датами устанавливаются автоматически сервером:
+
+- **`createdAt`** - устанавливается при создании сущности
+- **`updatedAt`** - обновляется при каждом изменении
+- **`uploadedAt`** - устанавливается при загрузке документа
+- **`sentAt`** - устанавливается при отправке уведомления
+
+### Часовой пояс
+
+**Важно**: Все даты хранятся и обрабатываются в **UTC**.
+
+```yaml
+# application.yaml
+jpa:
+  properties:
+    hibernate:
+      jdbc:
+        time_zone: UTC
+```
+
+При отображении дат в клиентском приложении конвертируйте их в локальный часовой пояс пользователя.
+
+### Поля с датами в основных сущностях
+
+| Сущность | Поля с датами | Тип | Обязательное |
+|----------|---------------|-----|--------------|
+| **Ticket** | `createdAt` | `Instant` | ✅ Да (auto) |
+| | `updatedAt` | `Instant` | ✅ Да (auto) |
+| | `deadlineAt` | `Instant` | ❌ Нет |
+| **Document** | `validFrom` | `Instant` | ❌ Нет |
+| | `validUntil` | `Instant` | ❌ Нет |
+| | `uploadedAt` | `Instant` | ✅ Да (auto) |
+| **Shift** | `startTime` | `Instant` | ✅ Да |
+| | `endTime` | `Instant` | ❌ Нет |
+| **Notification** | `createdAt` | `Instant` | ✅ Да (auto) |
+| | `sentAt` | `Instant` | ✅ Да (auto) |
+| **Event** | `time` | `Instant` | ✅ Да |
+
+### Валидация дат
+
+Система автоматически:
+- ✅ Проверяет корректность формата ISO-8601
+- ✅ Конвертирует в UTC при сохранении
+- ✅ Возвращает в ISO-8601 формате
+- ❌ Не проверяет логику дат (например, `validUntil` > `validFrom`) - проверка на стороне сервиса
 
 ---
 

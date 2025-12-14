@@ -99,7 +99,7 @@ class TicketController(
     }
 
     @GetMapping("/{id}/documents")
-    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'GOD')")
+    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'MIGRANT', 'GOD')")
     fun getTicketDocuments(
         authentication: Authentication,
         @PathVariable id: String,
@@ -109,7 +109,7 @@ class TicketController(
     }
 
     @PostMapping("/{id}/documents/{documentId}")
-    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'GOD')")
+    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'MIGRANT', 'GOD')")
     fun addDocumentToTicket(
         authentication: Authentication,
         @PathVariable id: String,
@@ -120,7 +120,7 @@ class TicketController(
     }
 
     @DeleteMapping("/{id}/documents/{documentId}")
-    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'GOD')")
+    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'MIGRANT', 'GOD')")
     fun removeDocumentFromTicket(
         authentication: Authentication,
         @PathVariable id: String,

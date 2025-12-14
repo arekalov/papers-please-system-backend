@@ -380,6 +380,33 @@ class TicketService(
         }
     }
 
+    private fun checkDocumentManagementAccess(currentUser: User, ticket: Ticket) {
+        when (currentUser.role) {
+            Role.GOD -> return
+            Role.MIGRANT -> {
+                if (ticket.author.id != currentUser.id) {
+                    throw ForbiddenException("Migrants can only manage documents for their own tickets")
+                }
+            }
+
+            Role.BOSS -> {
+                val upkId = currentUser.upk?.id
+                    ?: throw ForbiddenException("Boss must be assigned to UPK")
+                if (ticket.subject.upk?.id != upkId) {
+                    throw ForbiddenException("You can only manage documents for tickets in your UPK")
+                }
+            }
+
+            Role.INSPECTOR, Role.SECURITY -> {
+                val upkId = currentUser.upk?.id
+                    ?: throw ForbiddenException("Employee must be assigned to UPK")
+                if (ticket.subject.upk?.id != upkId) {
+                    throw ForbiddenException("You can only manage documents for tickets in your UPK")
+                }
+            }
+        }
+    }
+
     @Transactional
     fun addDocument(currentUserId: String, ticketId: String, documentId: String): TicketResponse {
         val currentUser = userRepository.findById(UUID.fromString(currentUserId))
@@ -388,7 +415,7 @@ class TicketService(
         val ticket = ticketRepository.findById(UUID.fromString(ticketId))
             .orElseThrow { ResourceNotFoundException("Ticket with id $ticketId not found") }
 
-        checkUpdateAccess(currentUser, ticket)
+        checkDocumentManagementAccess(currentUser, ticket)
 
         val document = documentRepository.findById(UUID.fromString(documentId))
             .orElseThrow { ResourceNotFoundException("Document with id $documentId not found") }
@@ -407,7 +434,7 @@ class TicketService(
         val ticket = ticketRepository.findById(UUID.fromString(ticketId))
             .orElseThrow { ResourceNotFoundException("Ticket with id $ticketId not found") }
 
-        checkUpdateAccess(currentUser, ticket)
+        checkDocumentManagementAccess(currentUser, ticket)
 
         val document = documentRepository.findById(UUID.fromString(documentId))
             .orElseThrow { ResourceNotFoundException("Document with id $documentId not found") }
@@ -441,12 +468,21 @@ class TicketService(
         val ticket = ticketRepository.findById(UUID.fromString(ticketId))
             .orElseThrow { ResourceNotFoundException("Ticket with id $ticketId not found") }
 
-        val currentUserUpkId = currentUser.upk?.id
-        val ticketUpkId = ticket.subject.upk?.id
+        when (currentUser.role) {
+            Role.GOD -> return ticket.documents.map { it.toResponse() }
+            Role.MIGRANT -> {
+                if (ticket.author.id != currentUser.id) {
+                    throw ForbiddenException("Migrants can only view documents from their own tickets")
+                }
+            }
 
-        if (currentUser.role != Role.GOD) {
-            if (currentUserUpkId == null || ticketUpkId == null || currentUserUpkId != ticketUpkId) {
-                throw ForbiddenException("Access denied: You can only view documents from tickets in your UPK")
+            Role.BOSS, Role.INSPECTOR, Role.SECURITY -> {
+                val currentUserUpkId = currentUser.upk?.id
+                val ticketUpkId = ticket.subject.upk?.id
+
+                if (currentUserUpkId == null || ticketUpkId == null || currentUserUpkId != ticketUpkId) {
+                    throw ForbiddenException("Access denied: You can only view documents from tickets in your UPK")
+                }
             }
         }
 
