@@ -223,9 +223,15 @@ class TicketService(
         val subject = userRepository.findById(UUID.fromString(request.subjectId))
             .orElseThrow { ResourceNotFoundException("Subject user with id ${request.subjectId} not found") }
 
-        val executor = request.executorId?.let {
-            userRepository.findById(UUID.fromString(it))
-                .orElseThrow { ResourceNotFoundException("User with id $it not found") }
+        val executor = when {
+            request.executorId != null -> {
+                userRepository.findById(UUID.fromString(request.executorId!!))
+                    .orElseThrow { ResourceNotFoundException("User with id ${request.executorId} not found") }
+            }
+            request.ticketType == TicketType.EXTERNAL -> {
+                assignLeastBusyInspector(subject)
+            }
+            else -> null
         }
 
         val shift = request.shiftId?.let {
@@ -246,6 +252,26 @@ class TicketService(
         }
 
         return savedTicket.toResponse()
+    }
+
+    private fun assignLeastBusyInspector(subject: User): User? {
+        val upkId = subject.upk?.id ?: return null
+
+        val inspectors = userRepository.findByRoleAndUpk_Id(Role.INSPECTOR, upkId)
+
+        if (inspectors.isEmpty()) {
+            return null
+        }
+
+        val activeStatuses = listOf(
+            TicketStatus.OPEN,
+            TicketStatus.IN_PROGRESS,
+            TicketStatus.NEED_INFO,
+        )
+
+        return inspectors.minByOrNull { inspector ->
+            ticketRepository.countByExecutor_IdAndStatusIn(inspector.id!!, activeStatuses)
+        }
     }
 
     @Transactional

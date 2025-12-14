@@ -119,7 +119,7 @@
 |----------|-------|------|----------|
 | `GET /` | GET | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Получить тикеты (с фильтрацией), включая полную информацию об executor* |
 | `GET /{id}` | GET | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Получить детали тикета с полными объектами executor, relatedTickets, documents* |
-| `POST /` | POST | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Создать новый тикет |
+| `POST /` | POST | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Создать новый тикет**** |
 | `PATCH /{id}` | PATCH | INSPECTOR, BOSS, SECURITY, GOD | Обновить тикет |
 | `DELETE /{id}` | DELETE | MIGRANT, BOSS, GOD | Удалить тикет |
 | `GET /{id}/documents` | GET | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Получить документы тикета (только своего УПК)** |
@@ -134,6 +134,8 @@
 > **Доступ только для сотрудников УПК, к которому относится тикет. MIGRANT может просматривать документы только своих тикетов
 >
 > ***MIGRANT может управлять документами только для тикетов, где он является автором
+>
+> ****При создании EXTERNAL тикета (заявки от мигранта) без указания executorId, система автоматически назначает инспектора УПК с наименьшим количеством активных тикетов (статусы: OPEN, IN_PROGRESS, NEED_INFO)
 
 ### 🏢 Управление УПК (`/api/v1/upks`)
 
@@ -179,6 +181,93 @@
 ---
 
 ## 📊 Детальные endpoints
+
+### 🎫 POST `/api/v1/tickets` - Создание тикета с автоматическим назначением
+
+**Описание**: При создании EXTERNAL тикета (заявки от мигранта) система автоматически назначает исполнителя
+
+**Роли**: INSPECTOR, BOSS, SECURITY, MIGRANT, GOD
+
+**Логика автоматического назначения**:
+
+1. **Если указан `executorId`** - тикет назначается на указанного пользователя
+2. **Если `ticketType` == `EXTERNAL` и `executorId` НЕ указан**:
+   - Система находит УПК, к которому привязан `subject` (мигрант)
+   - Ищет всех инспекторов (`INSPECTOR`) этого УПК
+   - Подсчитывает количество активных тикетов для каждого инспектора
+   - Назначает тикет на инспектора с **наименьшим количеством активных тикетов**
+   - Отправляет уведомление назначенному инспектору
+
+**Активные тикеты** - тикеты со статусами:
+- `OPEN` - открыт
+- `IN_PROGRESS` - в работе
+- `NEED_INFO` - требуется информация
+
+**Примеры запросов**:
+
+#### Создание EXTERNAL тикета с автоматическим назначением:
+
+```bash
+POST /api/v1/tickets
+Authorization: Bearer {migrant_token}
+Content-Type: application/json
+
+{
+  "ticketType": "EXTERNAL",
+  "status": "OPEN",
+  "priority": "NORMAL",
+  "authorId": "migrant-uuid",
+  "subjectId": "migrant-uuid",
+  "description": "Проверка документов для работы"
+  // executorId не указан - автоматически назначится инспектор
+}
+```
+
+**Ответ**:
+```json
+{
+  "id": "new-ticket-uuid",
+  "ticketType": "EXTERNAL",
+  "status": "OPEN",
+  "priority": "NORMAL",
+  "authorId": "migrant-uuid",
+  "subjectId": "migrant-uuid",
+  "executor": {
+    "id": "inspector-uuid",
+    "name": "Иван Инспектор",
+    "email": "ivan@upk.ru",
+    "role": "INSPECTOR",
+    "upkId": "upk-uuid"
+  },
+  "description": "Проверка документов для работы",
+  "createdAt": "2025-12-14T10:00:00Z",
+  "updatedAt": "2025-12-14T10:00:00Z"
+}
+```
+
+#### Создание тикета с явным указанием исполнителя:
+
+```bash
+POST /api/v1/tickets
+Content-Type: application/json
+
+{
+  "ticketType": "INTERNAL",
+  "status": "OPEN",
+  "priority": "HIGH",
+  "authorId": "boss-uuid",
+  "subjectId": "migrant-uuid",
+  "executorId": "specific-inspector-uuid",  // Явно указан исполнитель
+  "description": "Внутренняя проверка"
+}
+```
+
+**Примечания**:
+- Автоматическое назначение работает **только** для `EXTERNAL` тикетов
+- Если в УПК нет доступных инспекторов, тикет создастся без исполнителя (`executor: null`)
+- Инспектор с наименьшей нагрузкой получит уведомление о назначении
+
+---
 
 ### 👤 GET `/api/v1/users/{id}/boss-details`
 

@@ -25,4 +25,6 @@ interface TicketRepository : JpaRepository<Ticket, UUID> {
     fun findByShift_Id(shiftId: UUID, pageable: Pageable): Page<Ticket>
 
     fun countByExecutor_IdAndStatusAndShift_Id(executorId: UUID, status: TicketStatus, shiftId: UUID): Long
+
+    fun countByExecutor_IdAndStatusIn(executorId: UUID, statuses: List<TicketStatus>): Long
 }
