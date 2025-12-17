@@ -171,6 +171,7 @@ fun Document.toResponse(): DocumentResponse {
         body = bodyMap,
         validFrom = issuedAt,
         validUntil = expiresAt,
+        attachToProfile = attachToProfile,
     )
 }
 
@@ -183,6 +184,7 @@ fun DocumentRequest.toEntity(owner: User): Document {
         issuedAt = validFrom ?: Instant.now(),
         expiresAt = validUntil,
         owner = owner,
+        attachToProfile = attachToProfile,
     )
 }
 

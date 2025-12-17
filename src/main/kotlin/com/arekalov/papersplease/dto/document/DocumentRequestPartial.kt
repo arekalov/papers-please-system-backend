@@ -8,4 +8,5 @@ data class DocumentRequestPartial(
     val body: Map<String, Any>? = null,
     val validFrom: Instant? = null,
     val validUntil: Instant? = null,
+    val attachToProfile: Boolean? = null,
 )

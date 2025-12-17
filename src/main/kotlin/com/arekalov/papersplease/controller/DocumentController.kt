@@ -33,8 +33,9 @@ class DocumentController(
         @RequestParam userId: String,
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
+        @RequestParam(required = false) attachToProfileOnly: Boolean?,
     ): ResponseEntity<PagedResponse<DocumentResponse>> {
-        val response = documentService.getAllByUserId(authentication.name, userId, limit, offset)
+        val response = documentService.getAllByUserId(authentication.name, userId, limit, offset, attachToProfileOnly)
         return ResponseEntity.ok(response)
     }
 

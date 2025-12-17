@@ -103,15 +103,19 @@
 
 | Endpoint | Метод | Роли | Описание |
 |----------|-------|------|----------|
-| `GET /` | GET | INSPECTOR, BOSS, SECURITY, GOD, MIGRANT | Получить документы по userId |
+| `GET /` | GET | INSPECTOR, BOSS, SECURITY, GOD, MIGRANT | Получить документы по userId (поддерживает фильтр `attachToProfileOnly`)* |
 | `GET /active` | GET | **ПУБЛИЧНЫЙ** | Получить активные (не истекшие) документы |
 | `GET /{id}` | GET | INSPECTOR, BOSS, SECURITY, GOD, MIGRANT | Получить документ по ID |
-| `POST /` | POST | MIGRANT, GOD | Создать новый документ |
-| `PATCH /{id}` | PATCH | MIGRANT, GOD | Обновить документ |
+| `POST /` | POST | MIGRANT, GOD | Создать новый документ (с полем `attachToProfile`)** |
+| `PATCH /{id}` | PATCH | MIGRANT, GOD | Обновить документ (включая поле `attachToProfile`)** |
 | `DELETE /{id}` | DELETE | GOD | Удалить документ |
-| `GET /ticket/{ticketId}` | GET | INSPECTOR, BOSS, SECURITY, GOD | Получить документы тикета (только своего УПК)* |
+| `GET /ticket/{ticketId}` | GET | INSPECTOR, BOSS, SECURITY, GOD | Получить документы тикета (только своего УПК)*** |
 
-> *Доступ только для сотрудников УПК, к которому относится тикет
+> *Query-параметр `attachToProfileOnly=true` фильтрует документы, которые мигрант отметил для отображения в профиле
+>
+> **Поле `attachToProfile` (boolean) позволяет мигранту пометить документы для сохранения в истории профиля
+>
+> ***Доступ только для сотрудников УПК, к которому относится тикет
 
 ### 🎫 Управление тикетами (`/api/v1/tickets`)
 
@@ -459,6 +463,87 @@ Content-Type: application/json
 
 ---
 
+## 📌 Управление документами в профиле мигранта (`attachToProfile`)
+
+### Описание
+
+Поле `attachToProfile` позволяет мигрантам помечать документы, которые они хотят сохранить в истории своего профиля. Это полезно для:
+
+- 📋 Отображения избранных документов на странице профиля пользователя
+- 🗂️ Создания персональной истории важных документов
+- 🔍 Быстрого доступа к ключевым документам без просмотра всех
+
+### Основные характеристики
+
+- **Тип поля**: `Boolean`
+- **Значение по умолчанию**: `false`
+- **Доступ для изменения**: MIGRANT (для своих документов), GOD
+- **Фильтрация**: Поддерживается query-параметр `attachToProfileOnly`
+- **Миграция БД**: `V1__add_attach_to_profile_to_documents.sql` (применяется автоматически при запуске)
+
+### Примеры использования
+
+#### 1. Создание документа с прикреплением к профилю
+
+```json
+POST /api/v1/documents
+{
+  "userId": "user-uuid",
+  "documentType": "PASSPORT",
+  "body": { ... },
+  "attachToProfile": true  // Сразу прикрепить к профилю
+}
+```
+
+#### 2. Обновление существующего документа
+
+```json
+PATCH /api/v1/documents/{id}
+{
+  "attachToProfile": true  // Прикрепить к профилю
+}
+```
+
+#### 3. Получение только документов из профиля
+
+```bash
+GET /api/v1/documents?userId={userId}&attachToProfileOnly=true
+```
+
+### Сценарии использования
+
+**Сценарий 1: Мигрант готовит пакет документов для проверки**
+1. Загружает несколько версий паспорта
+2. Помечает актуальную версию как `attachToProfile: true`
+3. Инспектор видит помеченный документ в профиле мигранта
+
+**Сценарий 2: История важных документов**
+1. Мигрант загружает разрешение на работу: `attachToProfile: true`
+2. Загружает временный документ для тикета: `attachToProfile: false`
+3. На странице профиля отображается только разрешение на работу
+
+**Сценарий 3: Управление видимостью**
+1. Мигрант прикрепил старый паспорт к профилю
+2. Получил новый паспорт
+3. Обновляет старый: `PATCH {"attachToProfile": false}`
+4. Прикрепляет новый: `PATCH {"attachToProfile": true}`
+
+### API endpoints с поддержкой `attachToProfile`
+
+| Endpoint | Параметр | Описание |
+|----------|----------|----------|
+| `POST /documents` | `attachToProfile` в теле | Создать документ с флагом |
+| `PATCH /documents/{id}` | `attachToProfile` в теле | Изменить статус документа |
+| `GET /documents` | `attachToProfileOnly` в query | Фильтр по прикрепленным |
+
+### Правила доступа
+
+- **MIGRANT**: Может управлять флагом только для своих документов
+- **INSPECTOR, BOSS, SECURITY**: Могут видеть флаг, но не изменять
+- **GOD**: Полный доступ к управлению флагом
+
+---
+
 ## 🗄️ База данных: Индексы и PL/pgSQL функции
 
 ### 📊 Индексы для оптимизации запросов
@@ -470,6 +555,7 @@ Content-Type: application/json
 
 #### Таблица `documents`
 - **idx_document_owner** - быстрый поиск документов по владельцу
+- **idx_document_attach_to_profile** - быстрая фильтрация документов, прикрепленных к профилю (partial index для `attach_to_profile=true`)
 
 #### Таблица `tickets`
 - **idx_ticket_executor_status** - фильтрация тикетов по исполнителю и статусу
@@ -959,7 +1045,7 @@ Authorization: Bearer {token}
 
 ### 📄 Работа с документами мигранта
 
-#### Мигрант загружает свой паспорт
+#### Мигрант загружает свой паспорт с сохранением в профиле
 
 ```bash
 POST /api/v1/documents
@@ -979,7 +1065,8 @@ Content-Type: application/json
     "citizenship": "Таджикистан"
   },
   "validFrom": "2020-01-01T00:00:00Z",
-  "validUntil": "2030-01-01T00:00:00Z"
+  "validUntil": "2030-01-01T00:00:00Z",
+  "attachToProfile": true  // Сохранить в истории профиля
 }
 
 # Ответ:
@@ -997,7 +1084,8 @@ Content-Type: application/json
     "citizenship": "Таджикистан"
   },
   "validFrom": "2020-01-01T00:00:00Z",
-  "validUntil": "2030-01-01T00:00:00Z"
+  "validUntil": "2030-01-01T00:00:00Z",
+  "attachToProfile": true
 }
 ```
 
@@ -1041,6 +1129,58 @@ Authorization: Bearer {inspector_token}
 }
 ```
 
+#### Получить документы, прикрепленные к профилю мигранта
+
+```bash
+GET /api/v1/documents?userId=091b55a5-f94b-429d-8569-9dbfd050ae3c&attachToProfileOnly=true&limit=10&offset=0
+Authorization: Bearer {token}
+
+# Ответ:
+{
+  "items": [
+    {
+      "id": "a05e96e7-0deb-4147-a1be-2a06f07e5cfb",
+      "userId": "091b55a5-f94b-429d-8569-9dbfd050ae3c",
+      "documentType": "PASSPORT",
+      "body": {
+        "number": "123456789",
+        "series": "AB",
+        "fullName": "Али Хасанов"
+      },
+      "validFrom": "2020-01-01T00:00:00Z",
+      "validUntil": "2030-01-01T00:00:00Z",
+      "attachToProfile": true
+    }
+  ],
+  "total": 1,
+  "limit": 10,
+  "offset": 0
+}
+```
+
+#### Обновить статус документа (прикрепить/открепить от профиля)
+
+```bash
+PATCH /api/v1/documents/{id}
+Authorization: Bearer {migrant_token}
+Content-Type: application/json
+
+{
+  "attachToProfile": true  // Прикрепить к профилю
+}
+
+# Ответ:
+{
+  "id": "a05e96e7-0deb-4147-a1be-2a06f07e5cfb",
+  "userId": "091b55a5-f94b-429d-8569-9dbfd050ae3c",
+  "documentType": "PASSPORT",
+  "body": { ... },
+  "validFrom": "2020-01-01T00:00:00Z",
+  "validUntil": "2030-01-01T00:00:00Z",
+  "attachToProfile": true
+}
+```
+
 #### Получить только активные документы (публичный endpoint)
 
 ```bash
@@ -1058,7 +1198,8 @@ GET /api/v1/documents/active?userId=091b55a5-f94b-429d-8569-9dbfd050ae3c
       "fullName": "Али Хасанов"
     },
     "validFrom": "2020-01-01T00:00:00Z",
-    "validUntil": "2030-01-01T00:00:00Z"
+    "validUntil": "2030-01-01T00:00:00Z",
+    "attachToProfile": false
   }
 ]
 ```

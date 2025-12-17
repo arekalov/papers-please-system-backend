@@ -17,6 +17,8 @@ interface DocumentRepository : JpaRepository<Document, UUID> {
 
     fun findByOwner_Id(ownerId: UUID, pageable: Pageable): Page<Document>
 
+    fun findByOwner_IdAndAttachToProfile(ownerId: UUID, attachToProfile: Boolean, pageable: Pageable): Page<Document>
+
     /**
      * Получить все активные (не истекшие) документы пользователя
      * Использует PL/pgSQL функцию get_active_documents

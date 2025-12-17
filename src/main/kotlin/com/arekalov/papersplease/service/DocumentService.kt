@@ -32,6 +32,7 @@ class DocumentService(
         userId: String,
         limit: Int,
         offset: Int,
+        attachToProfileOnly: Boolean? = null,
     ): PagedResponse<DocumentResponse> {
         val currentUser = userRepository.findById(UUID.fromString(currentUserId))
             .orElseThrow { ResourceNotFoundException("Current user not found") }
@@ -43,7 +44,14 @@ class DocumentService(
         checkReadAccessByUserId(currentUser, targetUser)
 
         val pageable = PageRequest.of(offset / limit, limit)
-        val page = documentRepository.findByOwner_Id(targetUserId, pageable)
+        val page = when {
+            attachToProfileOnly == true -> documentRepository.findByOwner_IdAndAttachToProfile(
+                targetUserId,
+                true,
+                pageable,
+            )
+            else -> documentRepository.findByOwner_Id(targetUserId, pageable)
+        }
 
         return PagedResponse(
             items = page.content.map { it.toResponse() },
@@ -169,6 +177,7 @@ class DocumentService(
         }
         request.validFrom?.let { document.issuedAt = it }
         request.validUntil?.let { document.expiresAt = it }
+        request.attachToProfile?.let { document.attachToProfile = it }
 
         return documentRepository.save(document).toResponse()
     }

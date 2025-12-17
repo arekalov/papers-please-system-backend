@@ -40,6 +40,9 @@ class Document(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)
     var owner: User,
+
+    @Column(name = "attach_to_profile", nullable = false)
+    var attachToProfile: Boolean = false,
 ) : BaseEntity() {
     @ManyToMany(mappedBy = "documents", fetch = FetchType.LAZY)
     val tickets: MutableSet<Ticket> = mutableSetOf()

@@ -450,6 +450,11 @@ paths:
           type: integer
           format: int32
           default: 0
+      - name: attachToProfileOnly
+        in: query
+        required: false
+        schema:
+          type: boolean
       responses:
         "200":
           description: OK
@@ -1577,6 +1582,7 @@ components:
           - SPECIAL
     DocumentRequest:
       required:
+      - attachToProfile
       - body
       - documentType
       - userId
@@ -1602,8 +1608,11 @@ components:
         validUntil:
           type: string
           format: date-time
+        attachToProfile:
+          type: boolean
     DocumentResponse:
       required:
+      - attachToProfile
       - body
       - documentType
       - id
@@ -1632,6 +1641,8 @@ components:
         validUntil:
           type: string
           format: date-time
+        attachToProfile:
+          type: boolean
     RegisterRequest:
       required:
       - email
@@ -1904,6 +1915,8 @@ components:
         validUntil:
           type: string
           format: date-time
+        attachToProfile:
+          type: boolean
     PagedResponseUserResponse:
       required:
       - items

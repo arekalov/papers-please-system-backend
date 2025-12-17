@@ -10,4 +10,5 @@ data class DocumentResponse(
     val body: Map<String, Any>,
     val validFrom: Instant? = null,
     val validUntil: Instant? = null,
+    val attachToProfile: Boolean = false,
 )

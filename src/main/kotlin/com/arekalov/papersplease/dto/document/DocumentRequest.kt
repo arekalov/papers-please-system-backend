@@ -18,4 +18,6 @@ data class DocumentRequest(
     val validFrom: Instant? = null,
 
     val validUntil: Instant? = null,
+
+    val attachToProfile: Boolean = false,
 )
