@@ -1,14 +1,12 @@
 package com.arekalov.papersplease.dto.event
 
+import com.arekalov.papersplease.model.enums.Priority
 import com.arekalov.papersplease.model.enums.Specialization
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
 import java.time.Instant
 
 data class EventRequest(
-    @field:NotBlank(message = "Shift ID is required")
-    val shiftId: String,
-
     val time: Instant = Instant.now(),
 
     @field:NotBlank(message = "Description is required")
@@ -16,4 +14,6 @@ data class EventRequest(
     val description: String,
 
     val specialization: Specialization? = null,
+
+    val priority: Priority = Priority.NORMAL,
 )

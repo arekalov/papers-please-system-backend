@@ -6,6 +6,4 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface EventRepository : JpaRepository<Event, UUID> {
-    fun findByShift_Id(shiftId: UUID): List<Event>
-}
+interface EventRepository : JpaRepository<Event, UUID>

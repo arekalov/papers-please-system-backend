@@ -124,7 +124,7 @@
 | `GET /` | GET | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Получить тикеты (с фильтрацией), включая полную информацию об executor* |
 | `GET /{id}` | GET | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Получить детали тикета с полными объектами executor, relatedTickets, documents* |
 | `POST /` | POST | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Создать новый тикет**** |
-| `PATCH /{id}` | PATCH | INSPECTOR, BOSS, SECURITY, GOD | Обновить тикет |
+| `PATCH /{id}` | PATCH | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Обновить тикет***** |
 | `DELETE /{id}` | DELETE | MIGRANT, BOSS, GOD | Удалить тикет |
 | `GET /{id}/documents` | GET | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Получить документы тикета (только своего УПК)** |
 | `POST /{id}/documents/{documentId}` | POST | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Прикрепить документ к тикету*** |
@@ -140,6 +140,8 @@
 > ***MIGRANT может управлять документами только для тикетов, где он является автором
 >
 > ****При создании EXTERNAL тикета (заявки от мигранта) без указания executorId, система автоматически назначает инспектора УПК с наименьшим количеством активных тикетов (статусы: OPEN, IN_PROGRESS, NEED_INFO)
+>
+> *****MIGRANT может обновлять только свои тикеты и только закрывать их (изменение status на CLOSED). Другие поля недоступны для изменения мигрантами
 
 ### 🏢 Управление УПК (`/api/v1/upks`)
 
@@ -158,14 +160,21 @@
 
 | Endpoint | Метод | Роли | Описание |
 |----------|-------|------|----------|
-| `GET /` | GET | INSPECTOR, BOSS, SECURITY, GOD | Получить все смены |
+| `GET /` | GET | INSPECTOR, BOSS, SECURITY, GOD | Получить все смены (с фильтрацией)* |
 | `GET /{id}` | GET | INSPECTOR, BOSS, SECURITY, GOD | Получить смену по ID |
-| `GET /{id}/details` | GET | INSPECTOR, BOSS, SECURITY, GOD | Получить детали смены (инспекторы, статистика) |
+| `GET /{id}/details` | GET | INSPECTOR, BOSS, SECURITY, GOD | Получить детали смены (инспекторы, статистика)** |
 | `POST /` | POST | BOSS, GOD | Создать новую смену |
 | `PATCH /{id}` | PATCH | BOSS, GOD | Обновить смену |
 | `DELETE /{id}` | DELETE | GOD | Удалить смену |
 | `POST /{id}/participants/{userId}` | POST | BOSS, GOD | Добавить участника в смену |
 | `DELETE /{id}/participants/{userId}` | DELETE | BOSS, GOD | Удалить участника из смены |
+
+> *Поддерживаемые фильтры (query-параметры):
+> - `createdBy` - фильтр по ID пользователя, создавшего смену
+> - `upkId` - фильтр по ID УПК
+> - `endTimeNotNull` - фильтр по статусу завершения смены (true - завершенные, false - активные)
+>
+> **Поле `passedCrossChecks` в детализации смены теперь всегда возвращает 0, так как события больше не привязаны к сменам
 
 ### 🔔 Управление уведомлениями (`/api/v1/notifications`)
 
@@ -179,8 +188,15 @@
 
 | Endpoint | Метод | Роли | Описание |
 |----------|-------|------|----------|
-| `GET /` | GET | BOSS, GOD | Получить все события (с фильтрацией) |
-| `GET /{id}` | GET | BOSS, GOD | Получить событие по ID |
+| `GET /` | GET | INSPECTOR, BOSS, SECURITY, GOD | Получить все события* |
+| `GET /{id}` | GET | INSPECTOR, BOSS, SECURITY, GOD | Получить событие по ID |
+| `POST /` | POST | GOD | Создать событие с приоритетом** |
+| `PATCH /{id}` | PATCH | GOD | Обновить событие |
+| `DELETE /{id}` | DELETE | GOD | Удалить событие |
+
+> *События больше не привязаны к конкретному УПК и доступны всем сотрудникам (миграция `V6__remove_shift_id_add_priority_to_events.sql`)
+>
+> **Поле `priority` (LOW, NORMAL, HIGH, CRITICAL) используется для отображения на макетах, но не влияет на логику. Значение по умолчанию: `NORMAL`
 
 ---
 
@@ -248,6 +264,44 @@ Content-Type: application/json
   "updatedAt": "2025-12-14T10:00:00Z"
 }
 ```
+
+#### Закрытие тикета мигрантом:
+
+Мигрант может закрыть свою заявку, изменив статус на `CLOSED`:
+
+```bash
+PATCH /api/v1/tickets/{ticket-id}
+Authorization: Bearer {migrant_token}
+Content-Type: application/json
+
+{
+  "status": "CLOSED"
+}
+```
+
+**Ответ**:
+```json
+{
+  "id": "ticket-uuid",
+  "ticketType": "EXTERNAL",
+  "status": "CLOSED",
+  "priority": "NORMAL",
+  "authorId": "migrant-uuid",
+  "subjectId": "migrant-uuid",
+  "executor": {
+    "id": "inspector-uuid",
+    "name": "Иван Инспектор",
+    "email": "ivan@upk.ru",
+    "role": "INSPECTOR",
+    "upkId": "upk-uuid"
+  },
+  "description": "Проверка документов для работы",
+  "createdAt": "2025-12-14T10:00:00Z",
+  "updatedAt": "2025-12-14T12:30:00Z"
+}
+```
+
+> ⚠️ **Важно**: Мигрант может изменять только поле `status` и только на значение `CLOSED`. Попытка изменить другие поля (priority, description, executor и т.д.) приведет к ошибке `403 Forbidden`.
 
 #### Создание тикета с явным указанием исполнителя:
 
@@ -479,7 +533,7 @@ Content-Type: application/json
 - **Значение по умолчанию**: `false`
 - **Доступ для изменения**: MIGRANT (для своих документов), GOD
 - **Фильтрация**: Поддерживается query-параметр `attachToProfileOnly`
-- **Миграция БД**: `V1__add_attach_to_profile_to_documents.sql` (применяется автоматически при запуске)
+- **Миграция БД**: `V2__add_attach_to_profile_to_documents.sql` (применяется автоматически при запуске)
 
 ### Примеры использования
 
@@ -545,6 +599,25 @@ GET /api/v1/documents?userId={userId}&attachToProfileOnly=true
 ---
 
 ## 🗄️ База данных: Индексы и PL/pgSQL функции
+
+### 🔄 Миграции Flyway
+
+Все изменения схемы базы данных управляются через Flyway миграции:
+
+| Версия | Файл | Описание |
+|--------|------|----------|
+| V2 | `V2__add_attach_to_profile_to_documents.sql` | Добавляет поле `attach_to_profile` в таблицу `documents` для фильтрации документов в профиле мигранта |
+| V4 | `V4__remove_coefficient_columns_from_participations.sql` | Удаляет устаревшие колонки `bonus_coefficient` и `penalty_coefficient` (заменены на `wage` и `penalty`) |
+| V5 | `V5__update_notification_type_constraint.sql` | Обновляет check constraint для `notification_type`, добавляя `TICKET_UPDATED` |
+| V6 | `V6__remove_shift_id_add_priority_to_events.sql` | Удаляет привязку событий к сменам (`shift_id`) и добавляет поле `priority` |
+
+**Важно**: Миграции применяются автоматически при запуске приложения. Конфигурация в `application.yaml`:
+```yaml
+flyway:
+  enabled: true
+  baseline-on-migrate: true
+  out-of-order: true  # Разрешает применение миграций вне порядка
+```
 
 ### 📊 Индексы для оптимизации запросов
 
@@ -1206,6 +1279,46 @@ GET /api/v1/documents/active?userId=091b55a5-f94b-429d-8569-9dbfd050ae3c
 
 ### 👥 Работа со сменами
 
+#### Получить смены с фильтрацией
+
+```bash
+# Получить все смены определенного УПК
+GET /api/v1/shifts?upkId=ba31cff1-55db-434c-9902-0c7a8c5c05d5&limit=10&offset=0
+Authorization: Bearer {token}
+
+# Получить все активные смены (без endTime)
+GET /api/v1/shifts?endTimeNotNull=false&limit=10&offset=0
+Authorization: Bearer {token}
+
+# Получить все завершенные смены
+GET /api/v1/shifts?endTimeNotNull=true&limit=10&offset=0
+Authorization: Bearer {token}
+
+# Получить смены, созданные конкретным пользователем
+GET /api/v1/shifts?createdBy=0247d06e-7f44-4835-b7af-25cc2c9d8afb&limit=10&offset=0
+Authorization: Bearer {token}
+
+# Комбинация фильтров
+GET /api/v1/shifts?upkId=ba31cff1-55db-434c-9902-0c7a8c5c05d5&endTimeNotNull=false&limit=10&offset=0
+Authorization: Bearer {token}
+
+# Ответ:
+{
+  "items": [
+    {
+      "id": "feefbbd1-f842-4c33-88c9-cf131aef0c78",
+      "startTime": "2025-01-01T08:00:00Z",
+      "endTime": null,
+      "createdBy": "0247d06e-7f44-4835-b7af-25cc2c9d8afb",
+      "upkId": "ba31cff1-55db-434c-9902-0c7a8c5c05d5"
+    }
+  ],
+  "total": 1,
+  "limit": 10,
+  "offset": 0
+}
+```
+
 #### Получить детали смены с информацией о боссе, УПК и инспекторах
 
 ```bash
@@ -1619,6 +1732,8 @@ Authorization: Bearer {token}
 **Таблица `participations`**:
 - ~~`bonus_coefficient`~~ → **`wage`** (коэффициент оплаты/премии)
 - ~~`penalty_coefficient`~~ → **`penalty`** (коэффициент штрафа)
+
+**Миграция**: `V4__remove_coefficient_columns_from_participations.sql` удаляет устаревшие колонки `bonus_coefficient` и `penalty_coefficient` из базы данных.
 
 **API endpoints** (Request/Response):
 - ~~`coeffBonus`~~ → **`wage`**

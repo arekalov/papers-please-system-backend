@@ -2,6 +2,7 @@ package com.arekalov.papersplease.controller
 
 import com.arekalov.papersplease.dto.PagedResponse
 import com.arekalov.papersplease.dto.shift.ShiftDetailedResponse
+import com.arekalov.papersplease.dto.shift.ShiftFilterRequest
 import com.arekalov.papersplease.dto.shift.ShiftRequest
 import com.arekalov.papersplease.dto.shift.ShiftRequestPartial
 import com.arekalov.papersplease.dto.shift.ShiftResponse
@@ -29,12 +30,17 @@ class ShiftController(
 ) {
 
     @GetMapping
+    @Suppress("LongParameterList")
     fun getAllShifts(
         authentication: Authentication,
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
+        @RequestParam(required = false) createdBy: String?,
+        @RequestParam(required = false) upkId: String?,
+        @RequestParam(required = false) endTimeNotNull: Boolean?,
     ): ResponseEntity<PagedResponse<ShiftResponse>> {
-        val response = shiftService.getAll(authentication.name, limit, offset)
+        val filters = ShiftFilterRequest(createdBy, upkId, endTimeNotNull)
+        val response = shiftService.getAll(authentication.name, filters, limit, offset)
         return ResponseEntity.ok(response)
     }
 

@@ -8,12 +8,9 @@ import com.arekalov.papersplease.exception.ForbiddenException
 import com.arekalov.papersplease.exception.ResourceNotFoundException
 import com.arekalov.papersplease.mapper.toEntity
 import com.arekalov.papersplease.mapper.toResponse
-import com.arekalov.papersplease.model.entity.Event
 import com.arekalov.papersplease.model.entity.User
 import com.arekalov.papersplease.model.enums.Role
 import com.arekalov.papersplease.repository.EventRepository
-import com.arekalov.papersplease.repository.ParticipationRepository
-import com.arekalov.papersplease.repository.ShiftRepository
 import com.arekalov.papersplease.repository.UserRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
@@ -23,9 +20,7 @@ import java.util.UUID
 @Service
 class EventService(
     private val eventRepository: EventRepository,
-    private val shiftRepository: ShiftRepository,
     private val userRepository: UserRepository,
-    private val participationRepository: ParticipationRepository,
 ) {
 
     @Transactional(readOnly = true)
@@ -37,7 +32,7 @@ class EventService(
         val page = eventRepository.findAll(pageable)
 
         return PagedResponse(
-            items = page.content.filter { checkReadAccess(currentUser, it) }.map { it.toResponse() },
+            items = page.content.filter { checkReadAccess(currentUser) }.map { it.toResponse() },
             total = page.totalElements,
             limit = limit,
             offset = offset,
@@ -52,32 +47,11 @@ class EventService(
         val event = eventRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("Event with id $id not found") }
 
-        if (!checkReadAccess(currentUser, event)) {
+        if (!checkReadAccess(currentUser)) {
             throw ForbiddenException("You don't have access to this event")
         }
 
         return event.toResponse()
-    }
-
-    @Transactional(readOnly = true)
-    fun getByShift(currentUserId: String, shiftId: String, limit: Int, offset: Int): PagedResponse<EventResponse> {
-        val currentUser = userRepository.findById(UUID.fromString(currentUserId))
-            .orElseThrow { ResourceNotFoundException("Current user not found") }
-
-        val events = eventRepository.findByShift_Id(UUID.fromString(shiftId))
-        val totalCount = events.size.toLong()
-
-        val paginatedEvents = events
-            .filter { checkReadAccess(currentUser, it) }
-            .drop(offset)
-            .take(limit)
-
-        return PagedResponse(
-            items = paginatedEvents.map { it.toResponse() },
-            total = totalCount,
-            limit = limit,
-            offset = offset,
-        )
     }
 
     @Transactional
@@ -89,10 +63,7 @@ class EventService(
             throw ForbiddenException("Only gods can create events")
         }
 
-        val shift = shiftRepository.findById(UUID.fromString(request.shiftId))
-            .orElseThrow { ResourceNotFoundException("Shift with id ${request.shiftId} not found") }
-
-        val event = request.toEntity(shift)
+        val event = request.toEntity()
 
         return eventRepository.save(event).toResponse()
     }
@@ -105,16 +76,13 @@ class EventService(
         val event = eventRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("Event with id $id not found") }
 
-        checkUpdateAccess(currentUser, event)
-
-        val shift = shiftRepository.findById(UUID.fromString(request.shiftId))
-            .orElseThrow { ResourceNotFoundException("Shift with id ${request.shiftId} not found") }
+        checkUpdateAccess(currentUser)
 
         event.apply {
-            this.shift = shift
             time = request.time
             description = request.description
             specialization = request.specialization
+            priority = request.priority
         }
 
         return eventRepository.save(event).toResponse()
@@ -128,15 +96,12 @@ class EventService(
         val event = eventRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("Event with id $id not found") }
 
-        checkUpdateAccess(currentUser, event)
+        checkUpdateAccess(currentUser)
 
-        request.shiftId?.let { shiftId ->
-            event.shift = shiftRepository.findById(UUID.fromString(shiftId))
-                .orElseThrow { ResourceNotFoundException("Shift with id $shiftId not found") }
-        }
         request.time?.let { event.time = it }
         request.description?.let { event.description = it }
         request.specialization?.let { event.specialization = it }
+        request.priority?.let { event.priority = it }
 
         return eventRepository.save(event).toResponse()
     }
@@ -155,37 +120,16 @@ class EventService(
         eventRepository.delete(event)
     }
 
-    private fun checkReadAccess(currentUser: User, event: Event): Boolean {
+    private fun checkReadAccess(currentUser: User): Boolean {
         return when (currentUser.role) {
-            Role.GOD -> true
+            Role.GOD, Role.BOSS, Role.INSPECTOR, Role.SECURITY -> true
             Role.MIGRANT -> false
-            Role.BOSS -> {
-                val upkId = currentUser.upk?.id ?: return false
-                event.shift.upk.id == upkId
-            }
-            Role.INSPECTOR, Role.SECURITY -> {
-                val participations = participationRepository.findByUser_Id(currentUser.id!!)
-                val relevantParticipation = participations.find { it.shift.id == event.shift.id }
-                    ?: return false
-                if (event.specialization != null && event.specialization != relevantParticipation.specialization) {
-                    return false
-                }
-                true
-            }
         }
     }
 
-    private fun checkUpdateAccess(currentUser: User, event: Event) {
-        when (currentUser.role) {
-            Role.GOD -> return
-            Role.BOSS -> {
-                val upkId = currentUser.upk?.id
-                    ?: throw ForbiddenException("Boss must be assigned to UPK")
-                if (event.shift.upk.id != upkId) {
-                    throw ForbiddenException("You can only update events for shifts in your UPK")
-                }
-            }
-            else -> throw ForbiddenException("You don't have permission to update events")
+    private fun checkUpdateAccess(currentUser: User) {
+        if (currentUser.role != Role.GOD) {
+            throw ForbiddenException("Only GOD can update events")
         }
     }
 }

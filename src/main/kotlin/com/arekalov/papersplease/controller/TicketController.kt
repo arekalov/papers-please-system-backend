@@ -78,7 +78,7 @@ class TicketController(
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'GOD')")
+    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'MIGRANT', 'GOD')")
     fun partialUpdateTicket(
         authentication: Authentication,
         @PathVariable id: String,

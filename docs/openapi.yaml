@@ -298,6 +298,21 @@ paths:
           type: integer
           format: int32
           default: 0
+      - name: createdBy
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: upkId
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: endTimeNotNull
+        in: query
+        required: false
+        schema:
+          type: boolean
       responses:
         "200":
           description: OK
@@ -382,11 +397,6 @@ paths:
       - event-controller
       operationId: getAllEvents
       parameters:
-      - name: shiftId
-        in: query
-        required: false
-        schema:
-          type: string
       - name: limit
         in: query
         required: false
@@ -1534,12 +1544,10 @@ components:
     EventRequest:
       required:
       - description
-      - shiftId
+      - priority
       - time
       type: object
       properties:
-        shiftId:
-          type: string
         time:
           type: string
           format: date-time
@@ -1555,17 +1563,22 @@ components:
           - WORK
           - TRANSIT
           - SPECIAL
+        priority:
+          type: string
+          enum:
+          - LOW
+          - NORMAL
+          - HIGH
+          - CRITICAL
     EventResponse:
       required:
       - description
       - id
-      - shiftId
+      - priority
       - time
       type: object
       properties:
         id:
-          type: string
-        shiftId:
           type: string
         time:
           type: string
@@ -1580,6 +1593,13 @@ components:
           - WORK
           - TRANSIT
           - SPECIAL
+        priority:
+          type: string
+          enum:
+          - LOW
+          - NORMAL
+          - HIGH
+          - CRITICAL
     DocumentRequest:
       required:
       - attachToProfile
@@ -1877,8 +1897,6 @@ components:
     EventRequestPartial:
       type: object
       properties:
-        shiftId:
-          type: string
         time:
           type: string
           format: date-time
@@ -1894,6 +1912,13 @@ components:
           - WORK
           - TRANSIT
           - SPECIAL
+        priority:
+          type: string
+          enum:
+          - LOW
+          - NORMAL
+          - HIGH
+          - CRITICAL
     DocumentRequestPartial:
       type: object
       properties:

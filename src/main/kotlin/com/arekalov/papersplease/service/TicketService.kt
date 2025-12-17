@@ -282,7 +282,7 @@ class TicketService(
         val ticket = ticketRepository.findById(UUID.fromString(id))
             .orElseThrow { ResourceNotFoundException("Ticket with id $id not found") }
 
-        checkUpdateAccess(currentUser, ticket)
+        checkUpdateAccess(currentUser, ticket, request)
 
         val oldExecutorId = ticket.executor?.id
 
@@ -356,32 +356,60 @@ class TicketService(
         }
     }
 
-    private fun checkUpdateAccess(currentUser: User, ticket: Ticket) {
+    private fun checkUpdateAccess(currentUser: User, ticket: Ticket, request: TicketRequestPartial) {
         if (ticket.ticketType == TicketType.APPEAL) {
-            if (currentUser.role != Role.GOD && currentUser.role != Role.BOSS) {
-                throw ForbiddenException("Only bosses and gods can update APPEAL tickets")
-            }
+            checkAppealUpdateAccess(currentUser)
             return
         }
 
         when (currentUser.role) {
             Role.GOD -> return
-            Role.MIGRANT -> throw ForbiddenException("Migrants cannot update tickets")
-            Role.BOSS -> {
-                val upkId = currentUser.upk?.id
-                    ?: throw ForbiddenException("Boss must be assigned to UPK")
-                if (ticket.subject.upk?.id != upkId) {
-                    throw ForbiddenException("You can only update tickets for users in your UPK")
-                }
-            }
+            Role.MIGRANT -> checkMigrantUpdateAccess(currentUser, ticket, request)
+            Role.BOSS -> checkBossUpdateAccess(currentUser, ticket)
+            Role.INSPECTOR, Role.SECURITY -> checkEmployeeUpdateAccess(currentUser, ticket)
+        }
+    }
 
-            Role.INSPECTOR, Role.SECURITY -> {
-                val upkId = currentUser.upk?.id
-                    ?: throw ForbiddenException("Employee must be assigned to UPK")
-                if (ticket.subject.upk?.id != upkId) {
-                    throw ForbiddenException("You can only update tickets for users in your UPK")
-                }
-            }
+    private fun checkAppealUpdateAccess(currentUser: User) {
+        if (currentUser.role != Role.GOD && currentUser.role != Role.BOSS) {
+            throw ForbiddenException("Only bosses and gods can update APPEAL tickets")
+        }
+    }
+
+    private fun checkMigrantUpdateAccess(currentUser: User, ticket: Ticket, request: TicketRequestPartial) {
+        if (ticket.author.id != currentUser.id) {
+            throw ForbiddenException("Migrants can only update their own tickets")
+        }
+        if (!isMigrantRequestValid(request)) {
+            throw ForbiddenException("Migrants can only close their tickets (set status to CLOSED)")
+        }
+    }
+
+    private fun isMigrantRequestValid(request: TicketRequestPartial): Boolean {
+        return request.status == TicketStatus.CLOSED &&
+            request.ticketType == null &&
+            request.priority == null &&
+            request.deadlineAt == null &&
+            request.executorId == null &&
+            request.shiftId == null &&
+            request.description == null &&
+            request.resolution == null &&
+            request.appealDecision == null
+    }
+
+    private fun checkBossUpdateAccess(currentUser: User, ticket: Ticket) {
+        val upkId = currentUser.upk?.id
+            ?: throw ForbiddenException("Boss must be assigned to UPK")
+        if (ticket.subject.upk?.id != upkId) {
+            throw ForbiddenException("You can only update tickets for users in your UPK")
+        }
+    }
+
+    private fun checkEmployeeUpdateAccess(currentUser: User, ticket: Ticket) {
+        val upkId = currentUser.upk?.id
+            ?: throw ForbiddenException("Employee must be assigned to UPK")
+        if (ticket.subject.upk?.id != upkId) {
+            throw ForbiddenException("You can only update tickets for users in your UPK")
         }
     }
 
@@ -538,7 +566,7 @@ class TicketService(
         val ticket = ticketRepository.findById(UUID.fromString(ticketId))
             .orElseThrow { ResourceNotFoundException("Ticket with id $ticketId not found") }
 
-        checkUpdateAccess(currentUser, ticket)
+        checkUpdateAccess(currentUser, ticket, TicketRequestPartial())
 
         val relatedTicket = ticketRepository.findById(UUID.fromString(relatedTicketId))
             .orElseThrow { ResourceNotFoundException("Related ticket with id $relatedTicketId not found") }
@@ -557,7 +585,7 @@ class TicketService(
         val ticket = ticketRepository.findById(UUID.fromString(ticketId))
             .orElseThrow { ResourceNotFoundException("Ticket with id $ticketId not found") }
 
-        checkUpdateAccess(currentUser, ticket)
+        checkUpdateAccess(currentUser, ticket, TicketRequestPartial())
 
         val relatedTicket = ticketRepository.findById(UUID.fromString(relatedTicketId))
             .orElseThrow { ResourceNotFoundException("Related ticket with id $relatedTicketId not found") }

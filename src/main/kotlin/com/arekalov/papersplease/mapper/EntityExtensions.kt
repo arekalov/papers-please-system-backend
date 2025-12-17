@@ -83,17 +83,17 @@ fun ParticipationRequest.toEntity(shift: Shift, user: User) = Participation(
 
 fun Event.toResponse() = EventResponse(
     id = id.toString(),
-    shiftId = shift.id.toString(),
     time = time,
     description = description,
     specialization = specialization,
+    priority = priority,
 )
 
-fun EventRequest.toEntity(shift: Shift) = Event(
-    shift = shift,
+fun EventRequest.toEntity() = Event(
     time = time,
     description = description,
     specialization = specialization,
+    priority = priority,
 )
 
 fun Ticket.toResponse() = TicketResponse(

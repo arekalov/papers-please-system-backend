@@ -2,6 +2,7 @@ package com.arekalov.papersplease.service
 
 import com.arekalov.papersplease.dto.PagedResponse
 import com.arekalov.papersplease.dto.shift.ShiftDetailedResponse
+import com.arekalov.papersplease.dto.shift.ShiftFilterRequest
 import com.arekalov.papersplease.dto.shift.ShiftRequest
 import com.arekalov.papersplease.dto.shift.ShiftRequestPartial
 import com.arekalov.papersplease.dto.shift.ShiftResponse
@@ -13,10 +14,12 @@ import com.arekalov.papersplease.model.entity.Shift
 import com.arekalov.papersplease.model.entity.Upk
 import com.arekalov.papersplease.model.entity.User
 import com.arekalov.papersplease.model.enums.Role
+import com.arekalov.papersplease.repository.ParticipationRepository
 import com.arekalov.papersplease.repository.ShiftRepository
+import com.arekalov.papersplease.repository.TicketRepository
 import com.arekalov.papersplease.repository.UpkRepository
 import com.arekalov.papersplease.repository.UserRepository
-import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
@@ -29,42 +32,66 @@ class ShiftService(
     private val shiftRepository: ShiftRepository,
     private val upkRepository: UpkRepository,
     private val userRepository: UserRepository,
-    private val participationRepository: com.arekalov.papersplease.repository.ParticipationRepository,
-    private val ticketRepository: com.arekalov.papersplease.repository.TicketRepository,
-    private val eventRepository: com.arekalov.papersplease.repository.EventRepository,
+    private val participationRepository: ParticipationRepository,
+    private val ticketRepository: TicketRepository,
 ) {
 
     @Transactional(readOnly = true)
-    fun getAll(currentUserId: String, limit: Int, offset: Int): PagedResponse<ShiftResponse> {
-        val pageable = PageRequest.of(offset / limit, limit)
+    fun getAll(
+        currentUserId: String,
+        filters: ShiftFilterRequest,
+        limit: Int,
+        offset: Int,
+    ): PagedResponse<ShiftResponse> {
         val currentUser = userRepository.findById(UUID.fromString(currentUserId))
             .orElseThrow { ResourceNotFoundException("Current user not found") }
 
-        val page = currentUser.id?.let { userId ->
-            when (currentUser.role) {
-                Role.GOD -> {
-                    shiftRepository.findAll(pageable)
-                }
-                Role.BOSS -> {
-                    val upkId = currentUser.upk?.id
-                        ?: throw ForbiddenException("Boss must be assigned to UPK")
-                    shiftRepository.findByUpk_Id(upkId, pageable)
-                }
-                Role.INSPECTOR, Role.SECURITY -> {
-                    shiftRepository.findByParticipations_User_Id(userId, pageable)
-                }
-                Role.MIGRANT -> {
-                    throw ForbiddenException("Migrants do not have access to shifts")
-                }
-            }
-        } ?: throw IllegalStateException("User ID cannot be null for persisted entity")
+        val allShifts = getAccessibleShifts(currentUser)
+        val filteredShifts = applyFilters(allShifts, filters)
+        val paginatedShifts = filteredShifts.drop(offset).take(limit)
 
         return PagedResponse(
-            items = page.content.map { it.toResponse() },
-            total = page.totalElements,
+            items = paginatedShifts.map { it.toResponse() },
+            total = filteredShifts.size.toLong(),
             limit = limit,
             offset = offset,
         )
+    }
+
+    private fun getAccessibleShifts(currentUser: User): List<Shift> {
+        val userId = currentUser.id ?: throw IllegalStateException("User ID cannot be null")
+        return when (currentUser.role) {
+            Role.GOD -> shiftRepository.findAll()
+            Role.BOSS -> {
+                val bossUpkId = currentUser.upk?.id
+                    ?: throw ForbiddenException("Boss must be assigned to UPK")
+                shiftRepository.findByUpk_Id(bossUpkId)
+            }
+            Role.INSPECTOR, Role.SECURITY -> {
+                shiftRepository.findByParticipations_User_Id(userId, Pageable.unpaged()).content
+            }
+            Role.MIGRANT -> throw ForbiddenException("Migrants do not have access to shifts")
+        }
+    }
+
+    private fun applyFilters(shifts: List<Shift>, filters: ShiftFilterRequest): List<Shift> {
+        return shifts.filter { shift ->
+            matchesCreatedBy(shift, filters.createdBy) &&
+                matchesUpk(shift, filters.upkId) &&
+                matchesEndTime(shift, filters.endTimeNotNull)
+        }
+    }
+
+    private fun matchesCreatedBy(shift: Shift, createdBy: String?): Boolean {
+        return createdBy == null || shift.createdBy.id.toString() == createdBy
+    }
+
+    private fun matchesUpk(shift: Shift, upkId: String?): Boolean {
+        return upkId == null || shift.upk.id.toString() == upkId
+    }
+
+    private fun matchesEndTime(shift: Shift, endTimeNotNull: Boolean?): Boolean {
+        return endTimeNotNull == null || (endTimeNotNull == (shift.endTime != null))
     }
 
     @Transactional(readOnly = true)
@@ -89,8 +116,6 @@ class ShiftService(
 
         val participations = participationRepository.findByShift_Id(shift.id!!)
 
-        val events = eventRepository.findByShift_Id(shift.id!!)
-
         val inspectors = participations
             .filter { it.user.role == Role.INSPECTOR }
             .map { participation ->
@@ -109,10 +134,6 @@ class ShiftService(
                                 )
                     }
 
-                val passedCrossChecks = events.count { event ->
-                    event.specialization == participation.specialization
-                }
-
                 com.arekalov.papersplease.dto.shift.InspectorShiftInfo(
                     userId = userId.toString(),
                     shiftId = shift.id.toString(),
@@ -120,7 +141,7 @@ class ShiftService(
                     penalty = participation.penalty,
                     specialization = participation.specialization,
                     resolvedTickets = resolvedTickets,
-                    passedCrossChecks = passedCrossChecks,
+                    passedCrossChecks = 0,
                 )
             }
 
