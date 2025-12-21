@@ -125,7 +125,8 @@
 | `GET /{id}` | GET | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Получить детали тикета с полными объектами executor, relatedTickets, documents* |
 | `POST /` | POST | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Создать новый тикет**** |
 | `PATCH /{id}` | PATCH | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Обновить тикет***** |
-| `DELETE /{id}` | DELETE | MIGRANT, BOSS, GOD | Удалить тикет |
+| `DELETE /{id}` | DELETE | MIGRANT, BOSS, GOD | Удалить тикет****** |
+| `POST /{id}/delegate` | POST | INSPECTOR, BOSS, SECURITY, GOD | Делегировать тикет (создать дочерний/кросс-проверку/арест)******* |
 | `GET /{id}/documents` | GET | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Получить документы тикета (только своего УПК)** |
 | `POST /{id}/documents/{documentId}` | POST | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Прикрепить документ к тикету*** |
 | `DELETE /{id}/documents/{documentId}` | DELETE | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Открепить документ от тикета*** |
@@ -139,9 +140,18 @@
 >
 > ***MIGRANT может управлять документами только для тикетов, где он является автором
 >
-> ****При создании EXTERNAL тикета (заявки от мигранта) без указания executorId, система автоматически назначает инспектора УПК с наименьшим количеством активных тикетов (статусы: OPEN, IN_PROGRESS, NEED_INFO)
+> ****При создании EXTERNAL тикета (заявки от мигранта) без указания executorId, система автоматически назначает инспектора со специализацией PASSPORT с наименьшим количеством активных тикетов (статусы: OPEN, IN_PROGRESS, NEED_INFO). Если инспекторов с PASSPORT нет, назначается любой инспектор УПК
 >
 > *****MIGRANT может обновлять только свои тикеты и только закрывать их (изменение status на CLOSED). Другие поля недоступны для изменения мигрантами
+>
+> ******При удалении тикета автоматически удаляются все связи с другими тикетами и документами
+>
+> *******POST `/tickets/{id}/delegate` - Делегирование тикета создает новый тикет на основе существующего с автоматическим назначением исполнителя. Поддерживает три типа делегирования:
+> - **INTERNAL** (дочерний тикет) - назначается на инспектора с указанной специализацией с наименьшей загруженностью
+> - **CROSSCHECK** (кросс-проверка) - назначается на другого инспектора (не текущего) с наименьшей загруженностью
+> - **ARREST** (арест) - назначается на сотрудника безопасности с наименьшей загруженностью
+> 
+> При делегировании автоматически копируются документы оригинального тикета и создается двусторонняя связь между тикетами
 
 ### 🏢 Управление УПК (`/api/v1/upks`)
 
@@ -188,15 +198,19 @@
 
 | Endpoint | Метод | Роли | Описание |
 |----------|-------|------|----------|
-| `GET /` | GET | INSPECTOR, BOSS, SECURITY, GOD | Получить все события* |
+| `GET /` | GET | INSPECTOR, BOSS, SECURITY, GOD | Получить все события (с фильтром по upkId)* |
 | `GET /{id}` | GET | INSPECTOR, BOSS, SECURITY, GOD | Получить событие по ID |
-| `POST /` | POST | GOD | Создать событие с приоритетом** |
-| `PATCH /{id}` | PATCH | GOD | Обновить событие |
-| `DELETE /{id}` | DELETE | GOD | Удалить событие |
+| `POST /` | POST | BOSS, GOD | Создать событие с приоритетом и привязкой к УПК** |
+| `PATCH /{id}` | PATCH | BOSS, GOD | Обновить событие*** |
+| `DELETE /{id}` | DELETE | BOSS, GOD | Удалить событие**** |
 
-> *События больше не привязаны к конкретному УПК и доступны всем сотрудникам (миграция `V6__remove_shift_id_add_priority_to_events.sql`)
+> *События теперь привязаны к конкретному УПК. BOSS видит только события своего УПК, GOD - все события. Поддерживается фильтрация по `upkId` через query-параметр
 >
-> **Поле `priority` (LOW, NORMAL, HIGH, CRITICAL) используется для отображения на макетах, но не влияет на логику. Значение по умолчанию: `NORMAL`
+> **При создании события обязательно указывается `upkId` - УПК, к которому относится событие. Поле `priority` (LOW, NORMAL, HIGH, CRITICAL) используется для отображения важности. Значение по умолчанию: `NORMAL`
+>
+> ***BOSS может обновлять только события своего УПК, GOD - любые события
+>
+> ****BOSS может удалять только события своего УПК, GOD - любые события
 
 ---
 
@@ -610,6 +624,8 @@ GET /api/v1/documents?userId={userId}&attachToProfileOnly=true
 | V4 | `V4__remove_coefficient_columns_from_participations.sql` | Удаляет устаревшие колонки `bonus_coefficient` и `penalty_coefficient` (заменены на `wage` и `penalty`) |
 | V5 | `V5__update_notification_type_constraint.sql` | Обновляет check constraint для `notification_type`, добавляя `TICKET_UPDATED` |
 | V6 | `V6__remove_shift_id_add_priority_to_events.sql` | Удаляет привязку событий к сменам (`shift_id`) и добавляет поле `priority` |
+| V7 | `V7__add_approved_status_to_tickets.sql` | Добавляет статус `APPROVED` (одобрен) для тикетов |
+| V8 | `V8__add_upk_id_to_events.sql` | Добавляет поле `upk_id` в таблицу `events` для привязки событий к конкретному УПК |
 
 **Важно**: Миграции применяются автоматически при запуске приложения. Конфигурация в `application.yaml`:
 ```yaml
@@ -1345,7 +1361,9 @@ Authorization: Bearer {token}
   },
   "inspectors": [
     {
+      "participationId": "279632b7-7da6-4493-91da-845b69ac28ae",
       "userId": "ae3df3bc-77fe-436d-a2fb-e35426621451",
+      "name": "Иван Инспектор",
       "shiftId": "feefbbd1-f842-4c33-88c9-cf131aef0c78",
       "wage": 1.2,
       "penalty": 0.0,
@@ -1354,7 +1372,9 @@ Authorization: Bearer {token}
       "passedCrossChecks": 8
     },
     {
+      "participationId": "4dbd89c8-6123-41cf-8c89-39dae72bf456",
       "userId": "f8c7eed2-5a92-4d6e-874b-8a9bf2e42a75",
+      "name": "Петр Инспектор",
       "shiftId": "feefbbd1-f842-4c33-88c9-cf131aef0c78",
       "wage": 1.5,
       "penalty": 0.1,
@@ -1365,6 +1385,14 @@ Authorization: Bearer {token}
   ]
 }
 ```
+
+**Поля участия (participation)**:
+- `participationId` - уникальный идентификатор участия в смене
+- `name` - имя инспектора
+- `wage` - коэффициент оплаты/премии (вместо старого `coeffBonus`)
+- `penalty` - коэффициент штрафа (вместо старого `coeffPenalty`)
+- `resolvedTickets` - количество решённых тикетов инспектором в этой смене
+- `passedCrossChecks` - количество пройденных кросс-проверок
 
 ### 📊 Статистика participation (участия в сменах)
 
@@ -1399,6 +1427,114 @@ Authorization: Bearer {token}
   "offset": 0
 }
 ```
+
+### 🔀 Делегирование тикетов
+
+#### Создание дочернего тикета (INTERNAL)
+
+```bash
+POST /api/v1/tickets/{ticketId}/delegate
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "ticketType": "INTERNAL",
+  "specialization": "WORK",
+  "description": "Дополнительная проверка разрешения на работу",
+  "priority": "HIGH"
+}
+
+# Ответ:
+{
+  "id": "new-ticket-uuid",
+  "ticketType": "INTERNAL",
+  "status": "OPEN",
+  "priority": "HIGH",
+  "createdAt": "2025-12-21T10:00:00Z",
+  "updatedAt": "2025-12-21T10:00:00Z",
+  "authorId": "current-user-uuid",
+  "subjectId": "original-subject-uuid",
+  "executor": {
+    "id": "inspector-uuid",
+    "name": "Петр Инспектор",
+    "email": "petr@upk.ru",
+    "role": "INSPECTOR",
+    "specialization": "WORK"
+  },
+  "description": "Дополнительная проверка разрешения на работу",
+  "relatedTicketIds": ["original-ticket-uuid"],
+  "documentIds": ["doc-uuid-1", "doc-uuid-2"]
+}
+```
+
+**Примечания**:
+- Автоматически назначается инспектор с указанной специализацией и наименьшей загруженностью
+- Документы оригинального тикета копируются в новый тикет
+- Создается двусторонняя связь между тикетами
+
+#### Создание кросс-проверки (CROSSCHECK)
+
+```bash
+POST /api/v1/tickets/{ticketId}/delegate
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "ticketType": "CROSSCHECK",
+  "description": "Кросс-проверка документов"
+}
+
+# Ответ:
+{
+  "id": "new-ticket-uuid",
+  "ticketType": "CROSSCHECK",
+  "status": "OPEN",
+  "priority": "NORMAL",
+  "executor": {
+    "id": "another-inspector-uuid",
+    "name": "Сергей Инспектор",
+    "email": "sergey@upk.ru",
+    "role": "INSPECTOR"
+  },
+  ...
+}
+```
+
+**Примечания**:
+- Автоматически назначается другой инспектор (не текущий исполнитель) с наименьшей загруженностью
+- Specialization не требуется
+
+#### Создание тикета на арест (ARREST)
+
+```bash
+POST /api/v1/tickets/{ticketId}/delegate
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "ticketType": "ARREST",
+  "description": "Нарушитель задержан, требуется сопровождение"
+}
+
+# Ответ:
+{
+  "id": "new-ticket-uuid",
+  "ticketType": "ARREST",
+  "status": "OPEN",
+  "priority": "CRITICAL",
+  "executor": {
+    "id": "security-uuid",
+    "name": "Михаил Охранник",
+    "email": "mikhail@upk.ru",
+    "role": "SECURITY"
+  },
+  ...
+}
+```
+
+**Примечания**:
+- Автоматически назначается сотрудник безопасности с наименьшей загруженностью
+- Specialization не требуется
 
 ---
 
@@ -1458,6 +1594,122 @@ psql -U your_username -d papersplease -f scripts/clear-data-prod.sql
 ---
 
 ## 📝 Изменения в API
+
+### Обновления v1.4.0
+
+В версии 1.4.0 добавлены следующие улучшения:
+
+#### 1. **Добавлен статус APPROVED для тикетов**
+
+Новый статус `APPROVED` (одобрен) позволяет отмечать тикеты, прошедшие проверку и одобренные, но еще не закрытые.
+
+**Миграция**: `V7__add_approved_status_to_tickets.sql`
+
+**Все возможные статусы тикетов**:
+- `OPEN` - открыт
+- `IN_PROGRESS` - в работе
+- `NEED_INFO` - требуется информация
+- `APPROVED` - одобрен ✨ (новый)
+- `CLOSED` - закрыт
+- `REJECTED` - отклонен
+
+#### 2. **Расширена информация в деталях смены**
+
+Endpoint `GET /api/v1/shifts/{id}/details` теперь возвращает дополнительную информацию об инспекторах:
+
+**Новые поля в `InspectorShiftInfo`**:
+- ✅ **`participationId`** - уникальный идентификатор участия в смене
+- ✅ **`name`** - имя инспектора
+
+Это упрощает отображение информации на фронтенде без дополнительных запросов.
+
+#### 3. **События теперь привязаны к УПК**
+
+События (`Event`) теперь связаны с конкретным УПК, что позволяет боссам управлять событиями только своего учреждения.
+
+**Что изменилось**:
+- ✅ Добавлено поле `upkId` в `Event`, `EventRequest`, `EventResponse`, `EventRequestPartial`
+- ✅ BOSS может создавать, обновлять и удалять события только своего УПК
+- ✅ GOD имеет доступ ко всем событиям
+- ✅ Добавлен query-параметр `upkId` для фильтрации событий в `GET /api/v1/events`
+- ✅ Автоматическая миграция: `V8__add_upk_id_to_events.sql` привязывает существующие события к УПК
+
+**Пример запроса**:
+```bash
+GET /api/v1/events?upkId=ba31cff1-55db-434c-9902-0c7a8c5c05d5&limit=10
+Authorization: Bearer {boss_token}
+```
+
+#### 4. **Делегирование тикетов**
+
+Добавлен новый endpoint `POST /api/v1/tickets/{id}/delegate` для создания дочерних тикетов, кросс-проверок и тикетов на арест.
+
+**Три типа делегирования**:
+
+**а) INTERNAL (дочерний тикет)**:
+- Создается новый тикет для инспектора с указанной специализацией
+- Исполнитель выбирается по принципу наименьшей загруженности
+- Обязательно указывать `specialization`
+
+```json
+{
+  "ticketType": "INTERNAL",
+  "specialization": "WORK",
+  "description": "Дополнительная проверка разрешения на работу"
+}
+```
+
+**б) CROSSCHECK (кросс-проверка)**:
+- Создается тикет для другого инспектора (не текущего исполнителя)
+- Выбирается по принципу наименьшей загруженности
+- Specialization не требуется
+
+```json
+{
+  "ticketType": "CROSSCHECK",
+  "description": "Кросс-проверка документов"
+}
+```
+
+**в) ARREST (арест)**:
+- Создается тикет для сотрудника безопасности
+- Выбирается по принципу наименьшей загруженности
+- Specialization не требуется
+
+```json
+{
+  "ticketType": "ARREST",
+  "description": "Нарушитель задержан"
+}
+```
+
+**Автоматические операции при делегировании**:
+- ✅ Копирование всех документов из оригинального тикета
+- ✅ Создание двусторонней связи между тикетами (`relatedTickets`)
+- ✅ Автоматическое назначение наименее загруженного исполнителя
+- ✅ Отправка уведомления назначенному исполнителю
+- ✅ Поддержка опциональных полей: `priority`, `subjectId`, `shiftId`
+
+**Загруженность исполнителя** определяется количеством активных тикетов (статусы: `OPEN`, `IN_PROGRESS`, `NEED_INFO`)
+
+#### 5. **Улучшена логика автоматического назначения для EXTERNAL тикетов**
+
+При создании `EXTERNAL` тикета (заявка от мигранта) система теперь:
+1. Сначала ищет инспектора со специализацией **PASSPORT** с наименьшей загруженностью
+2. Если инспекторов с PASSPORT нет, назначает любого инспектора УПК с наименьшей загруженностью
+
+Это обеспечивает приоритет проверки паспортов специализированными инспекторами.
+
+#### 6. **Улучшено удаление тикетов**
+
+Исправлена проблема с удалением тикетов. Теперь при удалении:
+- ✅ Автоматически удаляются все связи с другими тикетами (`relatedTickets`)
+- ✅ Удаляются связи с документами (`documents`)
+- ✅ Обновляются связанные тикеты для удаления ссылок на удаляемый
+
+Это предотвращает ошибки foreign key constraint.
+
+---
 
 ### Обновления v1.3.0
 
