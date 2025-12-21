@@ -8,7 +8,7 @@ ADD COLUMN upk_id UUID;
 -- Заполняем существующие записи первым доступным UPK
 -- Если событий нет или UPK нет, эта команда ничего не сделает
 UPDATE events 
-SET upk_id = (SELECT id FROM upks ORDER BY created_at LIMIT 1)
+SET upk_id = (SELECT id FROM upks LIMIT 1)
 WHERE upk_id IS NULL;
 
 -- Удаляем записи, которые не удалось связать с UPK (на случай, если в БД нет UPK)

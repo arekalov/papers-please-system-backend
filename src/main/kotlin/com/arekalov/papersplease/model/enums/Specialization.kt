@@ -6,4 +6,6 @@ enum class Specialization(val value: String) {
     WORK("work"),
     TRANSIT("transit"),
     SPECIAL("special"),
+    FOR_A("for_all"),
+    FOR_SB("for_sb"),
 }
