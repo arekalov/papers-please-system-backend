@@ -120,6 +120,7 @@ class ShiftService(
             .filter { it.user.role == Role.INSPECTOR }
             .map { participation ->
                 val userId = participation.user.id!!
+                val userName = participation.user.name
 
                 val resolvedTickets = ticketRepository.findByExecutor_Id(
                     userId,
@@ -136,7 +137,9 @@ class ShiftService(
                     }
 
                 com.arekalov.papersplease.dto.shift.InspectorShiftInfo(
+                    participationId = participation.id.toString(),
                     userId = userId.toString(),
+                    name = userName,
                     shiftId = shift.id.toString(),
                     wage = participation.wage,
                     penalty = participation.penalty,
