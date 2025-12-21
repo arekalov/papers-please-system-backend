@@ -130,7 +130,8 @@ class ShiftService(
                         ticket.shift?.id == shift.id &&
                             (
                                 ticket.status == com.arekalov.papersplease.model.enums.TicketStatus.CLOSED ||
-                                    ticket.status == com.arekalov.papersplease.model.enums.TicketStatus.REJECTED
+                                    ticket.status == com.arekalov.papersplease.model.enums.TicketStatus.REJECTED ||
+                                    ticket.status == com.arekalov.papersplease.model.enums.TicketStatus.APPROVED
                                 )
                     }
 
