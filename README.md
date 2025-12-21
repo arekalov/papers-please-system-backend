@@ -130,9 +130,9 @@
 | `GET /{id}/documents` | GET | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Получить документы тикета (только своего УПК)** |
 | `POST /{id}/documents/{documentId}` | POST | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Прикрепить документ к тикету*** |
 | `DELETE /{id}/documents/{documentId}` | DELETE | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Открепить документ от тикета*** |
-| `GET /{id}/related` | GET | INSPECTOR, BOSS, SECURITY, GOD | Получить связанные тикеты |
-| `POST /{id}/related/{relatedTicketId}` | POST | INSPECTOR, BOSS, SECURITY, GOD | Связать тикеты |
-| `DELETE /{id}/related/{relatedTicketId}` | DELETE | INSPECTOR, BOSS, SECURITY, GOD | Удалить связь между тикетами |
+| `GET /{id}/related` | GET | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Получить связанные тикеты |
+| `POST /{id}/related/{relatedTicketId}` | POST | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Связать тикеты |
+| `DELETE /{id}/related/{relatedTicketId}` | DELETE | INSPECTOR, BOSS, SECURITY, MIGRANT, GOD | Удалить связь между тикетами |
 
 > *В версии 1.3.0+ тикеты возвращаются с полными объектами executor (вместо только executorId)
 > 
@@ -1536,6 +1536,69 @@ Content-Type: application/json
 - Автоматически назначается сотрудник безопасности с наименьшей загруженностью
 - Specialization не требуется
 
+### 🔗 Управление связанными тикетами (для мигрантов)
+
+Мигранты могут связывать свои заявки друг с другом для группировки связанных запросов.
+
+#### Просмотр связанных тикетов
+
+```bash
+GET /api/v1/tickets/{ticketId}/related
+Authorization: Bearer {migrant_token}
+
+# Ответ:
+[
+  {
+    "id": "related-ticket-uuid",
+    "ticketType": "EXTERNAL",
+    "status": "CLOSED",
+    "priority": "NORMAL",
+    "executor": {
+      "id": "inspector-uuid",
+      "name": "Иван Инспектор",
+      "email": "ivan@upk.ru",
+      "role": "INSPECTOR"
+    },
+    "description": "Похожая проблема с документами",
+    "createdAt": "2025-12-15T10:00:00Z"
+  }
+]
+```
+
+#### Связывание тикетов
+
+```bash
+POST /api/v1/tickets/{ticketId}/related/{relatedTicketId}
+Authorization: Bearer {migrant_token}
+
+# Ответ:
+{
+  "id": "ticket-uuid",
+  "ticketType": "EXTERNAL",
+  "status": "OPEN",
+  "relatedTicketIds": ["related-ticket-uuid"],
+  ...
+}
+```
+
+**Примечания**:
+- Создается двусторонняя связь между тикетами
+- Мигрант может связывать только свои тикеты
+- Полезно для группировки связанных заявок (например, продление разрешения на работу и регистрация)
+
+#### Удаление связи между тикетами
+
+```bash
+DELETE /api/v1/tickets/{ticketId}/related/{relatedTicketId}
+Authorization: Bearer {migrant_token}
+
+# Ответ: 204 No Content
+```
+
+**Примечания**:
+- Удаляет связь в обоих направлениях
+- Мигрант может удалять связи только для своих тикетов
+
 ---
 
 ## 🚀 Запуск проекта
@@ -1708,6 +1771,15 @@ Authorization: Bearer {boss_token}
 - ✅ Обновляются связанные тикеты для удаления ссылок на удаляемый
 
 Это предотвращает ошибки foreign key constraint.
+
+#### 7. **Мигранты получили доступ к управлению связанными тикетами**
+
+Добавлена возможность для мигрантов работать со связанными тикетами:
+- ✅ `GET /api/v1/tickets/{id}/related` - просмотр связанных тикетов
+- ✅ `POST /api/v1/tickets/{id}/related/{relatedTicketId}` - связывание тикетов
+- ✅ `DELETE /api/v1/tickets/{id}/related/{relatedTicketId}` - удаление связи
+
+Это позволяет мигрантам самостоятельно управлять связями между своими заявками, объединяя похожие запросы или указывая на связанные проблемы.
 
 ---
 

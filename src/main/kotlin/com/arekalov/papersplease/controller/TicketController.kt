@@ -132,7 +132,7 @@ class TicketController(
     }
 
     @GetMapping("/{id}/related")
-    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'GOD')")
+    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'MIGRANT', 'GOD')")
     fun getRelatedTickets(
         authentication: Authentication,
         @PathVariable id: String,
@@ -142,7 +142,7 @@ class TicketController(
     }
 
     @PostMapping("/{id}/related/{relatedTicketId}")
-    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'GOD')")
+    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'MIGRANT', 'GOD')")
     fun addRelatedTicket(
         authentication: Authentication,
         @PathVariable id: String,
@@ -153,7 +153,7 @@ class TicketController(
     }
 
     @DeleteMapping("/{id}/related/{relatedTicketId}")
-    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'GOD')")
+    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'MIGRANT', 'GOD')")
     fun removeRelatedTicket(
         authentication: Authentication,
         @PathVariable id: String,
