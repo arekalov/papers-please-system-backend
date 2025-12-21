@@ -10,4 +10,5 @@ data class EventResponse(
     val description: String,
     val specialization: Specialization? = null,
     val priority: Priority,
+    val upkId: String,
 )

@@ -32,8 +32,9 @@ class EventController(
         authentication: Authentication,
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
+        @RequestParam(required = false) upkId: String?,
     ): ResponseEntity<PagedResponse<EventResponse>> {
-        val response = eventService.getAll(authentication.name, limit, offset)
+        val response = eventService.getAll(authentication.name, limit, offset, upkId)
         return ResponseEntity.ok(response)
     }
 

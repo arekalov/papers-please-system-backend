@@ -14,4 +14,6 @@ data class EventRequestPartial(
     val specialization: Specialization? = null,
 
     val priority: Priority? = null,
+
+    val upkId: String? = null,
 )

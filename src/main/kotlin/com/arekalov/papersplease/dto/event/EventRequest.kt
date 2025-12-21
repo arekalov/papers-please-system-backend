@@ -16,4 +16,7 @@ data class EventRequest(
     val specialization: Specialization? = null,
 
     val priority: Priority = Priority.NORMAL,
+
+    @field:NotBlank(message = "UPK ID is required")
+    val upkId: String,
 )

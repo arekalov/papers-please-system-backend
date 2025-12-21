@@ -4,7 +4,6 @@ package com.arekalov.papersplease.mapper
 
 import com.arekalov.papersplease.dto.document.DocumentRequest
 import com.arekalov.papersplease.dto.document.DocumentResponse
-import com.arekalov.papersplease.dto.event.EventRequest
 import com.arekalov.papersplease.dto.event.EventResponse
 import com.arekalov.papersplease.dto.notification.NotificationRequest
 import com.arekalov.papersplease.dto.notification.NotificationResponse
@@ -87,13 +86,7 @@ fun Event.toResponse() = EventResponse(
     description = description,
     specialization = specialization,
     priority = priority,
-)
-
-fun EventRequest.toEntity() = Event(
-    time = time,
-    description = description,
-    specialization = specialization,
-    priority = priority,
+    upkId = upk.id.toString(),
 )
 
 fun Ticket.toResponse() = TicketResponse(
