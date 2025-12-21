@@ -2,6 +2,7 @@ package com.arekalov.papersplease.service
 
 import com.arekalov.papersplease.dto.PagedResponse
 import com.arekalov.papersplease.dto.document.DocumentResponse
+import com.arekalov.papersplease.dto.ticket.DelegateTicketRequest
 import com.arekalov.papersplease.dto.ticket.TicketDetailedResponse
 import com.arekalov.papersplease.dto.ticket.TicketRequest
 import com.arekalov.papersplease.dto.ticket.TicketRequestPartial
@@ -16,9 +17,11 @@ import com.arekalov.papersplease.model.entity.User
 import com.arekalov.papersplease.model.enums.NotificationType
 import com.arekalov.papersplease.model.enums.Priority
 import com.arekalov.papersplease.model.enums.Role
+import com.arekalov.papersplease.model.enums.Specialization
 import com.arekalov.papersplease.model.enums.TicketStatus
 import com.arekalov.papersplease.model.enums.TicketType
 import com.arekalov.papersplease.repository.DocumentRepository
+import com.arekalov.papersplease.repository.ParticipationRepository
 import com.arekalov.papersplease.repository.ShiftRepository
 import com.arekalov.papersplease.repository.TicketRepository
 import com.arekalov.papersplease.repository.UserRepository
@@ -28,13 +31,14 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 import java.util.UUID
 
-@Suppress("TooManyFunctions")
+@Suppress("TooManyFunctions", "LargeClass")
 @Service
 class TicketService(
     private val ticketRepository: TicketRepository,
     private val userRepository: UserRepository,
     private val shiftRepository: ShiftRepository,
     private val documentRepository: DocumentRepository,
+    private val participationRepository: ParticipationRepository,
     private val notificationService: NotificationService,
 ) {
 
@@ -229,7 +233,8 @@ class TicketService(
                     .orElseThrow { ResourceNotFoundException("User with id ${request.executorId} not found") }
             }
             request.ticketType == TicketType.EXTERNAL -> {
-                assignLeastBusyInspector(subject)
+                assignRandomInspectorBySpecialization(subject, Specialization.PASSPORT)
+                    ?: assignLeastBusyInspector(subject)
             }
             else -> null
         }
@@ -333,6 +338,15 @@ class TicketService(
 
         checkDeleteAccess(currentUser, ticket)
 
+        ticket.relatedTickets.forEach { relatedTicket ->
+            relatedTicket.relatedTickets.remove(ticket)
+            ticketRepository.save(relatedTicket)
+        }
+
+        ticket.relatedTickets.clear()
+        ticket.documents.clear()
+
+        ticketRepository.save(ticket)
         ticketRepository.delete(ticket)
     }
 
@@ -594,5 +608,205 @@ class TicketService(
         ticket.updatedAt = Instant.now()
 
         ticketRepository.save(ticket)
+    }
+
+    @Transactional
+    fun delegateTicket(currentUserId: String, ticketId: String, request: DelegateTicketRequest): TicketResponse {
+        val currentUser = userRepository.findById(UUID.fromString(currentUserId))
+            .orElseThrow { ResourceNotFoundException("Current user not found") }
+
+        val originalTicket = ticketRepository.findById(UUID.fromString(ticketId))
+            .orElseThrow { ResourceNotFoundException("Ticket with id $ticketId not found") }
+
+        checkUpdateAccess(currentUser, originalTicket, TicketRequestPartial())
+
+        val ticketType = request.ticketType
+            ?: throw IllegalArgumentException("Ticket type is required")
+
+        val subject = resolveSubject(request, originalTicket)
+        val shift = resolveShift(request, originalTicket)
+        val executor = assignExecutorForDelegation(ticketType, subject, originalTicket, request)
+
+        val newTicket = createDelegatedTicket(
+            ticketType = ticketType,
+            currentUser = currentUser,
+            subject = subject,
+            executor = executor,
+            shift = shift,
+            originalTicket = originalTicket,
+            request = request,
+        )
+
+        newTicket.documents.addAll(originalTicket.documents)
+
+        val savedTicket = ticketRepository.save(newTicket)
+
+        linkTickets(originalTicket, savedTicket)
+        notifyExecutor(executor, savedTicket)
+
+        return savedTicket.toResponse()
+    }
+
+    private fun resolveSubject(request: DelegateTicketRequest, originalTicket: Ticket): User {
+        return request.subjectId?.let {
+            userRepository.findById(UUID.fromString(it))
+                .orElseThrow { ResourceNotFoundException("Subject user with id $it not found") }
+        } ?: originalTicket.subject
+    }
+
+    private fun resolveShift(
+        request: DelegateTicketRequest,
+        originalTicket: Ticket,
+    ): com.arekalov.papersplease.model.entity.Shift? {
+        return request.shiftId?.let {
+            shiftRepository.findById(UUID.fromString(it)).orElse(null)
+        } ?: originalTicket.shift
+    }
+
+    private fun assignExecutorForDelegation(
+        ticketType: TicketType,
+        subject: User,
+        originalTicket: Ticket,
+        request: DelegateTicketRequest,
+    ): User {
+        return when (ticketType) {
+            TicketType.INTERNAL -> assignInspectorBySpecialization(subject, request)
+            TicketType.CROSSCHECK -> assignDifferentInspector(subject, originalTicket)
+            TicketType.ARREST -> assignSecurityStaff(subject)
+            else -> throw IllegalArgumentException("Invalid ticket type for delegation: $ticketType")
+        }
+    }
+
+    private fun assignInspectorBySpecialization(subject: User, request: DelegateTicketRequest): User {
+        val specialization = request.specialization
+            ?: throw IllegalArgumentException("Specialization is required for INTERNAL ticket")
+        return assignRandomInspectorBySpecialization(subject, specialization)
+            ?: throw IllegalArgumentException(
+                "No available inspector with specialization $specialization in UPK ${subject.upk?.id}",
+            )
+    }
+
+    private fun assignDifferentInspector(subject: User, originalTicket: Ticket): User {
+        return assignRandomDifferentInspector(subject, originalTicket.executor)
+            ?: throw IllegalArgumentException("No available different inspector in UPK ${subject.upk?.id}")
+    }
+
+    private fun assignSecurityStaff(subject: User): User {
+        return assignRandomSecurity(subject)
+            ?: throw IllegalArgumentException("No available security staff in UPK ${subject.upk?.id}")
+    }
+
+    @Suppress("LongParameterList")
+    private fun createDelegatedTicket(
+        ticketType: TicketType,
+        currentUser: User,
+        subject: User,
+        executor: User,
+        shift: com.arekalov.papersplease.model.entity.Shift?,
+        originalTicket: Ticket,
+        request: DelegateTicketRequest,
+    ): Ticket {
+        val description = request.description
+            ?: "Delegated from ticket #${originalTicket.id}: ${originalTicket.description}"
+
+        return Ticket(
+            ticketType = ticketType,
+            status = TicketStatus.OPEN,
+            priority = request.priority ?: originalTicket.priority,
+            createdAt = Instant.now(),
+            updatedAt = Instant.now(),
+            deadlineAt = originalTicket.deadlineAt,
+            author = currentUser,
+            subject = subject,
+            executor = executor,
+            shift = shift,
+            description = description,
+            resolution = null,
+            appealDecision = null,
+        )
+    }
+
+    private fun linkTickets(originalTicket: Ticket, delegatedTicket: Ticket) {
+        originalTicket.relatedTickets.add(delegatedTicket)
+        delegatedTicket.relatedTickets.add(originalTicket)
+        originalTicket.updatedAt = Instant.now()
+
+        ticketRepository.save(originalTicket)
+        ticketRepository.save(delegatedTicket)
+    }
+
+    private fun notifyExecutor(executor: User?, ticket: Ticket) {
+        executor?.let {
+            notificationService.createSystemNotification(
+                userId = it.id!!,
+                type = NotificationType.TICKET_ASSIGNED,
+                message = "You have been assigned to delegated ticket #${ticket.id}: ${ticket.description}",
+            )
+        }
+    }
+
+    private fun assignRandomInspectorBySpecialization(subject: User, specialization: Specialization): User? {
+        val upkId = subject.upk?.id ?: return null
+
+        val participationsWithSpecialization = participationRepository.findBySpecialization(specialization)
+            .filter { participation ->
+                participation.user.role == Role.INSPECTOR &&
+                    participation.user.upk?.id == upkId
+            }
+
+        if (participationsWithSpecialization.isEmpty()) {
+            return null
+        }
+
+        val activeStatuses = listOf(
+            TicketStatus.OPEN,
+            TicketStatus.IN_PROGRESS,
+            TicketStatus.NEED_INFO,
+        )
+
+        return participationsWithSpecialization.minByOrNull { participation ->
+            ticketRepository.countByExecutor_IdAndStatusIn(participation.user.id!!, activeStatuses)
+        }?.user
+    }
+
+    private fun assignRandomDifferentInspector(subject: User, currentExecutor: User?): User? {
+        val upkId = subject.upk?.id ?: return null
+
+        val inspectors = userRepository.findByRoleAndUpk_Id(Role.INSPECTOR, upkId)
+            .filter { it.id != currentExecutor?.id }
+
+        if (inspectors.isEmpty()) {
+            return null
+        }
+
+        val activeStatuses = listOf(
+            TicketStatus.OPEN,
+            TicketStatus.IN_PROGRESS,
+            TicketStatus.NEED_INFO,
+        )
+
+        return inspectors.minByOrNull { inspector ->
+            ticketRepository.countByExecutor_IdAndStatusIn(inspector.id!!, activeStatuses)
+        }
+    }
+
+    private fun assignRandomSecurity(subject: User): User? {
+        val upkId = subject.upk?.id ?: return null
+
+        val securityStaff = userRepository.findByRoleAndUpk_Id(Role.SECURITY, upkId)
+
+        if (securityStaff.isEmpty()) {
+            return null
+        }
+
+        val activeStatuses = listOf(
+            TicketStatus.OPEN,
+            TicketStatus.IN_PROGRESS,
+            TicketStatus.NEED_INFO,
+        )
+
+        return securityStaff.minByOrNull { security ->
+            ticketRepository.countByExecutor_IdAndStatusIn(security.id!!, activeStatuses)
+        }
     }
 }

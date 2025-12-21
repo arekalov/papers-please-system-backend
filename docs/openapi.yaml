@@ -122,6 +122,7 @@ paths:
           - OPEN
           - IN_PROGRESS
           - NEED_INFO
+          - APPROVED
           - CLOSED
           - REJECTED
       - name: type
@@ -278,6 +279,30 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/Unit"
+  /api/v1/tickets/{id}/delegate:
+    post:
+      tags:
+      - ticket-controller
+      operationId: delegateTicket
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DelegateTicketRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TicketResponse"
   /api/v1/shifts:
     get:
       tags:
@@ -411,6 +436,11 @@ paths:
           type: integer
           format: int32
           default: 0
+      - name: upkId
+        in: query
+        required: false
+        schema:
+          type: string
       responses:
         "200":
           description: OK
@@ -1346,6 +1376,7 @@ components:
           - OPEN
           - IN_PROGRESS
           - NEED_INFO
+          - APPROVED
           - CLOSED
           - REJECTED
         priority:
@@ -1401,6 +1432,7 @@ components:
           - OPEN
           - IN_PROGRESS
           - NEED_INFO
+          - APPROVED
           - CLOSED
           - REJECTED
         priority:
@@ -1447,6 +1479,40 @@ components:
           type: array
           items:
             type: string
+    DelegateTicketRequest:
+      required:
+      - ticketType
+      type: object
+      properties:
+        ticketType:
+          type: string
+          enum:
+          - EXTERNAL
+          - INTERNAL
+          - ARREST
+          - CROSSCHECK
+          - APPEAL
+        specialization:
+          type: string
+          enum:
+          - PASSPORT
+          - LOCALS
+          - WORK
+          - TRANSIT
+          - SPECIAL
+        description:
+          type: string
+        priority:
+          type: string
+          enum:
+          - LOW
+          - NORMAL
+          - HIGH
+          - CRITICAL
+        subjectId:
+          type: string
+        shiftId:
+          type: string
     ShiftRequest:
       required:
       - upkId
@@ -1546,6 +1612,7 @@ components:
       - description
       - priority
       - time
+      - upkId
       type: object
       properties:
         time:
@@ -1570,12 +1637,15 @@ components:
           - NORMAL
           - HIGH
           - CRITICAL
+        upkId:
+          type: string
     EventResponse:
       required:
       - description
       - id
       - priority
       - time
+      - upkId
       type: object
       properties:
         id:
@@ -1600,6 +1670,8 @@ components:
           - NORMAL
           - HIGH
           - CRITICAL
+        upkId:
+          type: string
     DocumentRequest:
       required:
       - attachToProfile
@@ -1786,6 +1858,7 @@ components:
           - OPEN
           - IN_PROGRESS
           - NEED_INFO
+          - APPROVED
           - CLOSED
           - REJECTED
         priority:
@@ -1919,6 +1992,8 @@ components:
           - NORMAL
           - HIGH
           - CRITICAL
+        upkId:
+          type: string
     DocumentRequestPartial:
       type: object
       properties:
@@ -2163,6 +2238,7 @@ components:
           - OPEN
           - IN_PROGRESS
           - NEED_INFO
+          - APPROVED
           - CLOSED
           - REJECTED
         priority:
@@ -2232,6 +2308,8 @@ components:
           format: int32
     InspectorShiftInfo:
       required:
+      - name
+      - participationId
       - passedCrossChecks
       - penalty
       - resolvedTickets
@@ -2241,7 +2319,11 @@ components:
       - wage
       type: object
       properties:
+        participationId:
+          type: string
         userId:
+          type: string
+        name:
           type: string
         shiftId:
           type: string

@@ -2,6 +2,7 @@ package com.arekalov.papersplease.controller
 
 import com.arekalov.papersplease.dto.PagedResponse
 import com.arekalov.papersplease.dto.document.DocumentResponse
+import com.arekalov.papersplease.dto.ticket.DelegateTicketRequest
 import com.arekalov.papersplease.dto.ticket.TicketDetailedResponse
 import com.arekalov.papersplease.dto.ticket.TicketRequest
 import com.arekalov.papersplease.dto.ticket.TicketRequestPartial
@@ -160,5 +161,16 @@ class TicketController(
     ): ResponseEntity<Unit> {
         ticketService.removeRelatedTicket(authentication.name, id, relatedTicketId)
         return ResponseEntity.noContent().build()
+    }
+
+    @PostMapping("/{id}/delegate")
+    @PreAuthorize("hasAnyRole('INSPECTOR', 'BOSS', 'SECURITY', 'GOD')")
+    fun delegateTicket(
+        authentication: Authentication,
+        @PathVariable id: String,
+        @Valid @RequestBody request: DelegateTicketRequest,
+    ): ResponseEntity<TicketResponse> {
+        val response = ticketService.delegateTicket(authentication.name, id, request)
+        return ResponseEntity.status(HttpStatus.CREATED).body(response)
     }
 }
