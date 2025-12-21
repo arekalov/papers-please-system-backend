@@ -1,0 +1,2468 @@
+openapi: 3.0.1
+info:
+  title: Papers Please System API
+  description: API для системы управления УПК (пограничные пункты)
+  version: 1.0.0
+servers:
+- url: http://localhost:8080
+  description: Generated server url
+security:
+- bearerAuth: []
+paths:
+  /api/v1/users:
+    get:
+      tags:
+      - user-controller
+      operationId: getAllUsers
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 10
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PagedResponseUserResponse"
+    post:
+      tags:
+      - user-controller
+      operationId: createUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+  /api/v1/upks:
+    get:
+      tags:
+      - upk-controller
+      operationId: getAllUpks
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 10
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PagedResponseUpkResponse"
+    post:
+      tags:
+      - upk-controller
+      operationId: createUpk
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpkRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/UpkResponse"
+  /api/v1/tickets:
+    get:
+      tags:
+      - ticket-controller
+      operationId: getAllTickets
+      parameters:
+      - name: authorId
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: executorId
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - OPEN
+          - IN_PROGRESS
+          - NEED_INFO
+          - APPROVED
+          - CLOSED
+          - REJECTED
+      - name: type
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - EXTERNAL
+          - INTERNAL
+          - ARREST
+          - CROSSCHECK
+          - APPEAL
+      - name: priority
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - LOW
+          - NORMAL
+          - HIGH
+          - CRITICAL
+      - name: shiftId
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 10
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PagedResponseTicketResponse"
+    post:
+      tags:
+      - ticket-controller
+      operationId: createTicket
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TicketRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TicketResponse"
+  /api/v1/tickets/{id}/related/{relatedTicketId}:
+    post:
+      tags:
+      - ticket-controller
+      operationId: addRelatedTicket
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: relatedTicketId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TicketResponse"
+    delete:
+      tags:
+      - ticket-controller
+      operationId: removeRelatedTicket
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: relatedTicketId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Unit"
+  /api/v1/tickets/{id}/documents/{documentId}:
+    post:
+      tags:
+      - ticket-controller
+      operationId: addDocumentToTicket
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: documentId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TicketResponse"
+    delete:
+      tags:
+      - ticket-controller
+      operationId: removeDocumentFromTicket
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: documentId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Unit"
+  /api/v1/tickets/{id}/delegate:
+    post:
+      tags:
+      - ticket-controller
+      operationId: delegateTicket
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DelegateTicketRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TicketResponse"
+  /api/v1/shifts:
+    get:
+      tags:
+      - shift-controller
+      operationId: getAllShifts
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 10
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      - name: createdBy
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: upkId
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: endTimeNotNull
+        in: query
+        required: false
+        schema:
+          type: boolean
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PagedResponseShiftResponse"
+    post:
+      tags:
+      - shift-controller
+      operationId: createShift
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShiftRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ShiftResponse"
+  /api/v1/participations:
+    get:
+      tags:
+      - participation-controller
+      operationId: getAllParticipations
+      parameters:
+      - name: shiftId
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: userId
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 10
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PagedResponseParticipationResponse"
+    post:
+      tags:
+      - participation-controller
+      operationId: createParticipation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ParticipationRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ParticipationResponse"
+  /api/v1/events:
+    get:
+      tags:
+      - event-controller
+      operationId: getAllEvents
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 10
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      - name: upkId
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PagedResponseEventResponse"
+    post:
+      tags:
+      - event-controller
+      operationId: createEvent
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EventResponse"
+  /api/v1/documents:
+    get:
+      tags:
+      - document-controller
+      operationId: getAllDocumentsByUserId
+      parameters:
+      - name: userId
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 10
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      - name: attachToProfileOnly
+        in: query
+        required: false
+        schema:
+          type: boolean
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PagedResponseDocumentResponse"
+    post:
+      tags:
+      - document-controller
+      operationId: createDocument
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocumentRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DocumentResponse"
+  /api/v1/auth/register:
+    post:
+      tags:
+      - auth-controller
+      operationId: register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+  /api/v1/auth/register-god:
+    post:
+      tags:
+      - auth-controller
+      operationId: registerGod
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterGodRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+  /api/v1/auth/refresh:
+    post:
+      tags:
+      - auth-controller
+      operationId: refresh
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+  /api/v1/auth/login:
+    post:
+      tags:
+      - auth-controller
+      operationId: login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+  /api/v1/users/{id}:
+    get:
+      tags:
+      - user-controller
+      operationId: getUserById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+    delete:
+      tags:
+      - user-controller
+      operationId: deleteUser
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Unit"
+    patch:
+      tags:
+      - user-controller
+      operationId: partialUpdateUser
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRequestPartial"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+  /api/v1/users/me:
+    get:
+      tags:
+      - user-controller
+      operationId: getCurrentUser
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+    patch:
+      tags:
+      - user-controller
+      operationId: partialUpdateCurrentUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRequestPartial"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+  /api/v1/upks/{id}:
+    get:
+      tags:
+      - upk-controller
+      operationId: getUpkById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/UpkResponse"
+    delete:
+      tags:
+      - upk-controller
+      operationId: deleteUpk
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Unit"
+    patch:
+      tags:
+      - upk-controller
+      operationId: partialUpdateUpk
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpkRequestPartial"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/UpkResponse"
+  /api/v1/tickets/{id}:
+    get:
+      tags:
+      - ticket-controller
+      operationId: getTicketById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TicketDetailedResponse"
+    delete:
+      tags:
+      - ticket-controller
+      operationId: deleteTicket
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Unit"
+    patch:
+      tags:
+      - ticket-controller
+      operationId: partialUpdateTicket
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TicketRequestPartial"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TicketResponse"
+  /api/v1/shifts/{id}:
+    get:
+      tags:
+      - shift-controller
+      operationId: getShiftById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ShiftResponse"
+    delete:
+      tags:
+      - shift-controller
+      operationId: deleteShift
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Unit"
+    patch:
+      tags:
+      - shift-controller
+      operationId: partialUpdateShift
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShiftRequestPartial"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ShiftResponse"
+  /api/v1/participations/{id}:
+    get:
+      tags:
+      - participation-controller
+      operationId: getParticipationById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ParticipationResponse"
+    delete:
+      tags:
+      - participation-controller
+      operationId: deleteParticipation
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Unit"
+    patch:
+      tags:
+      - participation-controller
+      operationId: partialUpdateParticipation
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ParticipationRequestPartial"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ParticipationResponse"
+  /api/v1/notifications/{id}:
+    get:
+      tags:
+      - notification-controller
+      operationId: getNotificationById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/NotificationResponse"
+    delete:
+      tags:
+      - notification-controller
+      operationId: deleteNotification
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Unit"
+    patch:
+      tags:
+      - notification-controller
+      operationId: markAsRead
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationRequestPartial"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/NotificationResponse"
+  /api/v1/events/{id}:
+    get:
+      tags:
+      - event-controller
+      operationId: getEventById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EventResponse"
+    delete:
+      tags:
+      - event-controller
+      operationId: deleteEvent
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Unit"
+    patch:
+      tags:
+      - event-controller
+      operationId: partialUpdateEvent
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventRequestPartial"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EventResponse"
+  /api/v1/documents/{id}:
+    get:
+      tags:
+      - document-controller
+      operationId: getDocumentById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DocumentResponse"
+    delete:
+      tags:
+      - document-controller
+      operationId: deleteDocument
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Unit"
+    patch:
+      tags:
+      - document-controller
+      operationId: partialUpdateDocument
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocumentRequestPartial"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DocumentResponse"
+  /api/v1/users/{id}/details:
+    get:
+      tags:
+      - user-controller
+      operationId: getUserFullDetailsById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/UserFullDetailedResponse"
+  /api/v1/users/{id}/boss-details:
+    get:
+      tags:
+      - user-controller
+      operationId: getUserDetailsById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/UserDetailedResponse"
+  /api/v1/upks/{id}/employees:
+    get:
+      tags:
+      - upk-controller
+      operationId: getUpkEmployees
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserResponse"
+  /api/v1/tickets/{id}/related:
+    get:
+      tags:
+      - ticket-controller
+      operationId: getRelatedTickets
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TicketResponse"
+  /api/v1/tickets/{id}/documents:
+    get:
+      tags:
+      - ticket-controller
+      operationId: getTicketDocuments
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DocumentResponse"
+  /api/v1/shifts/{id}/details:
+    get:
+      tags:
+      - shift-controller
+      operationId: getShiftDetailsById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ShiftDetailedResponse"
+  /api/v1/notifications:
+    get:
+      tags:
+      - notification-controller
+      operationId: getMyNotifications
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 10
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PagedResponseNotificationResponse"
+  /api/v1/documents/ticket/{ticketId}:
+    get:
+      tags:
+      - document-controller
+      operationId: getDocumentsByTicket
+      parameters:
+      - name: ticketId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DocumentResponse"
+  /api/v1/documents/active:
+    get:
+      tags:
+      - document-controller
+      operationId: getActiveDocuments
+      parameters:
+      - name: userId
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DocumentResponse"
+components:
+  schemas:
+    UserRequest:
+      required:
+      - email
+      - name
+      - password
+      - role
+      type: object
+      properties:
+        name:
+          maxLength: 100
+          minLength: 2
+          type: string
+        email:
+          type: string
+        password:
+          maxLength: 100
+          minLength: 8
+          type: string
+        role:
+          type: string
+          enum:
+          - MIGRANT
+          - INSPECTOR
+          - BOSS
+          - SECURITY
+          - GOD
+        upkId:
+          type: string
+    UserResponse:
+      required:
+      - email
+      - id
+      - name
+      - role
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum:
+          - MIGRANT
+          - INSPECTOR
+          - BOSS
+          - SECURITY
+          - GOD
+        upkId:
+          type: string
+    UpkRequest:
+      required:
+      - name
+      - region
+      type: object
+      properties:
+        name:
+          maxLength: 100
+          minLength: 2
+          type: string
+        region:
+          type: string
+          enum:
+          - ORVECH_VONOR
+          - EAST_GRESTIN
+          - PARADIZNA
+    UpkResponse:
+      required:
+      - id
+      - name
+      - region
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        region:
+          type: string
+          enum:
+          - ORVECH_VONOR
+          - EAST_GRESTIN
+          - PARADIZNA
+    TicketRequest:
+      required:
+      - authorId
+      - description
+      - priority
+      - status
+      - subjectId
+      - ticketType
+      type: object
+      properties:
+        ticketType:
+          type: string
+          enum:
+          - EXTERNAL
+          - INTERNAL
+          - ARREST
+          - CROSSCHECK
+          - APPEAL
+        status:
+          type: string
+          enum:
+          - OPEN
+          - IN_PROGRESS
+          - NEED_INFO
+          - APPROVED
+          - CLOSED
+          - REJECTED
+        priority:
+          type: string
+          enum:
+          - LOW
+          - NORMAL
+          - HIGH
+          - CRITICAL
+        deadlineAt:
+          type: string
+          format: date-time
+        authorId:
+          type: string
+        subjectId:
+          type: string
+        executorId:
+          type: string
+        shiftId:
+          type: string
+        description:
+          type: string
+        resolution:
+          type: string
+    TicketResponse:
+      required:
+      - authorId
+      - createdAt
+      - description
+      - documentIds
+      - id
+      - priority
+      - relatedTicketIds
+      - status
+      - subjectId
+      - ticketType
+      - updatedAt
+      type: object
+      properties:
+        id:
+          type: string
+        ticketType:
+          type: string
+          enum:
+          - EXTERNAL
+          - INTERNAL
+          - ARREST
+          - CROSSCHECK
+          - APPEAL
+        status:
+          type: string
+          enum:
+          - OPEN
+          - IN_PROGRESS
+          - NEED_INFO
+          - APPROVED
+          - CLOSED
+          - REJECTED
+        priority:
+          type: string
+          enum:
+          - LOW
+          - NORMAL
+          - HIGH
+          - CRITICAL
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        deadlineAt:
+          type: string
+          format: date-time
+        authorId:
+          type: string
+        subjectId:
+          type: string
+        executor:
+          $ref: "#/components/schemas/UserResponse"
+        shiftId:
+          type: string
+        description:
+          type: string
+        resolution:
+          type: string
+        appealDecision:
+          type: string
+          enum:
+          - APPROVED
+          - REJECTED
+          - PUNISH_EXECUTOR
+          - PUNISH_CHECKER
+          - PUNISH_BOTH
+        relatedTicketIds:
+          type: array
+          items:
+            type: string
+        documentIds:
+          type: array
+          items:
+            type: string
+    DelegateTicketRequest:
+      required:
+      - ticketType
+      type: object
+      properties:
+        ticketType:
+          type: string
+          enum:
+          - EXTERNAL
+          - INTERNAL
+          - ARREST
+          - CROSSCHECK
+          - APPEAL
+        specialization:
+          type: string
+          enum:
+          - PASSPORT
+          - LOCALS
+          - WORK
+          - TRANSIT
+          - SPECIAL
+        description:
+          type: string
+        priority:
+          type: string
+          enum:
+          - LOW
+          - NORMAL
+          - HIGH
+          - CRITICAL
+        subjectId:
+          type: string
+        shiftId:
+          type: string
+    ShiftRequest:
+      required:
+      - upkId
+      type: object
+      properties:
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        upkId:
+          type: string
+    ShiftResponse:
+      required:
+      - createdBy
+      - id
+      - startTime
+      - upkId
+      type: object
+      properties:
+        id:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        upkId:
+          type: string
+    ParticipationRequest:
+      required:
+      - penalty
+      - shiftId
+      - specialization
+      - userId
+      - wage
+      type: object
+      properties:
+        userId:
+          type: string
+        shiftId:
+          type: string
+        wage:
+          type: number
+          format: float
+        penalty:
+          type: number
+          format: float
+        specialization:
+          type: string
+          enum:
+          - PASSPORT
+          - LOCALS
+          - WORK
+          - TRANSIT
+          - SPECIAL
+    ParticipationResponse:
+      required:
+      - id
+      - penalty
+      - shiftId
+      - specialization
+      - totalResolvedTickets
+      - userId
+      - wage
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        shiftId:
+          type: string
+        wage:
+          type: number
+          format: float
+        penalty:
+          type: number
+          format: float
+        specialization:
+          type: string
+          enum:
+          - PASSPORT
+          - LOCALS
+          - WORK
+          - TRANSIT
+          - SPECIAL
+        totalResolvedTickets:
+          type: integer
+          format: int64
+    EventRequest:
+      required:
+      - description
+      - priority
+      - time
+      - upkId
+      type: object
+      properties:
+        time:
+          type: string
+          format: date-time
+        description:
+          maxLength: 500
+          minLength: 5
+          type: string
+        specialization:
+          type: string
+          enum:
+          - PASSPORT
+          - LOCALS
+          - WORK
+          - TRANSIT
+          - SPECIAL
+        priority:
+          type: string
+          enum:
+          - LOW
+          - NORMAL
+          - HIGH
+          - CRITICAL
+        upkId:
+          type: string
+    EventResponse:
+      required:
+      - description
+      - id
+      - priority
+      - time
+      - upkId
+      type: object
+      properties:
+        id:
+          type: string
+        time:
+          type: string
+          format: date-time
+        description:
+          type: string
+        specialization:
+          type: string
+          enum:
+          - PASSPORT
+          - LOCALS
+          - WORK
+          - TRANSIT
+          - SPECIAL
+        priority:
+          type: string
+          enum:
+          - LOW
+          - NORMAL
+          - HIGH
+          - CRITICAL
+        upkId:
+          type: string
+    DocumentRequest:
+      required:
+      - attachToProfile
+      - body
+      - documentType
+      - userId
+      type: object
+      properties:
+        userId:
+          type: string
+        documentType:
+          type: string
+          enum:
+          - PASSPORT
+          - VISA
+          - CERTIFICATE
+          - WORK_PERMIT
+          - PHOTO
+        body:
+          type: object
+          additionalProperties:
+            type: object
+        validFrom:
+          type: string
+          format: date-time
+        validUntil:
+          type: string
+          format: date-time
+        attachToProfile:
+          type: boolean
+    DocumentResponse:
+      required:
+      - attachToProfile
+      - body
+      - documentType
+      - id
+      - userId
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        documentType:
+          type: string
+          enum:
+          - PASSPORT
+          - VISA
+          - CERTIFICATE
+          - WORK_PERMIT
+          - PHOTO
+        body:
+          type: object
+          additionalProperties:
+            type: object
+        validFrom:
+          type: string
+          format: date-time
+        validUntil:
+          type: string
+          format: date-time
+        attachToProfile:
+          type: boolean
+    RegisterRequest:
+      required:
+      - email
+      - name
+      - password
+      - region
+      type: object
+      properties:
+        name:
+          maxLength: 100
+          minLength: 2
+          type: string
+        email:
+          type: string
+        password:
+          maxLength: 100
+          minLength: 8
+          type: string
+        region:
+          type: string
+          enum:
+          - ORVECH_VONOR
+          - EAST_GRESTIN
+          - PARADIZNA
+    AuthResponse:
+      required:
+      - accessToken
+      - refreshToken
+      - user
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        user:
+          $ref: "#/components/schemas/UserResponse"
+    RegisterGodRequest:
+      required:
+      - email
+      - name
+      - password
+      - secretKey
+      type: object
+      properties:
+        name:
+          maxLength: 100
+          minLength: 2
+          type: string
+        email:
+          type: string
+        password:
+          maxLength: 100
+          minLength: 8
+          type: string
+        secretKey:
+          type: string
+    RefreshRequest:
+      required:
+      - refreshToken
+      type: object
+      properties:
+        refreshToken:
+          type: string
+    LoginRequest:
+      required:
+      - email
+      - password
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+    UserRequestPartial:
+      type: object
+      properties:
+        name:
+          maxLength: 100
+          minLength: 2
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum:
+          - MIGRANT
+          - INSPECTOR
+          - BOSS
+          - SECURITY
+          - GOD
+        upkId:
+          type: string
+    UpkRequestPartial:
+      type: object
+      properties:
+        name:
+          maxLength: 100
+          minLength: 2
+          type: string
+        region:
+          type: string
+          enum:
+          - ORVECH_VONOR
+          - EAST_GRESTIN
+          - PARADIZNA
+    TicketRequestPartial:
+      type: object
+      properties:
+        ticketType:
+          type: string
+          enum:
+          - EXTERNAL
+          - INTERNAL
+          - ARREST
+          - CROSSCHECK
+          - APPEAL
+        status:
+          type: string
+          enum:
+          - OPEN
+          - IN_PROGRESS
+          - NEED_INFO
+          - APPROVED
+          - CLOSED
+          - REJECTED
+        priority:
+          type: string
+          enum:
+          - LOW
+          - NORMAL
+          - HIGH
+          - CRITICAL
+        deadlineAt:
+          type: string
+          format: date-time
+        executorId:
+          type: string
+        shiftId:
+          type: string
+        description:
+          type: string
+        resolution:
+          type: string
+        appealDecision:
+          type: string
+          enum:
+          - APPROVED
+          - REJECTED
+          - PUNISH_EXECUTOR
+          - PUNISH_CHECKER
+          - PUNISH_BOTH
+    ShiftRequestPartial:
+      type: object
+      properties:
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        upkId:
+          type: string
+    ParticipationRequestPartial:
+      type: object
+      properties:
+        shiftId:
+          type: string
+        userId:
+          type: string
+        wage:
+          type: number
+          format: float
+        penalty:
+          type: number
+          format: float
+        specialization:
+          type: string
+          enum:
+          - PASSPORT
+          - LOCALS
+          - WORK
+          - TRANSIT
+          - SPECIAL
+    NotificationRequestPartial:
+      type: object
+      properties:
+        userId:
+          type: string
+        notificationType:
+          type: string
+          enum:
+          - TICKET_ASSIGNED
+          - TICKET_UPDATED
+          - SHIFT_STARTED
+          - APPEAL_RESULT
+          - EVENT_UPDATE
+        message:
+          type: string
+        isRead:
+          type: boolean
+    NotificationResponse:
+      required:
+      - id
+      - isRead
+      - message
+      - notificationType
+      - sentAt
+      - userId
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        relatedTicketId:
+          type: string
+        message:
+          type: string
+        notificationType:
+          type: string
+          enum:
+          - TICKET_ASSIGNED
+          - TICKET_UPDATED
+          - SHIFT_STARTED
+          - APPEAL_RESULT
+          - EVENT_UPDATE
+        sentAt:
+          type: string
+          format: date-time
+        isRead:
+          type: boolean
+    EventRequestPartial:
+      type: object
+      properties:
+        time:
+          type: string
+          format: date-time
+        description:
+          maxLength: 500
+          minLength: 5
+          type: string
+        specialization:
+          type: string
+          enum:
+          - PASSPORT
+          - LOCALS
+          - WORK
+          - TRANSIT
+          - SPECIAL
+        priority:
+          type: string
+          enum:
+          - LOW
+          - NORMAL
+          - HIGH
+          - CRITICAL
+        upkId:
+          type: string
+    DocumentRequestPartial:
+      type: object
+      properties:
+        documentType:
+          type: string
+          enum:
+          - PASSPORT
+          - VISA
+          - CERTIFICATE
+          - WORK_PERMIT
+          - PHOTO
+        body:
+          type: object
+          additionalProperties:
+            type: object
+        validFrom:
+          type: string
+          format: date-time
+        validUntil:
+          type: string
+          format: date-time
+        attachToProfile:
+          type: boolean
+    PagedResponseUserResponse:
+      required:
+      - items
+      - limit
+      - offset
+      - total
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserResponse"
+        total:
+          type: integer
+          format: int64
+        limit:
+          type: integer
+          format: int32
+        offset:
+          type: integer
+          format: int32
+    UserFullDetailedResponse:
+      required:
+      - email
+      - id
+      - name
+      - role
+      - shifts
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        passwordHash:
+          type: string
+        role:
+          type: string
+          enum:
+          - MIGRANT
+          - INSPECTOR
+          - BOSS
+          - SECURITY
+          - GOD
+        upk:
+          $ref: "#/components/schemas/UpkResponse"
+        boss:
+          $ref: "#/components/schemas/UserResponse"
+        shifts:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserShiftInfo"
+    UserParticipationInfo:
+      required:
+      - penalty
+      - resolvedTickets
+      - shiftId
+      - specialization
+      - userId
+      - wage
+      type: object
+      properties:
+        userId:
+          type: string
+        shiftId:
+          type: string
+        wage:
+          type: number
+          format: float
+        penalty:
+          type: number
+          format: float
+        specialization:
+          type: string
+          enum:
+          - PASSPORT
+          - LOCALS
+          - WORK
+          - TRANSIT
+          - SPECIAL
+        resolvedTickets:
+          type: integer
+          format: int32
+    UserShiftInfo:
+      required:
+      - boss
+      - createdBy
+      - id
+      - participation
+      - startTime
+      - upk
+      - upkId
+      type: object
+      properties:
+        id:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        upkId:
+          type: string
+        boss:
+          $ref: "#/components/schemas/UserResponse"
+        upk:
+          $ref: "#/components/schemas/UpkResponse"
+        participation:
+          $ref: "#/components/schemas/UserParticipationInfo"
+    UserDetailedResponse:
+      required:
+      - email
+      - id
+      - name
+      - role
+      - shifts
+      - subordinates
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum:
+          - MIGRANT
+          - INSPECTOR
+          - BOSS
+          - SECURITY
+          - GOD
+        upk:
+          $ref: "#/components/schemas/UpkResponse"
+        subordinates:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserResponse"
+        shifts:
+          type: array
+          items:
+            $ref: "#/components/schemas/ShiftResponse"
+    PagedResponseUpkResponse:
+      required:
+      - items
+      - limit
+      - offset
+      - total
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/UpkResponse"
+        total:
+          type: integer
+          format: int64
+        limit:
+          type: integer
+          format: int32
+        offset:
+          type: integer
+          format: int32
+    PagedResponseTicketResponse:
+      required:
+      - items
+      - limit
+      - offset
+      - total
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TicketResponse"
+        total:
+          type: integer
+          format: int64
+        limit:
+          type: integer
+          format: int32
+        offset:
+          type: integer
+          format: int32
+    TicketDetailedResponse:
+      required:
+      - authorId
+      - createdAt
+      - description
+      - documents
+      - id
+      - priority
+      - relatedTickets
+      - status
+      - subjectId
+      - ticketType
+      - updatedAt
+      type: object
+      properties:
+        id:
+          type: string
+        ticketType:
+          type: string
+          enum:
+          - EXTERNAL
+          - INTERNAL
+          - ARREST
+          - CROSSCHECK
+          - APPEAL
+        status:
+          type: string
+          enum:
+          - OPEN
+          - IN_PROGRESS
+          - NEED_INFO
+          - APPROVED
+          - CLOSED
+          - REJECTED
+        priority:
+          type: string
+          enum:
+          - LOW
+          - NORMAL
+          - HIGH
+          - CRITICAL
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        deadlineAt:
+          type: string
+          format: date-time
+        authorId:
+          type: string
+        subjectId:
+          type: string
+        executor:
+          $ref: "#/components/schemas/UserResponse"
+        shiftId:
+          type: string
+        description:
+          type: string
+        resolution:
+          type: string
+        appealDecision:
+          type: string
+          enum:
+          - APPROVED
+          - REJECTED
+          - PUNISH_EXECUTOR
+          - PUNISH_CHECKER
+          - PUNISH_BOTH
+        relatedTickets:
+          type: array
+          items:
+            $ref: "#/components/schemas/TicketResponse"
+        documents:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentResponse"
+    PagedResponseShiftResponse:
+      required:
+      - items
+      - limit
+      - offset
+      - total
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ShiftResponse"
+        total:
+          type: integer
+          format: int64
+        limit:
+          type: integer
+          format: int32
+        offset:
+          type: integer
+          format: int32
+    InspectorShiftInfo:
+      required:
+      - name
+      - participationId
+      - passedCrossChecks
+      - penalty
+      - resolvedTickets
+      - shiftId
+      - specialization
+      - userId
+      - wage
+      type: object
+      properties:
+        participationId:
+          type: string
+        userId:
+          type: string
+        name:
+          type: string
+        shiftId:
+          type: string
+        wage:
+          type: number
+          format: float
+        penalty:
+          type: number
+          format: float
+        specialization:
+          type: string
+          enum:
+          - PASSPORT
+          - LOCALS
+          - WORK
+          - TRANSIT
+          - SPECIAL
+        resolvedTickets:
+          type: integer
+          format: int32
+        passedCrossChecks:
+          type: integer
+          format: int32
+    ShiftDetailedResponse:
+      required:
+      - boss
+      - createdBy
+      - id
+      - inspectors
+      - startTime
+      - upk
+      type: object
+      properties:
+        id:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        upk:
+          $ref: "#/components/schemas/UpkResponse"
+        boss:
+          $ref: "#/components/schemas/UserResponse"
+        inspectors:
+          type: array
+          items:
+            $ref: "#/components/schemas/InspectorShiftInfo"
+    PagedResponseParticipationResponse:
+      required:
+      - items
+      - limit
+      - offset
+      - total
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ParticipationResponse"
+        total:
+          type: integer
+          format: int64
+        limit:
+          type: integer
+          format: int32
+        offset:
+          type: integer
+          format: int32
+    PagedResponseNotificationResponse:
+      required:
+      - items
+      - limit
+      - offset
+      - total
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationResponse"
+        total:
+          type: integer
+          format: int64
+        limit:
+          type: integer
+          format: int32
+        offset:
+          type: integer
+          format: int32
+    PagedResponseEventResponse:
+      required:
+      - items
+      - limit
+      - offset
+      - total
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/EventResponse"
+        total:
+          type: integer
+          format: int64
+        limit:
+          type: integer
+          format: int32
+        offset:
+          type: integer
+          format: int32
+    PagedResponseDocumentResponse:
+      required:
+      - items
+      - limit
+      - offset
+      - total
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentResponse"
+        total:
+          type: integer
+          format: int64
+        limit:
+          type: integer
+          format: int32
+        offset:
+          type: integer
+          format: int32
+    Unit:
+      type: object
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
