@@ -204,6 +204,7 @@ class TicketService(
     }
 
     @Transactional
+    @Suppress("CyclomaticComplexMethod")
     fun create(currentUserId: String, request: TicketRequest): TicketResponse {
         val currentUser = userRepository.findById(UUID.fromString(currentUserId))
             .orElseThrow { ResourceNotFoundException("Current user not found") }
@@ -235,6 +236,10 @@ class TicketService(
             request.ticketType == TicketType.EXTERNAL -> {
                 assignRandomInspectorBySpecialization(subject, Specialization.PASSPORT)
                     ?: assignLeastBusyInspector(subject)
+            }
+            request.ticketType == TicketType.APPEAL -> {
+                assignBoss(subject)
+                    ?: throw IllegalArgumentException("No boss found in UPK ${subject.upk?.id}")
             }
             else -> null
         }
@@ -700,6 +705,8 @@ class TicketService(
             TicketType.INTERNAL -> assignInspectorBySpecialization(subject, request)
             TicketType.CROSSCHECK -> assignDifferentInspector(subject, originalTicket)
             TicketType.ARREST -> assignSecurityStaff(subject)
+            TicketType.APPEAL -> assignBoss(subject)
+                ?: throw IllegalArgumentException("No boss found in UPK ${subject.upk?.id}")
             else -> throw IllegalArgumentException("Invalid ticket type for delegation: $ticketType")
         }
     }
@@ -835,5 +842,13 @@ class TicketService(
         return securityStaff.minByOrNull { security ->
             ticketRepository.countByExecutor_IdAndStatusIn(security.id!!, activeStatuses)
         }
+    }
+
+    private fun assignBoss(subject: User): User? {
+        val upkId = subject.upk?.id ?: return null
+
+        val bosses = userRepository.findByRoleAndUpk_Id(Role.BOSS, upkId)
+
+        return bosses.firstOrNull()
     }
 }
