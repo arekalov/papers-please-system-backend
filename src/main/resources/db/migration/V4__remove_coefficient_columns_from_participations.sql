@@ -11,3 +11,4 @@ DROP COLUMN IF EXISTS penalty_coefficient;
 COMMENT ON COLUMN participations.wage IS 'Абсолютное значение коэффициента оплаты/премии (заменяет bonus_coefficient)';
 COMMENT ON COLUMN participations.penalty IS 'Абсолютное значение коэффициента штрафа (заменяет penalty_coefficient)';
 
+

@@ -475,6 +475,33 @@ class TicketService(
         }
     }
 
+    private fun checkRelatedTicketManagementAccess(currentUser: User, ticket: Ticket) {
+        when (currentUser.role) {
+            Role.GOD -> return
+            Role.MIGRANT -> {
+                if (ticket.author.id != currentUser.id) {
+                    throw ForbiddenException("Migrants can only manage related tickets for their own tickets")
+                }
+            }
+
+            Role.BOSS -> {
+                val upkId = currentUser.upk?.id
+                    ?: throw ForbiddenException("Boss must be assigned to UPK")
+                if (ticket.subject.upk?.id != upkId) {
+                    throw ForbiddenException("You can only manage related tickets for tickets in your UPK")
+                }
+            }
+
+            Role.INSPECTOR, Role.SECURITY -> {
+                val upkId = currentUser.upk?.id
+                    ?: throw ForbiddenException("Employee must be assigned to UPK")
+                if (ticket.subject.upk?.id != upkId) {
+                    throw ForbiddenException("You can only manage related tickets for tickets in your UPK")
+                }
+            }
+        }
+    }
+
     @Transactional
     fun addDocument(currentUserId: String, ticketId: String, documentId: String): TicketResponse {
         val currentUser = userRepository.findById(UUID.fromString(currentUserId))
@@ -580,7 +607,7 @@ class TicketService(
         val ticket = ticketRepository.findById(UUID.fromString(ticketId))
             .orElseThrow { ResourceNotFoundException("Ticket with id $ticketId not found") }
 
-        checkUpdateAccess(currentUser, ticket, TicketRequestPartial())
+        checkRelatedTicketManagementAccess(currentUser, ticket)
 
         val relatedTicket = ticketRepository.findById(UUID.fromString(relatedTicketId))
             .orElseThrow { ResourceNotFoundException("Related ticket with id $relatedTicketId not found") }
@@ -599,7 +626,7 @@ class TicketService(
         val ticket = ticketRepository.findById(UUID.fromString(ticketId))
             .orElseThrow { ResourceNotFoundException("Ticket with id $ticketId not found") }
 
-        checkUpdateAccess(currentUser, ticket, TicketRequestPartial())
+        checkRelatedTicketManagementAccess(currentUser, ticket)
 
         val relatedTicket = ticketRepository.findById(UUID.fromString(relatedTicketId))
             .orElseThrow { ResourceNotFoundException("Related ticket with id $relatedTicketId not found") }

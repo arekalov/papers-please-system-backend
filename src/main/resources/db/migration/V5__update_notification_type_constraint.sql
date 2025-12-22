@@ -19,3 +19,4 @@ CHECK (notification_type IN (
 -- Комментарий
 COMMENT ON COLUMN notifications.notification_type IS 'Тип уведомления: TICKET_ASSIGNED, TICKET_UPDATED, SHIFT_STARTED, APPEAL_RESULT, EVENT_UPDATE';
 
+
